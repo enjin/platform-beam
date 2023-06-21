@@ -1,0 +1,21 @@
+mutation CreateBeam(
+  $name: String!
+  $description: String!
+  $image: String!
+  $start: DateTime!
+  $end: DateTime!
+  $collectionId: BigInt!
+  $tokens: [ClaimToken!]!
+  $flags: [BeamFlagInputType!]
+) {
+  CreateBeam(
+    name: $name
+    description: $description
+    image: $image
+    start: $start
+    end: $end
+    collectionId: $collectionId
+    tokens: $tokens
+    flags: $flags
+  )
+}

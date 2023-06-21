@@ -1,0 +1,3 @@
+mutation RemoveTokens($code: String!, $tokenIds: [IntegerRangeString!]!) {
+  RemoveTokens(code: $code, tokenIds: $tokenIds)
+}

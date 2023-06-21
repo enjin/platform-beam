@@ -1,0 +1,74 @@
+query GetClaims(
+  $ids: [BigInt]
+  $codes: [String]
+  $accounts: [String]
+  $states: [ClaimStatus]
+  $after: String
+  $first: Int
+) {
+  GetClaims(
+    ids: $ids
+    codes: $codes
+    accounts: $accounts
+    states: $states
+    after: $after
+    first: $first
+  ) {
+    edges {
+      cursor
+      node {
+        id
+        claimedAt
+        claimStatus
+        quantity
+        wallet {
+          account {
+            publicKey
+            address
+          }
+        }
+        collection {
+          collectionId
+          maxTokenCount
+          maxTokenSupply
+          forceSingleMint
+          frozen
+          network
+        }
+        beam {
+          id
+          code
+          name
+          description
+          image
+          start
+          end
+          isClaimable
+          qr {
+            url
+            payload
+          }
+          message {
+            walletPublicKey
+            message
+          }
+          collection {
+            collectionId
+            maxTokenCount
+            maxTokenSupply
+            forceSingleMint
+            frozen
+            network
+          }
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      startCursor
+      endCursor
+      hasPreviousPage
+      hasNextPage
+    }
+  }
+}

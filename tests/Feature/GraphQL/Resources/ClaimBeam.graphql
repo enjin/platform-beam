@@ -1,0 +1,13 @@
+mutation ClaimBeam(
+  $code: String!
+  $account: String!
+  $signature: String!
+  $cryptoSignatureType: CryptoSignatureType
+) {
+  ClaimBeam(
+    code: $code
+    account: $account
+    signature: $signature
+    cryptoSignatureType: $cryptoSignatureType
+  )
+}

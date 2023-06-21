@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'can_claim' => 'There are no more claims available.',
+    'duplicate_token_ids' => 'There are some duplicate token IDs supplied in the data.',
+    'end_date_after_start' => 'The :attribute must be a date after start.',
+    'end_date_greater_than' => 'The :attribute must be a date greater than :value.',
+    'is_paused' => 'The beam is paused.',
+    'scan_limit' => 'You have reached the maximum limit to retry.',
+    'start_date_after_end' => 'The :attribute must be a date before end.',
+    'start_date_has_passed' => 'The start date of this beam has passed, it can no longer be modified.',
+    'start_date_less_than' => 'The :attribute must be a date less than :value.',
+    'tokens_are_claimable' => 'The :attribute value is already used.',
+    'tokens_doesnt_exist_in_collection' => 'The :attribute exists in the specified collection.',
+    'tokens_exist_in_collection' => 'The :attribute does not exist in the specified collection.',
+    'verify_signed_message' => 'The :attribute is invalid.',
+    'beam_scan_not_found' => 'Beam scan record is not found.',
+    'max_token_count' => 'The token count exceeded the maximum limit of :limit for this collection.',
+    'max_token_supply' => 'The :attribute exceeded the maximum supply limit of :limit for each token for this collection.',
+    'has_beam_flag' => 'The :attribute is invalid.',
+    'not_expired' => 'The beam has expired.',
+    'tokens_doesnt_exist_in_beam' => 'The :attribute already exist in beam.',
+    'tokens_exist_in_beam' => 'The :attribute doesn\'t exist in beam.',
+    'not_owner' => 'The :attribute should not be the owner of the collection.',
+];

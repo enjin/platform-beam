@@ -1,0 +1,29 @@
+query GetBeam($code: String!, $account: String) {
+  GetBeam(code: $code, account: $account) {
+    id
+    code
+    name
+    description
+    image
+    start
+    end
+    isClaimable
+    qr {
+      url
+      payload
+    }
+    message {
+      walletPublicKey
+      message
+    }
+    collection {
+      collectionId
+      maxTokenCount
+      maxTokenSupply
+      forceSingleMint
+      frozen
+      network
+    }
+    claimsRemaining
+  }
+}

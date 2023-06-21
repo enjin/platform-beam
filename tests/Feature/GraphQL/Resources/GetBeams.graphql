@@ -1,0 +1,67 @@
+query GetBeams($codes: [String!], $names: [String!]) {
+  GetBeams(codes: $codes, names: $names) {
+    totalCount
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    edges {
+      node {
+        id
+        code
+        name
+        description
+        image
+        start
+        end
+        isClaimable
+        qr {
+          url
+          payload
+        }
+        collection {
+          collectionId
+          maxTokenCount
+          maxTokenSupply
+          forceSingleMint
+          frozen
+          network
+        }
+        claims {
+          totalCount
+          pageInfo {
+            hasPreviousPage
+            hasNextPage
+            startCursor
+            endCursor
+          }
+          edges {
+            node {
+              id
+              claimedAt
+              claimStatus
+              quantity
+              code
+              wallet {
+                account {
+                  publicKey
+                  address
+                }
+              }
+              collection {
+                collectionId
+                maxTokenCount
+                maxTokenSupply
+                forceSingleMint
+                frozen
+                network
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
