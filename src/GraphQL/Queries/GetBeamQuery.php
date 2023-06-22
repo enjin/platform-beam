@@ -3,7 +3,6 @@
 namespace Enjin\Platform\Beam\GraphQL\Queries;
 
 use Closure;
-use Enjin\Platform\Beam\GraphQL\Mutations\ClaimBeamMutation;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Rules\CanClaim;
@@ -79,7 +78,7 @@ class GetBeamQuery extends Query implements PlatformPublicGraphQlOperation
      */
     protected function rules(array $args = []): array
     {
-        $singleUse = BeamService::isSingleUse($args['code']) || ClaimBeamMutation::hasSingleUse($args['code']);
+        $singleUse = BeamService::isSingleUse($args['code']);
 
         return [
             'code' => [

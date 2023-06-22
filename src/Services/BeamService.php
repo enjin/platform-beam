@@ -22,6 +22,7 @@ use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Support\BitMask;
 use Enjin\Platform\Support\Blake2;
 use Enjin\Platform\Support\SS58Address;
+use Facades\Enjin\Platform\Beam\Services\BeamService as BeamServiceFacade;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
@@ -258,6 +259,18 @@ class BeamService
     }
 
     /**
+     * Check if beam code is single.
+     */
+    public static function hasSingleUse(?string $code): bool
+    {
+        if (!$code) {
+            return false;
+        }
+
+        return (bool) BeamServiceFacade::findByCode($code)?->hasFlag(BeamFlag::SINGLE_USE);
+    }
+
+    /**
      * Check if code is single use.
      */
     public static function isSingleUse(?string $code): bool
@@ -267,6 +280,10 @@ class BeamService
         }
 
         try {
+            if (self::hasSingleUse($code)) {
+                return true;
+            }
+
             decrypt($code);
 
             return true;
