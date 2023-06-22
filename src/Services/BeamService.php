@@ -259,7 +259,7 @@ class BeamService
     }
 
     /**
-     * Check if beam code is single.
+     * Check if beam code is single use.
      */
     public static function hasSingleUse(?string $code): bool
     {
@@ -271,7 +271,7 @@ class BeamService
     }
 
     /**
-     * Check if code is single use.
+     * Check if code is an encrypted single use.
      */
     public static function isSingleUse(?string $code): bool
     {
@@ -280,10 +280,6 @@ class BeamService
         }
 
         try {
-            if (self::hasSingleUse($code)) {
-                return true;
-            }
-
             decrypt($code);
 
             return true;
