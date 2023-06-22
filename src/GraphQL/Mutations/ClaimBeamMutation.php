@@ -90,7 +90,7 @@ class ClaimBeamMutation extends Mutation implements PlatformPublicGraphQlOperati
      */
     protected function rules(array $args = []): array
     {
-        $singleUse = BeamService::isSingleUse($args['code']);
+        $singleUse = BeamService::isSingleUse($args['code']) || BeamService::hasSingleUse($args['code']);
 
         return [
             'code' => [
