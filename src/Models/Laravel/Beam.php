@@ -5,6 +5,7 @@ namespace Enjin\Platform\Beam\Models\Laravel;
 use Carbon\Carbon;
 use Enjin\Platform\Beam\Database\Factories\BeamFactory;
 use Enjin\Platform\Beam\Enums\BeamFlag;
+use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Models\BaseModel;
 use Enjin\Platform\Models\Laravel\Collection;
 use Enjin\Platform\Support\BitMask;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
 
 class Beam extends BaseModel
@@ -114,6 +116,16 @@ class Beam extends BaseModel
     }
 
     /**
+     * Interact with the beam's claims remaining attribute.
+     */
+    protected function claimsRemaining(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => Cache::get(BeamService::key($this->code), BeamService::claimsCountResolver($this->code))
+        );
+    }
+
+    /**
      * This model's factory.
      */
     protected static function newFactory(): BeamFactory
@@ -130,6 +142,16 @@ class Beam extends BaseModel
             get: fn () => collect(BitMask::getBits($this->flags_mask))->map(function ($flag) {
                 return BeamFlag::from($flag)->name;
             })->toArray()
+        );
+    }
+
+    /**
+     * This model's specific pivot identifier.
+     */
+    protected function pivotIdentifier(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->code,
         );
     }
 }
