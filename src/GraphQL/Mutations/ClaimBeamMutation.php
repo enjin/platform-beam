@@ -3,7 +3,6 @@
 namespace Enjin\Platform\Beam\GraphQL\Mutations;
 
 use Closure;
-use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
 use Enjin\Platform\Beam\Rules\CanClaim;
 use Enjin\Platform\Beam\Rules\NotExpired;
@@ -15,7 +14,6 @@ use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Enums\Substrate\CryptoSignatureType;
 use Enjin\Platform\Interfaces\PlatformPublicGraphQlOperation;
 use Enjin\Platform\Rules\ValidSubstrateAccount;
-use Facades\Enjin\Platform\Beam\Services\BeamService as BeamServiceFacade;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Illuminate\Support\Facades\DB;
@@ -88,23 +86,11 @@ class ClaimBeamMutation extends Mutation implements PlatformPublicGraphQlOperati
     }
 
     /**
-     * Check if beam code is single.
-     */
-    public static function hasSingleUse(?string $code): bool
-    {
-        if (!$code) {
-            return false;
-        }
-
-        return (bool) BeamServiceFacade::findByCode($code)?->hasFlag(BeamFlag::SINGLE_USE);
-    }
-
-    /**
      * Get the mutation's request validation rules.
      */
     protected function rules(array $args = []): array
     {
-        $singleUse = BeamService::isSingleUse($args['code']) || static::hasSingleUse($args['code']);
+        $singleUse = BeamService::isSingleUse($args['code']);
 
         return [
             'code' => [
