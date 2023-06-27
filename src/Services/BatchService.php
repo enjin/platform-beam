@@ -38,9 +38,13 @@ class BatchService
     /**
      * Get next batch ID.
      */
-    public function getNextBatchId(BeamType $type): int
+    public function getNextBatchId(BeamType $type, string $collectionid): int
     {
-        $batch = BeamBatch::firstOrNew(['completed_at' => null, 'beam_type' => $type->name]);
+        $batch = BeamBatch::firstOrNew([
+            'completed_at' => null,
+            'beam_type' => $type->name,
+            'collection_chain_id' => $collectionid,
+        ]);
         if (!$batch->exists) {
             $batch->save();
         }

@@ -94,7 +94,10 @@ class ClaimBeam implements ShouldQueue
     {
         return [
             ...Arr::only($this->data, ['wallet_public_key', 'claimed_at', 'state', 'ip_address']),
-            'beam_batch_id' => $batchService->getNextBatchId(BeamType::getEnumCase($claim->type)),
+            'beam_batch_id' => $batchService->getNextBatchId(
+                BeamType::getEnumCase($claim->type),
+                $claim->beam->collection_chain_id
+            ),
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace Enjin\Platform\Beam\Commands;
 
 use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Enums\ClaimStatus;
+use Enjin\Platform\Beam\Events\BeamBatchTransactionCreated;
 use Enjin\Platform\Beam\Events\BeamClaimInProgress;
 use Enjin\Platform\Beam\Models\BeamBatch;
 use Enjin\Platform\Beam\Models\BeamClaim;
@@ -217,6 +218,7 @@ class BatchProcess extends Command
                         'idempotency_key' => Str::uuid()->toString(),
                     ], $this->account);
                     BeamBatch::where('id', $batchId)->update(['transaction_id' => $transaction->id]);
+                    BeamBatchTransactionCreated::safeBroadcast($param['collectionId'], $transaction->id);
                 }
 
                 $this->updateStatus($claims, $reassignedClaims);
