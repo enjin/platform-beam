@@ -11,7 +11,7 @@ class BeamBatchTransactionCreated extends PlatformBroadcastEvent
     /**
      * Creates a new event instance.
      */
-    public function __construct(string $collectionId, string $transactionId)
+    public function __construct(string $collectionId, int $transactionId)
     {
         parent::__construct();
 
