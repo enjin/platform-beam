@@ -172,7 +172,7 @@ class BatchProcess extends Command
                         $key = $claim->token_chain_id . '|' . $claim->collection_id;
                         if (isset($createdTokens[$key])) {
                             // Succeeding claims should be minted. Reassigning claims to the next batch
-                            $claim->update(['beam_batch_id' => $batchId = $this->batch->getNextBatchId($type)]);
+                            $claim->update(['beam_batch_id' => $batchId = $this->batch->getNextBatchId($type, $claim->collection_id)]);
                             $this->info("Reassigning claim ID({$claim->id}) to the next batch:{$batchId}");
                             $reassignedClaims[] = $claim->id;
 
