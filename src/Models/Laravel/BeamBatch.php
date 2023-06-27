@@ -32,6 +32,7 @@ class BeamBatch extends BaseModel
         'processed_at',
         'transaction_id',
         'beam_type',
+        'collection_chain_id',
     ];
 
     /**
