@@ -6,6 +6,7 @@ use Enjin\Platform\Enums\Substrate\TokenMintCapType;
 use Enjin\Platform\Models\Collection;
 use Enjin\Platform\Models\Token;
 use Enjin\Platform\Models\Wallet;
+use Enjin\Platform\Support\Account;
 use Illuminate\Database\Eloquent\Model;
 
 trait CreateCollectionData
@@ -35,7 +36,7 @@ trait CreateCollectionData
     public function prepareCollectionData(?string $publicKey = null): void
     {
         $this->wallet = Wallet::firstOrCreate(
-            ['public_key' => $publicKey ?: config('enjin-platform.chains.daemon-account')],
+            ['public_key' => $publicKey ?: Account::daemonPublicKey()],
             [
                 'external_id' => fake()->unique()->uuid(),
                 'managed' => fake()->boolean(),
