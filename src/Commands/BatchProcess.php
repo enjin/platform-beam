@@ -201,6 +201,11 @@ class BatchProcess extends Command
 
                 $method = BeamType::MINT_ON_DEMAND == $type ? 'BatchMint' : 'BatchTransfer';
                 foreach ($params as $param) {
+                    if (!$signingAccount = $this->resolveSigningAccount($param['collectionId'])) {
+                        $this->error("Signing account not found for collection ID: {$param['collectionId']}");
+
+                        continue;
+                    }
                     $transaction = $this->transaction->store([
                         'method' => $method,
                         'encoded_data' => $this->serialize->encode($method, [
@@ -208,7 +213,7 @@ class BatchProcess extends Command
                             'recipients' => $param['recipients'],
                         ]),
                         'idempotency_key' => Str::uuid()->toString(),
-                    ], $this->resolveSigningAccount($param['collectionId']));
+                    ], $signingAccount);
                     BeamBatch::where('id', $batchId)->update(['transaction_id' => $transaction->id]);
                     BeamBatchTransactionCreated::safeBroadcast($param['collectionId'], $transaction->id);
                 }
@@ -223,7 +228,7 @@ class BatchProcess extends Command
     /**
      * Resolve the signing account for the given collection ID.
      */
-    protected function resolveSigningAccount(string $collectionId): Model
+    protected function resolveSigningAccount(string $collectionId): ?Model
     {
         if (static::$signingAccountResolver) {
             return call_user_func(static::$signingAccountResolver, $collectionId);
