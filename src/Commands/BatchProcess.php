@@ -202,7 +202,7 @@ class BatchProcess extends Command
                 $method = BeamType::MINT_ON_DEMAND == $type ? 'BatchMint' : 'BatchTransfer';
                 foreach ($params as $param) {
                     if (!$signingAccount = $this->resolveSigningAccount($param['collectionId'])) {
-                        $this->error("Signing account not found for collection ID: {$param['collectionId']}");
+                        $this->error("Signing account not found for collection ID: {$param['collectionId']}, batch ID: {$batchId}");
 
                         continue;
                     }
