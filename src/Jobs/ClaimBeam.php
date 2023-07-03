@@ -41,9 +41,9 @@ class ClaimBeam implements ShouldQueue
     {
         if ($data = $this->data) {
             try {
-                $beam = Beam::find($this->data['beam']['id']);
+                $beam = Beam::find($data['beam']['id']);
                 $claim = null;
-                if ($beam->probabilities) {
+                if ($beam->probabilities && !$data['code']) {
                     $claim = $this->computeClaim($beam);
                 }
                 if (!$claim) {
