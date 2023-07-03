@@ -6,6 +6,7 @@ use Enjin\Platform\Beam\Database\Factories\BeamClaimFactory;
 use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Enums\BeamRoute;
 use Enjin\Platform\Beam\Services\BeamService;
+use Enjin\Platform\Enums\Substrate\TokenMintCapType;
 use Enjin\Platform\Models\BaseModel;
 use Enjin\Platform\Models\Laravel\Collection;
 use Enjin\Platform\Models\Laravel\Token;
@@ -191,6 +192,32 @@ class BeamClaim extends BaseModel
 
         // If we don't have a prune expired claims config, we'll just return a query that will never return any results.
         return static::where('id', 0);
+    }
+
+    /**
+     * Scope for NFTs.
+     */
+    public function scopeNft(Builder $query, int $collectionId): Builder
+    {
+        return $query->leftJoin(
+            'tokens',
+            fn ($join) => $join->on('tokens.token_chain_id', '=', 'beam_claims.token_chain_id')
+                ->whereColumn('tokens.collection_id', 'beam_claims.collection_id')
+        )
+            ->join(
+                'collections',
+                fn ($join) => $join->on('collections.id', '=', 'beam_claims.collection_id')
+                    ->where('collections.collection_chain_id', $collectionId)
+            )
+            ->whereRaw("
+                (tokens.is_currency is false OR tokens.is_currency is NULL)
+                AND (
+                    collections.max_token_supply = '1'
+                    OR (collections.force_single_mint is true AND tokens.supply = '1')
+                    OR (tokens.cap='" . TokenMintCapType::SUPPLY->name . "' AND tokens.cap_supply = '1')
+                    OR (tokens.cap='" . TokenMintCapType::SINGLE_MINT->name . "' AND tokens.supply = '1')
+                )
+            ");
     }
 
     /**

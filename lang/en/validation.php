@@ -22,4 +22,5 @@ return [
     'tokens_doesnt_exist_in_beam' => 'The :attribute already exist in beam.',
     'tokens_exist_in_beam' => 'The :attribute doesn\'t exist in beam.',
     'not_owner' => 'The :attribute should not be the owner of the collection.',
+    'token_id_exists_in_params' => 'The :attribute doesn\'t exist in the `tokens` parameter.',
 ];

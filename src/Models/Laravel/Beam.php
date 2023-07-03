@@ -46,6 +46,7 @@ class Beam extends BaseModel
         'end',
         'collection_chain_id',
         'flags_mask',
+        'probabilities',
     ];
 
     /**
@@ -63,6 +64,13 @@ class Beam extends BaseModel
         'updated_at',
         'deleted_at',
     ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = ['probabilities' => 'array'];
 
     /**
      * The beam claim's relationship.
@@ -94,6 +102,20 @@ class Beam extends BaseModel
     public function hasFlag(BeamFlag $flag): bool
     {
         return BitMask::getBit($flag->value, $this->flags_mask ?? 0);
+    }
+
+    /**
+     * The beam chances attribute.
+     */
+    public function getChancesAttribute(): array
+    {
+        return collect($this->probabilities)->map(function ($key, $chance) {
+            if ($key === 'nft') {
+                return ['nft' => $chance];
+            }
+
+            return collect($chance['ft'])->map(fn ($row) => [$row['tokenId'] => $row['chance']])->all();
+        })->all();
     }
 
     /**

@@ -38,6 +38,7 @@ class BeamServiceProvider extends PackageServiceProvider
             ->hasMigration('create_beam_scans_table')
             ->hasMigration('update_beams_table')
             ->hasMigration('add_collection_chain_id_to_beam_batches_table')
+            ->hasMigration('add_probabilities_to_beam_table')
             ->hasRoute('enjin-platform-beam')
             ->hasTranslations();
     }

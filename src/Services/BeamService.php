@@ -79,6 +79,7 @@ class BeamService
             ...Arr::except($args, ['tokens', 'flags']),
             'flags_mask' => static::getFlagsValue(Arr::get($args, 'flags')),
             'code' => bin2hex(openssl_random_pseudo_bytes(16)),
+            'probabilities' => Arr::get($args, 'probabilities'),
         ]);
         if ($beam) {
             Cache::forever(

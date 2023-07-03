@@ -40,11 +40,18 @@ class ClaimBeam implements ShouldQueue
     {
         if ($data = $this->data) {
             try {
-                $claim = BeamClaim::where('beam_id', $data['beam']['id'])
-                    ->claimable()
-                    ->when($data['code'], fn ($query) => $query->withSingleUseCode($data['code']))
-                    ->unless($data['code'], fn ($query) => $query->inRandomOrder())
-                    ->first();
+                $beam = Beam::find($this->data['beam']['id']);
+                $claim = null;
+                if ($beam->probabilities) {
+                    $claim = $this->computeClaim($beam);
+                }
+                if (!$claim) {
+                    $claim = BeamClaim::where('beam_id', $data['beam']['id'])
+                        ->claimable()
+                        ->when($data['code'], fn ($query) => $query->withSingleUseCode($data['code']))
+                        ->unless($data['code'], fn ($query) => $query->inRandomOrder())
+                        ->first();
+                }
 
                 if ($claim) {
                     DB::beginTransaction();
@@ -74,6 +81,37 @@ class ClaimBeam implements ShouldQueue
             Cache::forever($key, true);
             Cache::increment(BeamService::key(Arr::get($this->data, 'beam.code')));
         }
+    }
+
+    /**
+     * Compute the claim base from its probabilities.
+     */
+    protected function computeClaim(Model $beam): ?Model
+    {
+        $tryLimit = BeamClaim::where('beam_id', $beam->id)->claimable()->count();
+        $tries = 0;
+        $claim = null;
+        do {
+            $rand = random_int(1, 100);
+            foreach ($beam->chances as $tokenId => $chance) {
+                if ($rand <= $chance) {
+                    if ($tokenId === 'nft') {
+                        $claim = BeamClaim::where('beam_id', $beam->id)
+                            ->claimable()
+                            ->nft($beam->collection_chain_id)
+                            ->first();
+                    } else {
+                        $claim = BeamClaim::where('beam_id', $beam->id)
+                            ->claimable()
+                            ->where('token_chain_id', $tokenId)
+                            ->first();
+                    }
+                }
+            }
+            $tries++;
+        } while (is_null($claim) && $tries <= $tryLimit);
+
+        return $claim;
     }
 
     /**

@@ -7,6 +7,7 @@ use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
 use Enjin\Platform\Beam\Rules\MaxTokenCount;
 use Enjin\Platform\Beam\Rules\MaxTokenSupply;
+use Enjin\Platform\Beam\Rules\TokenIdExistsInParams;
 use Enjin\Platform\Beam\Rules\TokensDoNotExistInCollection;
 use Enjin\Platform\Beam\Rules\TokensExistInCollection;
 use Enjin\Platform\Beam\Rules\TokenUploadExistInCollection;
@@ -64,6 +65,10 @@ class CreateBeamMutation extends Mutation
             'tokens' => [
                 'type' => GraphQL::type('[ClaimToken!]!'),
                 'description' => __('enjin-platform-beam::input_type.claim_token.description'),
+            ],
+            'probabilities' => [
+                'type' => GraphQL::type('[ClaimProbability!]'),
+                'description' => __('enjin-platform-beam::input_type.claim_probability.description'),
             ],
         ];
     }
@@ -148,6 +153,15 @@ class CreateBeamMutation extends Mutation
                 new MaxTokenCount($args['collectionId']),
             ],
             'flags.*.flag' => ['required', 'distinct'],
+            'probabilities.ft.*.tokenId' => [
+                'required_with:probabilities.ft.*.chance',
+                new TokenIdExistsInParams(),
+            ],
+            'probabilities.ft.*.chance' => [
+                'required_with:probabilities.ft.*.tokenId',
+                'decimal',
+                'min:0',
+            ],
         ];
     }
 }
