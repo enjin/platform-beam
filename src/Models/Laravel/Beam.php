@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
 
@@ -109,13 +110,21 @@ class Beam extends BaseModel
      */
     public function getChancesAttribute(): array
     {
-        return collect($this->probabilities)->map(function ($key, $chance) {
-            if ($key === 'nft') {
-                return ['nft' => $chance];
+        $chances = [];
+        foreach ($this->probabilities as $key => $values) {
+            if ($key === 'nft' && $values > 0) {
+                $chances['nft'] = $values;
+            } else {
+                foreach (Arr::get($values, 'ft', []) as $value) {
+                    if ($value['chance'] > 0) {
+                        $chances[$value['tokenId']] = $value['chance'];
+                    }
+                }
             }
+        }
+        arsort($chances);
 
-            return collect($chance['ft'])->map(fn ($row) => [$row['tokenId'] => $row['chance']])->all();
-        })->all();
+        return $chances;
     }
 
     /**

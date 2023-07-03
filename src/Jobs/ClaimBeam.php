@@ -3,6 +3,7 @@
 namespace Enjin\Platform\Beam\Jobs;
 
 use Enjin\Platform\Beam\Enums\BeamType;
+use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Models\BeamScan;
 use Enjin\Platform\Beam\Services\BatchService;
@@ -88,7 +89,7 @@ class ClaimBeam implements ShouldQueue
      */
     protected function computeClaim(Model $beam): ?Model
     {
-        $tryLimit = BeamClaim::where('beam_id', $beam->id)->claimable()->count();
+        $tryLimit = BeamClaim::where('beam_id', $beam->id)->claimable()->count() + count($beam->chances);
         $tries = 0;
         $claim = null;
         do {
