@@ -111,18 +111,15 @@ class Beam extends BaseModel
     public function getChancesAttribute(): array
     {
         $chances = [];
-        foreach ($this->probabilities as $key => $values) {
-            if ($key === 'nft' && $values > 0) {
-                $chances['nft'] = $values;
-            } else {
-                foreach (Arr::get($values, 'ft', []) as $value) {
-                    if ($value['chance'] > 0) {
-                        $chances[$value['tokenId']] = $value['chance'];
-                    }
-                }
+        foreach (Arr::get($this->probabilities, 'ft', []) as $value) {
+            if ($value['chance'] > 0) {
+                $chances[$value['tokenId']] = $value['chance'];
             }
         }
-        arsort($chances);
+        if ($value = Arr::get($this->probabilities, 'nft')) {
+            $chances['nft'] = $value;
+        }
+        asort($chances);
 
         return $chances;
     }

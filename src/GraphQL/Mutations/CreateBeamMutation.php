@@ -67,7 +67,7 @@ class CreateBeamMutation extends Mutation
                 'description' => __('enjin-platform-beam::input_type.claim_token.description'),
             ],
             'probabilities' => [
-                'type' => GraphQL::type('[ClaimProbability!]'),
+                'type' => GraphQL::type('ClaimProbability!'),
                 'description' => __('enjin-platform-beam::input_type.claim_probability.description'),
             ],
         ];

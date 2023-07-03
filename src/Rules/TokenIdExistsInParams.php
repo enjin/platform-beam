@@ -21,14 +21,8 @@ class TokenIdExistsInParams implements DataAwareRule, ValidationRule
             ->flatten()
             ->sortBy(fn ($tokenId) => false === $this->integerRange($tokenId))
             ->all();
-        if ($tokens) {
-            foreach ($value as $tokenId) {
-                if ($this->tokenIdExists($tokens, $tokenId)) {
-                    $fail(__('enjin-platform-beam::validation.token_id_exists_in_params'));
-
-                    return;
-                }
-            }
+        if ($tokens && !$this->tokenIdExists($tokens, $value)) {
+            $fail(__('enjin-platform-beam::validation.token_id_exists_in_params'));
         }
     }
 }
