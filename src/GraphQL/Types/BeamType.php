@@ -95,6 +95,13 @@ class BeamType extends Type
                 'description' => __('enjin-platform-beam::type.beam_claim.description'),
                 'args' => ConnectionInput::args(),
                 'resolve' => function ($beam, $args) {
+                    if ($beam->hasFlag(BeamFlag::SINGLE_USE)) {
+                        return [
+                            'items' => new CursorPaginator([], 1),
+                            'total' => 0,
+                        ];
+                    }
+
                     return [
                         'items' => new CursorPaginator(
                             $beam?->claims,
