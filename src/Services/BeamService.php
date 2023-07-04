@@ -210,6 +210,12 @@ class BeamService
     public static function claimsCountResolver(string $code): Closure
     {
         return function () use ($code) {
+            if (self::isSingleUse($code)) {
+                $singleUseClaim = BeamClaim::withSingleUseCode($code)->first();
+
+                return !isset($singleUseClaim) || $singleUseClaim->claimed_at ? 0 : 1;
+            }
+
             Cache::forever(
                 self::key($code),
                 $count = BeamClaim::claimable()->hasCode($code)->count()
