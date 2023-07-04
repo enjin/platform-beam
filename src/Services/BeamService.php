@@ -20,6 +20,7 @@ use Enjin\Platform\Beam\Jobs\DispatchCreateBeamClaimsJobs;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
+use Enjin\Platform\Beam\Support\ClaimProbabilities;
 use Enjin\Platform\Support\BitMask;
 use Enjin\Platform\Support\Blake2;
 use Enjin\Platform\Support\SS58Address;
@@ -42,11 +43,17 @@ class BeamService
     public const SIGNING_REQUEST_PREFIX = 'epsr:';
 
     /**
+     * The probability class.
+     */
+    protected $probability;
+
+    /**
      * Create new beam service instance.
      */
     public function __construct(
         protected BatchService $batch
     ) {
+        $this->probability = new ClaimProbabilities();
     }
 
     /**
@@ -333,6 +340,7 @@ class BeamService
         }
 
         if ($tokens) {
+            $this->probability->removeTokens($code, $tokens);
             TokensRemoved::dispatch(['code'=>$code, 'tokenIds' => $tokens]);
         }
 
@@ -359,6 +367,7 @@ class BeamService
                     );
                 }, $carry);
             }, $totalClaimCount);
+            $this->probability->createOrUpdateProbabilities($beam->code, $tokens->all());
 
             DispatchCreateBeamClaimsJobs::dispatch($beam, $tokenIds->all())->afterCommit();
         }
@@ -388,6 +397,8 @@ class BeamService
                         );
                     }, $totalClaimCount);
                     unset($token['tokenIdDataUpload']);
+                    $this->probability->createOrUpdateProbabilities($beam->code, [$token]);
+
                     DispatchCreateBeamClaimsJobs::dispatch($beam, [$token])->afterCommit();
                     unset($tokenIds, $token);
                 });

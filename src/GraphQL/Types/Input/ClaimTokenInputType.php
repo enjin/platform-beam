@@ -60,6 +60,11 @@ class ClaimTokenInputType extends InputType
                 'description' => __('enjin-platform-beam::mutation.common.args.type'),
                 'defaultValue' => BeamType::TRANSFER_TOKEN->name,
             ],
+            'isNft' => [
+                'type' => GraphQL::type('Boolean'),
+                'description' => __('enjin-platform-beam::input_type.claim_token.field.isNft'),
+                'defaultValue' => false,
+            ],
         ];
     }
 }

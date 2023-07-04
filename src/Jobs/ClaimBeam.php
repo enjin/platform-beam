@@ -8,6 +8,7 @@ use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Models\BeamScan;
 use Enjin\Platform\Beam\Services\BatchService;
 use Enjin\Platform\Beam\Services\BeamService;
+use Enjin\Platform\Beam\Support\ClaimProbabilities;
 use Enjin\Platform\Services\Database\WalletService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,15 +38,23 @@ class ClaimBeam implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(BatchService $batch, WalletService $wallet): void
+    public function handle(BatchService $batch, WalletService $wallet, ClaimProbabilities $probability): void
     {
         if ($data = $this->data) {
             try {
-                $claim = BeamClaim::where('beam_id', $data['beam']['id'])
-                    ->claimable()
-                    ->when($data['code'], fn ($query) => $query->withSingleUseCode($data['code']))
-                    ->unless($data['code'], fn ($query) => $query->inRandomOrder())
-                    ->first();
+                $claim = null;
+                if ($probability->hasProbabilities(Arr::get($data, 'beam.code'))) {
+                    $claim = $probability->drawClaim(Arr::get($data, 'beam.code'));
+                }
+
+                if (!$claim) {
+                    $claim = BeamClaim::where('beam_id', $data['beam']['id'])
+                        ->claimable()
+                        ->when($data['code'], fn ($query) => $query->withSingleUseCode($data['code']))
+                        ->unless($data['code'], fn ($query) => $query->inRandomOrder())
+                        ->first();
+                }
+
 
                 if ($claim) {
                     DB::beginTransaction();
