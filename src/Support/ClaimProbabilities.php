@@ -98,6 +98,7 @@ class ClaimProbabilities
                         $ranges = $this->integerRange($tokenId);
                         $claim = $ranges !== false
                             ? BeamClaim::whereBetween('token_chain_id', [(int) $ranges[0], (int) $ranges[1]])
+                                ->where('beam_id', $beam->id)
                                 ->claimable()
                                 ->inRandomOrder()
                                 ->first()
@@ -105,6 +106,9 @@ class ClaimProbabilities
                                 ->claimable()
                                 ->where('token_chain_id', $tokenId)
                                 ->first();
+                    }
+                    if ($claim) {
+                        break;
                     }
                 }
             }
@@ -161,18 +165,15 @@ class ClaimProbabilities
             asort($probabilities);
         }
 
-
-        Log::info('Probabilities', [
+        $data = [
             'tokens' => ['ft' => $fts, 'nft' => $nfts],
             'probabilities' => $probabilities,
-        ]);
+        ];
+        Log::info("Probability for beam {$code}", $data);
 
         Cache::forever(
             PlatformBeamCache::CLAIM_PROBABILITIES->key($code),
-            [
-                'tokens' => ['ft' => $fts, 'nft' => $nfts],
-                'probabilities' => $probabilities,
-            ]
+            $data
         );
     }
 }
