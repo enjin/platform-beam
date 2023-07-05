@@ -74,32 +74,33 @@ class ProbabilityTest extends TestCaseGraphQL
             for ($i = 0; $i < $token['claimQuantity']; $i++) {
                 foreach ($token['tokenIds'] as $tokenId) {
                     $rows[] = [
+                        'beam_id' => $this->beam->id,
+                        'collection_id' => $this->collection->id,
                         'type' => $token['type'],
                         'token_chain_id' => $tokenId,
                         'quantity' => 1,
+                        'is_nft' => $token['isNft'],
                     ];
                 }
             }
         }
-
+        BeamClaim::insert($rows);
         $this->probabilities->createOrUpdateProbabilities($this->beam->code, $this->generateTokens());
         $this->assertEquals(
-            [
-                '1' => 10,
-                '2' => 20,
-                '3' => 30,
-                'nft' => 40,
-            ],
-            $this->probabilities->getProbabilities($this->beam->code)['probabilities']
+            1,
+            $this->probabilities->drawClaim($this->beam->code, 1)['token_chain_id']
         );
-
-        $this->probabilities->removeTokens($this->beam->code, ['2', '3']);
         $this->assertEquals(
-            [
-                '1' => 20,
-                'nft' => 80,
-            ],
-            $this->probabilities->getProbabilities($this->beam->code)['probabilities']
+            2,
+            $this->probabilities->drawClaim($this->beam->code, 11)['token_chain_id']
+        );
+        $this->assertEquals(
+            3,
+            $this->probabilities->drawClaim($this->beam->code, 21)['token_chain_id']
+        );
+        $this->assertEquals(
+            4,
+            $this->probabilities->drawClaim($this->beam->code, 31)['token_chain_id']
         );
     }
 
