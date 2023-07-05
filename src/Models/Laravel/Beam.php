@@ -97,6 +97,23 @@ class Beam extends BaseModel
     }
 
     /**
+     * Boot model.
+     */
+    public static function boot()
+    {
+        static::deleting(function ($model) {
+            BeamScan::where('beam_id', $model->id)->update(['deleted_at' => $now = now()]);
+            BeamClaim::where('beam_id', $model->id)->delete(['deleted_at' => $now]);
+        });
+
+        static::deleted(function ($model) {
+            Cache::forget(BeamService::key($model->code));
+        });
+
+        parent::boot();
+    }
+
+    /**
      * Interact with the beam's start attribute.
      */
     protected function start(): Attribute
