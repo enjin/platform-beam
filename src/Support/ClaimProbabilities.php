@@ -75,7 +75,7 @@ class ClaimProbabilities
     /**
      * Draw a claim base from the probabilities.
      */
-    public function drawClaim(string $code): ?Model
+    public function drawClaim(string $code, ?int $randomInt = null): ?Model
     {
         if (!$current = $this->getProbabilities($code)) {
             return null;
@@ -86,7 +86,7 @@ class ClaimProbabilities
         $tries = 0;
         $tryLimit = count($current['probabilities']);
         do {
-            $rand = random_int(1, 100);
+            $rand = $randomInt ? abs($randomInt % 100) : random_int(1, 100);
             foreach ($current['probabilities'] as $tokenId => $chance) {
                 if ($rand <= $chance) {
                     if ($tokenId === 'nft') {
