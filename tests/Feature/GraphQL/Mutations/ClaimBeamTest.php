@@ -12,6 +12,7 @@ use Enjin\Platform\Beam\Tests\Feature\GraphQL\TestCaseGraphQL;
 use Enjin\Platform\Beam\Tests\Feature\Traits\CreateBeamData;
 use Enjin\Platform\Beam\Tests\Feature\Traits\SeedBeamData;
 use Enjin\Platform\Enums\Substrate\CryptoSignatureType;
+use Enjin\Platform\Support\Account;
 use Enjin\Platform\Support\SS58Address;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Event;
@@ -118,7 +119,7 @@ class ClaimBeamTest extends TestCaseGraphQL
     {
         $response = $this->graphql($this->method, [
             'code' => $this->beam->code,
-            'account' => config('enjin-platform.chains.daemon-account'),
+            'account' => Account::daemonPublicKey(),
             'signature' => fake()->text(10),
         ], true);
 

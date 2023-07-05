@@ -11,17 +11,22 @@ use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Services\BatchService;
 use Enjin\Platform\Enums\Substrate\TokenMintCapType;
 use Enjin\Platform\Models\Token;
-use Enjin\Platform\Models\Wallet;
 use Enjin\Platform\Services\Blockchain\Implementations\Substrate;
 use Enjin\Platform\Services\Database\TransactionService;
 use Enjin\Platform\Services\Serialization\Interfaces\SerializationServiceInterface;
+use Enjin\Platform\Support\Account;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class BatchProcess extends Command
 {
+    /**
+     * The signing account resolver.
+     */
+    public static $signingAccountResolver;
     /**
      * The name and signature of the console command.
      *
@@ -35,13 +40,6 @@ class BatchProcess extends Command
      * @var string
      */
     protected $description = 'Process pending beam transactions.';
-
-    /**
-     * The signing account.
-     *
-     * @var mixed
-     */
-    protected $account;
 
     /**
      * The batch service.
@@ -85,12 +83,6 @@ class BatchProcess extends Command
         $this->transaction = $transaction;
 
         $this->info('================ Starting Batch Process  ================');
-
-        if (!$this->account = Wallet::firstOrNew(['public_key' => config('enjin-platform.chains.daemon-account')])) {
-            $this->error('No signing account found in config.');
-
-            return Command::FAILURE;
-        }
 
         while (true) {
             $start = microtime(true);
@@ -163,7 +155,7 @@ class BatchProcess extends Command
                                 'tokenId' => ['integer' => $claim->token_chain_id],
                                 'amount' => $claim->quantity,
                                 'keepAlive' => false,
-                                'source' => $this->account->public_key !== $claim->collection->owner->public_key
+                                'source' => Account::daemonPublicKey() !== $claim->collection->owner->public_key
                                     ? $claim->collection->owner->public_key
                                     : null,
                             ]),
@@ -209,6 +201,11 @@ class BatchProcess extends Command
 
                 $method = BeamType::MINT_ON_DEMAND == $type ? 'BatchMint' : 'BatchTransfer';
                 foreach ($params as $param) {
+                    if (!$signingAccount = $this->resolveSigningAccount($param['collectionId'])) {
+                        $this->error("Signing account not found for collection ID: {$param['collectionId']}, batch ID: {$batchId}");
+
+                        continue;
+                    }
                     $transaction = $this->transaction->store([
                         'method' => $method,
                         'encoded_data' => $this->serialize->encode($method, [
@@ -216,7 +213,7 @@ class BatchProcess extends Command
                             'recipients' => $param['recipients'],
                         ]),
                         'idempotency_key' => Str::uuid()->toString(),
-                    ], $this->account);
+                    ], $signingAccount);
                     BeamBatch::where('id', $batchId)->update(['transaction_id' => $transaction->id]);
                     BeamBatchTransactionCreated::safeBroadcast($param['collectionId'], $transaction->id);
                 }
@@ -226,5 +223,17 @@ class BatchProcess extends Command
         }
 
         return $batches->count();
+    }
+
+    /**
+     * Resolve the signing account for the given collection ID.
+     */
+    protected function resolveSigningAccount(string $collectionId): ?Model
+    {
+        if (static::$signingAccountResolver) {
+            return call_user_func(static::$signingAccountResolver, $collectionId);
+        }
+
+        return Account::daemon();
     }
 }
