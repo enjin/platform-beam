@@ -43,7 +43,7 @@ class ClaimBeam implements ShouldQueue
         if ($data = $this->data) {
             try {
                 $claim = null;
-                if ($probability->hasProbabilities(Arr::get($data, 'beam.code'))) {
+                if ($probability->hasProbabilities(Arr::get($data, 'beam.code')) && !$data['code']) {
                     $claim = $probability->drawClaim(Arr::get($data, 'beam.code'));
                 }
 

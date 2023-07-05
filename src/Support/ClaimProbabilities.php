@@ -5,26 +5,28 @@ namespace Enjin\Platform\Beam\Support;
 use Enjin\Platform\Beam\Enums\PlatformBeamCache;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
+use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 
 class ClaimProbabilities
 {
+    use IntegerRange;
+
     /**
      * Create or update the probabilities for a claim.
      */
     public function createOrUpdateProbabilities(string $code, array $claims): void
     {
+        $fts = $this->filterClaims($claims);
+        $nfts = $this->filterClaims($claims, true);
         $current = $this->getProbabilities($code);
         $this->computeProbabilities(
             $code,
-            collect($this->filterClaims($claims))
-                ->map(fn ($quantity, $tokenId) => Arr::get($current, "tokens.ft.{$tokenId}", 0) + $quantity)
-                ->all(),
-            collect($this->filterClaims($claims, true))
-                ->map(fn ($quantity, $tokenId) => Arr::get($current, "tokens.nft.{$tokenId}", 0) + $quantity)
-                ->all(),
+            $this->mergeTokens(Arr::get($current, 'tokens.ft', []), $fts),
+            $this->mergeTokens(Arr::get($current, 'tokens.nft', []), $nfts),
         );
     }
 
@@ -49,26 +51,25 @@ class ClaimProbabilities
      */
     public function removeTokens(string $code, array $tokenIds): void
     {
-        $current = $this->getProbabilities($code);
-        foreach ($current['tokens'] as $items) {
-            foreach ($items['ft'] as $tokenId => $quantity) {
+        if ($current = $this->getProbabilities($code)) {
+            foreach (Arr::get($current, 'tokens.ft', []) as $tokenId => $quantity) {
                 if (in_array($tokenId, $tokenIds)) {
                     unset($current['tokens']['ft'][$tokenId]);
                 }
             }
 
-            foreach ($items['nft'] as $tokenId => $quantity) {
+            foreach (Arr::get($current, 'tokens.nft', []) as $tokenId => $quantity) {
                 if (in_array($tokenId, $tokenIds)) {
                     unset($current['tokens']['nft'][$tokenId]);
                 }
             }
-        }
 
-        $this->computeProbabilities(
-            $code,
-            Arr::get($current, 'tokens.ft'),
-            Arr::get($current, 'tokens.nft'),
-        );
+            $this->computeProbabilities(
+                $code,
+                Arr::get($current, 'tokens.ft'),
+                Arr::get($current, 'tokens.nft'),
+            );
+        }
     }
 
     /**
@@ -76,11 +77,14 @@ class ClaimProbabilities
      */
     public function drawClaim(string $code): ?Model
     {
-        $current = $this->getProbabilities($code);
+        if (!$current = $this->getProbabilities($code)) {
+            return null;
+        }
+
         $beam = Beam::where('code', $code)->firstOrfail();
         $claim = null;
         $tries = 0;
-        $tryLimit = 10;
+        $tryLimit = count($current['probabilities']);
         do {
             $rand = random_int(1, 100);
             foreach ($current['probabilities'] as $tokenId => $chance) {
@@ -91,10 +95,16 @@ class ClaimProbabilities
                             ->where('is_nft', true)
                             ->first();
                     } else {
-                        $claim = BeamClaim::where('beam_id', $beam->id)
-                            ->claimable()
-                            ->where('token_chain_id', $tokenId)
-                            ->first();
+                        $ranges = $this->integerRange($tokenId);
+                        $claim = $ranges !== false
+                            ? BeamClaim::whereBetween('token_chain_id', [(int) $ranges[0], (int) $ranges[1]])
+                                ->claimable()
+                                ->inRandomOrder()
+                                ->first()
+                            : BeamClaim::where('beam_id', $beam->id)
+                                ->claimable()
+                                ->where('token_chain_id', $tokenId)
+                                ->first();
                     }
                 }
             }
@@ -102,6 +112,20 @@ class ClaimProbabilities
         } while (is_null($claim) && $tries <= $tryLimit);
 
         return $claim;
+    }
+
+    /**
+     * Merge the tokens into the current tokens.
+     */
+    protected function mergeTokens(array $current, array $tokens): array
+    {
+        foreach ($tokens as $tokenId => $quantity) {
+            $current[$tokenId] = isset($current[$tokenId])
+                ? $current[$tokenId] + $quantity
+                : $quantity;
+        }
+
+        return $current;
     }
 
     /**
@@ -129,12 +153,19 @@ class ClaimProbabilities
         $totalNft = collect($nfts)->sum();
         $total = collect($fts)->sum() + $totalNft;
         $probabilities = [];
-        foreach ($fts as $key => $quantity) {
-            $probabilities[$key] = ($quantity / $total) * 100;
+        if ($total > 0) {
+            foreach ($fts as $key => $quantity) {
+                $probabilities[$key] = ($quantity / $total) * 100;
+            }
+            $probabilities['nft'] = ($totalNft / $total) * 100;
+            asort($probabilities);
         }
-        $probabilities['nft'] = ($totalNft / $total) * 100;
-        asort($probabilities);
 
+
+        Log::info('Probabilities', [
+            'tokens' => ['ft' => $fts, 'nft' => $nfts],
+            'probabilities' => $probabilities,
+        ]);
 
         Cache::forever(
             PlatformBeamCache::CLAIM_PROBABILITIES->key($code),
