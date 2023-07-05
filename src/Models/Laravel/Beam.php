@@ -103,7 +103,7 @@ class Beam extends BaseModel
     {
         static::deleting(function ($model) {
             BeamScan::where('beam_id', $model->id)->update(['deleted_at' => $now = now()]);
-            BeamClaim::where('beam_id', $model->id)->delete(['deleted_at' => $now]);
+            BeamClaim::where('beam_id', $model->id)->update(['deleted_at' => $now]);
         });
 
         static::deleted(function ($model) {
