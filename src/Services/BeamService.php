@@ -213,7 +213,7 @@ class BeamService
             if (self::isSingleUse($code)) {
                 $singleUseClaim = BeamClaim::withSingleUseCode($code)->first();
 
-                return !isset($singleUseClaim) || $singleUseClaim->claimed_at ? 0 : 1;
+                return (int) empty($singleUseClaim?->claimed_at);
             }
 
             Cache::forever(
