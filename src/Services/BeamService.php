@@ -6,6 +6,7 @@ use Closure;
 use Enjin\BlockchainTools\HexConverter;
 use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Enums\ClaimStatus;
+use Enjin\Platform\Beam\Enums\PlatformBeamCache;
 use Enjin\Platform\Beam\Events\BeamClaimPending;
 use Enjin\Platform\Beam\Events\BeamCreated;
 use Enjin\Platform\Beam\Events\BeamDeleted;
@@ -34,11 +35,6 @@ use Throwable;
 class BeamService
 {
     use IntegerRange;
-
-    /**
-     * The cache prefix.
-     */
-    public const CACHE_PREFIX = 'enjin-platform:beam:';
 
     /**
      * The signing request prefix.
@@ -238,7 +234,7 @@ class BeamService
      */
     public static function key(string $name, ?string $suffix = null): string
     {
-        return static::CACHE_PREFIX . $name . ($suffix ? ":{$suffix}" : '');
+        return PlatformBeamCache::CLAIM_COUNT->key($name, $suffix);
     }
 
     /**

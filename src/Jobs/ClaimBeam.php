@@ -3,6 +3,7 @@
 namespace Enjin\Platform\Beam\Jobs;
 
 use Enjin\Platform\Beam\Enums\BeamType;
+use Enjin\Platform\Beam\Enums\PlatformBeamCache;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Models\BeamScan;
 use Enjin\Platform\Beam\Services\BatchService;
@@ -70,7 +71,8 @@ class ClaimBeam implements ShouldQueue
     public function failed(Throwable $exception): void
     {
         // Idempotency key prevents incrementing cache on same claim request even with manual retry on horizon
-        if (!Cache::get($key = Arr::get($this->data, 'idempotency_key'))) {
+        $key = Arr::get($this->data, 'idempotency_key');
+        if (!Cache::get(PlatformBeamCache::IDEMPOTENCY_KEY->key($key))) {
             Cache::forever($key, true);
             Cache::increment(BeamService::key(Arr::get($this->data, 'beam.code')));
         }
