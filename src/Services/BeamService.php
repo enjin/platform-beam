@@ -43,7 +43,7 @@ class BeamService
     public const SIGNING_REQUEST_PREFIX = 'epsr:';
 
     /**
-     * The probability class.
+     * The probability instance.
      */
     protected $probability;
 
