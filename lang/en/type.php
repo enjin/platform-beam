@@ -8,6 +8,7 @@ return [
     'beam.field.flags' => 'The beam flags.',
     'beam.field.message' => 'The beam message.',
     'beam.field.qr' => 'The QR URL and claimable code.',
+    'beam.field.probabilities' => 'The claim probability for each tokens.',
     'beam_claim.description' => 'The beam claim.',
     'beam_claim.field.id' => 'The beam claim internal ID.',
     'beam_claim.field.collection' => 'The collection details.',

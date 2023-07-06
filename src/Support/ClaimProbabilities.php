@@ -3,13 +3,9 @@
 namespace Enjin\Platform\Beam\Support;
 
 use Enjin\Platform\Beam\Enums\PlatformBeamCache;
-use Enjin\Platform\Beam\Models\Beam;
-use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 
 class ClaimProbabilities
 {
@@ -73,52 +69,6 @@ class ClaimProbabilities
     }
 
     /**
-     * Draw a claim base from the probabilities.
-     */
-    public function drawClaim(string $code, ?int $randomInt = null): ?Model
-    {
-        if (!$current = $this->getProbabilities($code)) {
-            return null;
-        }
-
-        $beam = Beam::where('code', $code)->firstOrfail();
-        $claim = null;
-        $tries = 0;
-        $tryLimit = count($current['probabilities']);
-        do {
-            $rand = $randomInt ? abs($randomInt % 100) : random_int(1, 100);
-            foreach ($current['probabilities'] as $tokenId => $chance) {
-                if ($rand <= $chance) {
-                    if ($tokenId === 'nft') {
-                        $claim = BeamClaim::where('beam_id', $beam->id)
-                            ->claimable()
-                            ->where('is_nft', true)
-                            ->first();
-                    } else {
-                        $ranges = $this->integerRange($tokenId);
-                        $claim = $ranges !== false
-                            ? BeamClaim::whereBetween('token_chain_id', [(int) $ranges[0], (int) $ranges[1]])
-                                ->where('beam_id', $beam->id)
-                                ->claimable()
-                                ->inRandomOrder()
-                                ->first()
-                            : BeamClaim::where('beam_id', $beam->id)
-                                ->claimable()
-                                ->where('token_chain_id', $tokenId)
-                                ->first();
-                    }
-                    if ($claim) {
-                        break;
-                    }
-                }
-            }
-            $tries++;
-        } while (is_null($claim) && $tries <= $tryLimit);
-
-        return $claim;
-    }
-
-    /**
      * Merge the tokens into the current tokens.
      */
     protected function mergeTokens(array $current, array $tokens): array
@@ -159,17 +109,15 @@ class ClaimProbabilities
         $probabilities = [];
         if ($total > 0) {
             foreach ($fts as $key => $quantity) {
-                $probabilities[$key] = ($quantity / $total) * 100;
+                $probabilities['ft'][$key] = ($quantity / $total) * 100;
             }
             $probabilities['nft'] = ($totalNft / $total) * 100;
-            asort($probabilities);
         }
 
         $data = [
             'tokens' => ['ft' => $fts, 'nft' => $nfts],
             'probabilities' => $probabilities,
         ];
-        Log::info("Probability for beam {$code}", $data);
 
         Cache::forever(
             PlatformBeamCache::CLAIM_PROBABILITIES->key($code),

@@ -42,18 +42,11 @@ class ClaimBeam implements ShouldQueue
     {
         if ($data = $this->data) {
             try {
-                $claim = null;
-                if ($probability->hasProbabilities(Arr::get($data, 'beam.code')) && !$data['code']) {
-                    $claim = $probability->drawClaim(Arr::get($data, 'beam.code'));
-                }
-
-                if (!$claim) {
-                    $claim = BeamClaim::where('beam_id', $data['beam']['id'])
-                        ->claimable()
-                        ->when($data['code'], fn ($query) => $query->withSingleUseCode($data['code']))
-                        ->unless($data['code'], fn ($query) => $query->inRandomOrder())
-                        ->first();
-                }
+                $claim = BeamClaim::where('beam_id', $data['beam']['id'])
+                    ->claimable()
+                    ->when($data['code'], fn ($query) => $query->withSingleUseCode($data['code']))
+                    ->unless($data['code'], fn ($query) => $query->inRandomOrder())
+                    ->first();
 
 
                 if ($claim) {
