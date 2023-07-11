@@ -66,12 +66,6 @@
             ]
         }
     },
-    "repositories": [
-        {
-            "type": "vcs",
-            "url": "git@github.com:enjin/platform-core.git"
-        }
-    ],
     "minimum-stability": "dev",
     "prefer-stable": false,
     "require-dev": {
