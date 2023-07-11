@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Closure;
 use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Enums\ClaimStatus;
+use Enjin\Platform\Beam\Enums\PlatformBeamCache;
 use Enjin\Platform\Beam\Exceptions\BeamException;
 use Enjin\Platform\Beam\Models\BeamBatch;
 use Enjin\Platform\Beam\Models\BeamClaim;
@@ -15,11 +16,6 @@ use Illuminate\Support\Facades\Cache;
 
 class BatchService
 {
-    /**
-     * The cache prefix.
-     */
-    public const CACHE_PREFIX = 'platform:beam-batch-cache.';
-
     /**
      * The batch threshold.
      */
@@ -117,6 +113,6 @@ class BatchService
      */
     public function key(string $name): string
     {
-        return static::CACHE_PREFIX . $name;
+        return PlatformBeamCache::BATCH_PROCESS->key($name);
     }
 }
