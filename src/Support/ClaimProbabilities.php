@@ -106,7 +106,7 @@ class ClaimProbabilities
     protected function filterClaims(array $claims): array
     {
         [$nfts, $fts] = collect($claims)->partition(
-            fn ($claim) => $claim['claimQuantity'] == 1 && $claim['tokenQuantityPerClaim'] == 1
+            fn ($claim) => $claim['claimQuantity'] == 1 && Arr::get($claim, 'tokenQuantityPerClaim', 1) == 1
         );
 
         return [
