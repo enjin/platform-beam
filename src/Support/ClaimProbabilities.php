@@ -5,6 +5,7 @@ namespace Enjin\Platform\Beam\Support;
 use Enjin\Platform\Beam\Enums\PlatformBeamCache;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 
 class ClaimProbabilities
@@ -16,13 +17,12 @@ class ClaimProbabilities
      */
     public function createOrUpdateProbabilities(string $code, array $claims): void
     {
-        $fts = $this->filterClaims($claims);
-        $nfts = $this->filterClaims($claims, true);
+        $formatted = $this->filterClaims($claims);
         $current = $this->getProbabilities($code);
         $this->computeProbabilities(
             $code,
-            $this->mergeTokens(Arr::get($current, 'tokens.ft', []), $fts),
-            $this->mergeTokens(Arr::get($current, 'tokens.nft', []), $nfts),
+            $this->mergeTokens(Arr::get($current, 'tokens.ft', []), $formatted['ft']),
+            $this->mergeTokens(Arr::get($current, 'tokens.nft', []), $formatted['nft']),
         );
     }
 
@@ -83,20 +83,36 @@ class ClaimProbabilities
     }
 
     /**
-     * Filter the claims for FTs and NFTs.
+     * Format claims into a token => quantity array.
      */
-    protected function filterClaims(array $claims, bool $isNft = false): array
+    protected function formatClaims(Collection $claims): array
     {
         $tokens = [];
         foreach ($claims as $claim) {
-            if ($claim['isNft'] === $isNft) {
-                foreach ($claim['tokenIds'] as $tokenId) {
-                    $tokens[$tokenId] = $claim['claimQuantity'];
-                }
+            foreach ($claim['tokenIds'] as $tokenId) {
+                $range = $this->integerRange($tokenId);
+                $tokens[$tokenId] = $range !== false
+                    ? (($range[1] - $range[0]) + 1) * $claim['claimQuantity']
+                    : $claim['claimQuantity'];
             }
         }
 
         return $tokens;
+    }
+
+    /**
+     * Filter the claims for FTs and NFTs.
+     */
+    protected function filterClaims(array $claims): array
+    {
+        [$nfts, $fts] = collect($claims)->partition(
+            fn ($claim) => $claim['claimQuantity'] == 1 && $claim['tokenQuantityPerClaim'] == 1
+        );
+
+        return [
+            'ft' => $this->formatClaims($fts),
+            'nft' => $this->formatClaims($nfts),
+        ];
     }
 
     /**

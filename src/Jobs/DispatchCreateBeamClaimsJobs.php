@@ -54,7 +54,6 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
                                     'nonce' => 1,
                                     'attributes' => json_encode($token['attributes']) ?: null,
                                     'quantity' => $token['quantity'],
-                                    'is_nft' => $token['isNft'] ?? false,
                                 ]);
                             }
                         } else {
@@ -78,7 +77,6 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
                                             'nonce' => 1,
                                             'attributes' => json_encode($token['attributes']) ?: null,
                                             'quantity' => $token['quantity'],
-                                            'is_nft' => $token['isNft'] ?? false,
                                         ]);
                                     }
                                 });

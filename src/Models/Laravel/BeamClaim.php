@@ -59,7 +59,6 @@ class BeamClaim extends BaseModel
         'ip_address',
         'code',
         'nonce',
-        'is_nft',
     ];
 
     /**

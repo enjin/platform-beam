@@ -9,5 +9,4 @@ return [
     'claim_token.field.tokenIdDataUpload' => 'You can use this to upload a txt file that contains a list of token ID ranges, one per line.',
     'claim_token.field.claimQuantity' => 'The total amount of times each token ID can be claimed.  This is mainly relevant for fungible tokens, where you can specify that there are a certain amount of claims for a token ID, e.g. 10 individual claims to receive 1 token with ID 123 per claim.',
     'claim_token.field.tokenQuantityPerClaim' => 'The quantity of token that can be received per claim.',
-    'claim_token.field.isNft' => 'Determines if the token is NFT.',
 ];

@@ -30,9 +30,9 @@ class ClaimProbabilityTest extends TestCaseGraphQL
         $this->assertEquals(
             [
                 'ft' => [
-                    '1' => 10,
-                    '2' => 20,
-                    '3' => 30,
+                    '41' => 10,
+                    '42' => 20,
+                    '43..45' => 30,
                 ],
                 'nft' => 40,
             ],
@@ -46,19 +46,19 @@ class ClaimProbabilityTest extends TestCaseGraphQL
         $this->assertEquals(
             [
                 'ft' => [
-                    '1' => 10,
-                    '2' => 20,
-                    '3' => 30,
+                    '41' => 10,
+                    '42' => 20,
+                    '43..45' => 30,
                 ],
                 'nft' => 40,
             ],
             $this->probabilities->getProbabilities($this->beam->code)['probabilities']
         );
 
-        $this->probabilities->removeTokens($this->beam->code, ['2', '3']);
+        $this->probabilities->removeTokens($this->beam->code, ['42', '43..45']);
         $this->assertEquals(
             [
-                'ft' => ['1' => 20],
+                'ft' => ['41' => 20],
                 'nft' => 80,
             ],
             $this->probabilities->getProbabilities($this->beam->code)['probabilities']
@@ -70,27 +70,27 @@ class ClaimProbabilityTest extends TestCaseGraphQL
         return [
             [
                 'type' => BeamType::MINT_ON_DEMAND->name,
-                'tokenIds' => ['1'],
+                'tokenIds' => ['1..40'],
+                'claimQuantity' => 1,
+                'tokenQuantityPerClaim' => 1,
+            ],
+            [
+                'type' => BeamType::MINT_ON_DEMAND->name,
+                'tokenIds' => ['41'],
                 'claimQuantity' => 10,
-                'isNft' => false,
+                'tokenQuantityPerClaim' => 1,
             ],
             [
                 'type' => BeamType::MINT_ON_DEMAND->name,
-                'tokenIds' => ['2'],
+                'tokenIds' => ['42'],
                 'claimQuantity' => 20,
-                'isNft' => false,
+                'tokenQuantityPerClaim' => 1,
             ],
             [
                 'type' => BeamType::MINT_ON_DEMAND->name,
-                'tokenIds' => ['3'],
-                'claimQuantity' => 30,
-                'isNft' => false,
-            ],
-            [
-                'type' => BeamType::MINT_ON_DEMAND->name,
-                'tokenIds' => ['4'],
-                'claimQuantity' => 40,
-                'isNft' => true,
+                'tokenIds' => ['43..45'],
+                'claimQuantity' => 10,
+                'tokenQuantityPerClaim' => 1,
             ],
         ];
     }
