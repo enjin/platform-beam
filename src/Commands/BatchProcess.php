@@ -148,6 +148,8 @@ class BatchProcess extends Command
                         ];
                     }
 
+                    $params[$collectionId]['beamId'] = $claim->beam_id;
+
                     if (BeamType::TRANSFER_TOKEN == $type) {
                         $params[$collectionId]['recipients'][] = [
                             'accountId' => $claim->wallet_public_key,
@@ -201,8 +203,8 @@ class BatchProcess extends Command
 
                 $method = BeamType::MINT_ON_DEMAND == $type ? 'BatchMint' : 'BatchTransfer';
                 foreach ($params as $param) {
-                    if (!$signingAccount = $this->resolveSigningAccount($param['collectionId'])) {
-                        $this->error("Signing account not found for collection ID: {$param['collectionId']}, batch ID: {$batchId}");
+                    if (!$signingAccount = $this->resolveSigningAccount($param['beamId'])) {
+                        $this->error("Signing account not found for beam ID: {$param['beamId']}, batch ID: {$batchId}");
 
                         continue;
                     }
@@ -228,10 +230,10 @@ class BatchProcess extends Command
     /**
      * Resolve the signing account for the given collection ID.
      */
-    protected function resolveSigningAccount(string $collectionId): ?Model
+    protected function resolveSigningAccount(string $beamId): ?Model
     {
         if (static::$signingAccountResolver) {
-            return call_user_func(static::$signingAccountResolver, $collectionId);
+            return call_user_func(static::$signingAccountResolver, $beamId);
         }
 
         return Account::daemon();
