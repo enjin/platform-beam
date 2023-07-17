@@ -23,19 +23,30 @@ class EventTest extends TestCaseGraphQL
 {
     public function test_it_can_listens_to_events(): void
     {
-        //Event::fake();
+        Event::fake();
 
-        event(new CollectionDestroyed($this->collection));
+        event($event = new CollectionDestroyed($this->collection));
         Event::assertListening(CollectionDestroyed::class, ExpireBeam::class);
-        event(new CollectionFrozen($this->collection));
+        resolve(ExpireBeam::class)->handle($event);
+
+        event($event = new CollectionFrozen($this->collection));
         Event::assertListening(CollectionFrozen::class, PauseBeam::class);
-        event(new TokenDestroyed($this->token, $this->wallet));
+        resolve(PauseBeam::class)->handle($event);
+
+        event($event = new TokenDestroyed($this->token, $this->wallet));
         Event::assertListening(TokenDestroyed::class, RemoveClaimToken::class);
-        event(new CollectionThawed($this->collection));
+        resolve(RemoveClaimToken::class)->handle($event);
+
+        event($event = new CollectionThawed($this->collection));
         Event::assertListening(CollectionThawed::class, UnpauseBeam::class);
-        event(new PlatformSynced($this->collection));
+        resolve(UnpauseBeam::class)->handle($event);
+
+        event($event = new PlatformSynced($this->collection));
         Event::assertListening(PlatformSynced::class, UpdateClaimCollectionIds::class);
-        event(new TransactionUpdated($this->collection));
+        resolve(UpdateClaimCollectionIds::class)->handle($event);
+
+        event($event = new TransactionUpdated($this->collection));
         Event::assertListening(TransactionUpdated::class, UpdateClaimStatus::class);
+        resolve(UpdateClaimStatus::class)->handle($event);
     }
 }
