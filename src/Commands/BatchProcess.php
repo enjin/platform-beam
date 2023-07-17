@@ -217,7 +217,7 @@ class BatchProcess extends Command
                         'idempotency_key' => Str::uuid()->toString(),
                     ], $signingAccount);
                     BeamBatch::where('id', $batchId)->update(['transaction_id' => $transaction->id]);
-                    BeamBatchTransactionCreated::safeBroadcast($param['collectionId'], $transaction->id);
+                    BeamBatchTransactionCreated::safeBroadcast($param['beamId'], $param['collectionId'], $transaction->id);
                 }
 
                 $this->updateStatus($claims, $reassignedClaims);
