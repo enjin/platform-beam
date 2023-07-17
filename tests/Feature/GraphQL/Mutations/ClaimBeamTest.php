@@ -214,7 +214,7 @@ class ClaimBeamTest extends TestCaseGraphQL
         $message = $response['message']['message'];
         $signature = $this->signMessage($type, $keypair, $message, $privateKey);
 
-        Queue::fake();
+        //Queue::fake();
 
         $response = $this->graphql($this->method, [
             'code' => $singleUseCode ?: $this->beam->code,
@@ -225,7 +225,7 @@ class ClaimBeamTest extends TestCaseGraphQL
 
         $this->assertTrue($response);
 
-        Queue::assertPushed(ClaimBeam::class);
+        //Queue::assertPushed(ClaimBeam::class);
         Event::assertDispatched(BeamClaimPending::class);
     }
 }

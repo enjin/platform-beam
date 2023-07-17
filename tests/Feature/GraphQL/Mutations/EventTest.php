@@ -23,7 +23,7 @@ class EventTest extends TestCaseGraphQL
 {
     public function test_it_can_listens_to_events(): void
     {
-        Event::fake();
+        //Event::fake();
 
         event(new CollectionDestroyed($this->collection));
         Event::assertListening(CollectionDestroyed::class, ExpireBeam::class);
