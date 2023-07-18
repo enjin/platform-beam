@@ -33,6 +33,7 @@
     <exclude>
         <directory>./src/Enums</directory>
         <directory>./src/Exceptions</directory>
+        <directory>./src/Providers</directory>
     </exclude>
   </source>
 </phpunit>
