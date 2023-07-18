@@ -11,6 +11,7 @@ use Enjin\Platform\Beam\Listeners\UnpauseBeam;
 use Enjin\Platform\Beam\Listeners\UpdateClaimCollectionIds;
 use Enjin\Platform\Beam\Listeners\UpdateClaimStatus;
 use Enjin\Platform\Beam\Tests\Feature\GraphQL\TestCaseGraphQL;
+use Enjin\Platform\Beam\Tests\Feature\Traits\SeedBeamData;
 use Enjin\Platform\Events\Global\TransactionUpdated;
 use Enjin\Platform\Events\Substrate\Commands\PlatformSynced;
 use Enjin\Platform\Events\Substrate\MultiTokens\CollectionDestroyed;
@@ -21,6 +22,17 @@ use Illuminate\Support\Facades\Event;
 
 class EventTest extends TestCaseGraphQL
 {
+    use SeedBeamData;
+
+    /**
+     * Setup test case.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seedBeam();
+    }
+
     public function test_it_can_listens_to_events(): void
     {
         Event::fake();
