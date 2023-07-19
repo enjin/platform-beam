@@ -11,6 +11,7 @@ use Enjin\Platform\Beam\Tests\Feature\Traits\CreateBeamData;
 use Enjin\Platform\Beam\Tests\Feature\Traits\SeedBeamData;
 use Enjin\Platform\GraphQL\Types\Scalars\Traits\HasIntegerRanges;
 use Enjin\Platform\Providers\Faker\SubstrateProvider;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Str;
@@ -32,6 +33,32 @@ class CreateBeamTest extends TestCaseGraphQL
     public function test_it_can_create_beam_with_transfer_token(): void
     {
         $this->genericTestCreateBeam(BeamType::TRANSFER_TOKEN, random_int(1, 20));
+    }
+
+    /**
+     * Test creating beam with file upload.
+     */
+    public function test_it_can_create_beam_with_file_upload(): void
+    {
+        $file = UploadedFile::fake()->createWithContent('tokens.txt', "1\n2..10");
+        $response = $this->graphql($this->method, array_merge(
+            $this->generateBeamData(BeamType::MINT_ON_DEMAND),
+            ['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]]]
+        ));
+        $this->assertNotEmpty($response);
+
+        Event::assertDispatched(BeamCreated::class);
+        $this->assertEquals(10, Cache::get(BeamService::key($response)));
+
+        $file = UploadedFile::fake()->createWithContent('tokens.txt', $this->token->token_chain_id);
+        $response = $this->graphql($this->method, array_merge(
+            $this->generateBeamData(BeamType::MINT_ON_DEMAND),
+            ['tokens' => [['tokenIdDataUpload' => $file]]]
+        ));
+        $this->assertNotEmpty($response);
+
+        Event::assertDispatched(BeamCreated::class);
+        $this->assertEquals(1, Cache::get(BeamService::key($response)));
     }
 
     /**
@@ -62,6 +89,32 @@ class CreateBeamTest extends TestCaseGraphQL
             random_int(1, 20),
             [['key' => 'key1', 'value'=> 'value1'], ['key' => 'key2', 'value'=> 'value2']]
         );
+    }
+
+    /**
+     * Test creating beam with file upload.
+     */
+    public function test_it_will_fail_to_create_beam_with_invalid_file_upload(): void
+    {
+        $file = UploadedFile::fake()->createWithContent('tokens.txt', "{$this->token->token_chain_id}\n{$this->token->token_chain_id}..{$this->token->token_chain_id}");
+        $response = $this->graphql($this->method, array_merge(
+            $this->generateBeamData(),
+            ['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]]]
+        ), true);
+        $this->assertArraySubset([
+            'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload exists in the specified collection.'],
+        ], $response['error']);
+        Event::assertNotDispatched(BeamCreated::class);
+
+        $file = UploadedFile::fake()->createWithContent('tokens.txt', "1\n2..10");
+        $response = $this->graphql($this->method, array_merge(
+            $this->generateBeamData(),
+            ['tokens' => [['tokenIdDataUpload' => $file]]]
+        ), true);
+        $this->assertArraySubset([
+            'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
+        ], $response['error']);
+        Event::assertNotDispatched(BeamCreated::class);
     }
 
     /**
