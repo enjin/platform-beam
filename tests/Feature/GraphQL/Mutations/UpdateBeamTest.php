@@ -70,6 +70,27 @@ class UpdateBeamTest extends TestCaseGraphQL
     }
 
     /**
+     * Test updating beam with attributes.
+     */
+    public function test_it_can_update_beam_with_attributes(): void
+    {
+        Event::fake();
+        $response = $this->graphql(
+            $this->method,
+            $this->generateBeamData(
+                BeamType::MINT_ON_DEMAND,
+                1,
+                [
+                    ['key' => 'test', 'value' => 'test'],
+                    ['key' => 'test2', 'value' => 'test2'],
+                ]
+            )
+        );
+        $this->assertTrue($response);
+        Event::assertDispatched(TokensAdded::class);
+    }
+
+    /**
      * Test updating beam with empty parameters.
      */
     public function test_it_will_fail_with_empty_parameters(): void
