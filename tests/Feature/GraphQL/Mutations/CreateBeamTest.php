@@ -207,6 +207,27 @@ class CreateBeamTest extends TestCaseGraphQL
             true
         );
         $this->assertArraySubset(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
+
+        $response = $this->graphql(
+            $this->method,
+            array_merge($data, ['tokens' => [['tokenIds' => '1'], ['tokenIds' => '1..10']]]),
+            true
+        );
+        $this->assertArraySubset(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
+
+        $response = $this->graphql(
+            $this->method,
+            array_merge($data, ['tokens' => [['tokenIds' => '1..10'], ['tokenIds' => '1']]]),
+            true
+        );
+        $this->assertArraySubset(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
+
+        $response = $this->graphql(
+            $this->method,
+            array_merge($data, ['tokens' => [['tokenIds' => '1..10'], ['tokenIds' => '5..10']]]),
+            true
+        );
+        $this->assertArraySubset(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
     }
 
     /**
