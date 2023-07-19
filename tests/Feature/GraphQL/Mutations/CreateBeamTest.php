@@ -50,7 +50,7 @@ class CreateBeamTest extends TestCaseGraphQL
         Event::assertDispatched(BeamCreated::class);
         $this->assertEquals(10, Cache::get(BeamService::key($response)));
 
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', $this->token->token_chain_id);
+        $file = UploadedFile::fake()->createWithContent('tokens.txt', "{$this->token->token_chain_id}\n{$this->token->token_chain_id}..{$this->token->token_chain_id}");
         $response = $this->graphql($this->method, array_merge(
             $this->generateBeamData(BeamType::MINT_ON_DEMAND),
             ['tokens' => [['tokenIdDataUpload' => $file]]]
