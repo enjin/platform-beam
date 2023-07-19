@@ -17,7 +17,7 @@ class UniqueTokenIds implements ValidationRule
             ->pluck('tokenIds')
             ->filter()
             ->flatten()
-            ->sortBy(fn ($tokenId) => false === $this->integerRange($tokenId));
+            ->sortBy(fn ($tokenId) => false !== $this->integerRange($tokenId));
 
         foreach ($tokens->all() as $tokenId) {
             if ($this->tokenIdExists($tokenIds, $tokenId)) {
