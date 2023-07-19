@@ -193,6 +193,20 @@ class CreateBeamTest extends TestCaseGraphQL
             true
         );
         $this->assertArraySubset(['tokens.0.tokenIds' => ['The tokens.0.tokenIds does not exist in the specified collection.']], $response['error']);
+
+        $response = $this->graphql(
+            $this->method,
+            array_merge($data, ['tokens' => [['tokenIds' => '1..10']]]),
+            true
+        );
+        $this->assertArraySubset(['tokens.0.tokenIds' => ['The tokens.0.tokenIds does not exist in the specified collection.']], $response['error']);
+
+        $response = $this->graphql(
+            $this->method,
+            array_merge($data, ['tokens' => [['tokenIds' => '1'], ['tokenIds' => '1']]]),
+            true
+        );
+        $this->assertArraySubset(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
     }
 
     /**
