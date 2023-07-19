@@ -208,6 +208,39 @@ class CreateBeamTest extends TestCaseGraphQL
     }
 
     /**
+     * Test creating beam with invalid claimQuantity.
+     */
+    public function test_it_will_fail_with_invalid_claim_quantity(): void
+    {
+        $this->prepareCollectionData();
+        $this->collection->update(['max_token_count' => 1]);
+        $response = $this->graphql(
+            $this->method,
+            $this->generateBeamData(BeamType::MINT_ON_DEMAND, 10),
+            true
+        );
+        $this->assertArraySubset(['tokens.0.claimQuantity' => ['The token count exceeded the maximum limit of 1 for this collection.']], $response['error']);
+    }
+
+    /**
+     * Test creating beam with invalid tokenQuantityPerClaim.
+     */
+    public function test_it_will_fail_with_invalid_token_quantity_per_claim(): void
+    {
+        $this->prepareCollectionData();
+        $this->collection->update(['max_token_supply' => 1]);
+        $response = $this->graphql(
+            $this->method,
+            $this->generateBeamData(BeamType::MINT_ON_DEMAND, 10),
+            true
+        );
+        $this->assertArraySubset(
+            ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 1 for each token for this collection.']],
+            $response['error']
+        );
+    }
+
+    /**
      * Generic test for create beam.
      */
     protected function genericTestCreateBeam(BeamType $type = BeamType::MINT_ON_DEMAND, int $count = 1, array $attributes = [], array $singleUse = []): void

@@ -14,16 +14,7 @@ class MaxBigIntIntegerRange extends MaxBigInt
     protected function isValidMaxBigInt($value): bool
     {
         $range = $this->integerRange($value);
-        if (false === $range) {
-            if (!is_numeric($value)) {
-                $this->message = __('validation.numeric');
-
-                return false;
-            }
-        } else {
-            $value = $range[0];
-        }
-
+        $value = false === $range ? $value : $range[0];
         $this->message = __('enjin-platform::validation.max_big_int', ['max' => $this->max]);
 
         return bccomp($this->max, $value) >= 0;
