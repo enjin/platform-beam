@@ -25,9 +25,9 @@ class ScanLimit implements DataAwareRule, Rule
             return true;
         }
 
-        return BeamScan::whereWalletPublicKey($value)
+        return $limit > (int) BeamScan::whereWalletPublicKey($value)
             ->hasCode($this->data['code'])
-            ->first()?->count >= $limit;
+            ->first()?->count;
     }
 
     /**

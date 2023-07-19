@@ -2,6 +2,7 @@
 
 namespace Enjin\Platform\Beam\Tests\Feature\GraphQL\Mutations;
 
+use Carbon\Carbon;
 use Crypto\sr25519;
 use Enjin\BlockchainTools\HexConverter;
 use Enjin\Platform\Beam\Enums\BeamFlag;
@@ -60,6 +61,22 @@ class ClaimBeamTest extends TestCaseGraphQL
     public function test_it_can_claim_beam_with_ed25519(): void
     {
         $this->genericClaimTest(CryptoSignatureType::ED25519);
+    }
+
+    /**
+     * Test claiming beam with expired date.
+     */
+    public function test_it_will_fail_with_expired_date(): void
+    {
+        [$keypair, $publicKey, $privateKey] = $this->getKeyPair(CryptoSignatureType::ED25519);
+        $this->beam->update(['end' => Carbon::now()->subDays(1)->startOfDay()]);
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'account' => $publicKey,
+            'signature' => fake()->text(10),
+        ], true);
+
+        $this->assertArraySubset(['code' => ['The beam has expired.']], $response['error']);
     }
 
     /**
