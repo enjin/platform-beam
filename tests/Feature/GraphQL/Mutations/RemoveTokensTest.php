@@ -103,6 +103,15 @@ class RemoveTokensTest extends TestCaseGraphQL
 
         $response = $this->graphql($this->method, [
             'code' => $this->beam->code,
+            'tokenIds' => ['0..5'],
+        ], true);
+        $this->assertArraySubset(
+            ['tokenIds.0' => ["The tokenIds.0 doesn't exist in beam."]],
+            $response['error']
+        );
+
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
             'tokenIds' => ['0', '0'],
         ], true);
         $this->assertArraySubset(

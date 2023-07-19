@@ -65,6 +65,24 @@ class CreateBeamTest extends TestCaseGraphQL
     }
 
     /**
+     * Test creating beam token exist in collection.
+     */
+    public function test_it_will_fail_with_token_exist(): void
+    {
+        $response = $this->graphql(
+            $this->method,
+            array_merge(
+                $this->generateBeamData(BeamType::MINT_ON_DEMAND),
+                ['tokens' => [['tokenIds' => [$this->token->token_chain_id], 'type' => BeamType::MINT_ON_DEMAND->name]]]
+            ),
+            true
+        );
+        $this->assertArraySubset([
+            'tokens.0.tokenIds' => ['The tokens.0.tokenIds exists in the specified collection.'],
+        ], $response['error']);
+    }
+
+    /**
      * Test creating beam with max length attribute mint on demand.
      */
     public function test_it_will_fail_with_max_length_attribute_mint_on_demand(): void
