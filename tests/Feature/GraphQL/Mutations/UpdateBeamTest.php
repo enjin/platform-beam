@@ -131,6 +131,26 @@ class UpdateBeamTest extends TestCaseGraphQL
             $response['error']
         );
 
+        $updates = array_merge(
+            $updates,
+            ['tokens' => [['tokenIds' => [$token->token_chain_id . '..' . $token->token_chain_id]]]]
+        );
+        $response = $this->graphql($this->method, $updates, true);
+        $this->assertArraySubset(
+            ['tokens.0.tokenIds' => ['The tokens.0.tokenIds already exist in beam.']],
+            $response['error']
+        );
+
+
+        $updates = array_merge(
+            $updates,
+            ['tokens' => [['tokenIds' => [$token->token_chain_id . '..' . $token->token_chain_id], 'type' => BeamType::MINT_ON_DEMAND->name]]]
+        );
+        $response = $this->graphql($this->method, $updates, true);
+        $this->assertArraySubset(
+            ['tokens.0.tokenIds' => ['The tokens.0.tokenIds exists in the specified collection.']],
+            $response['error']
+        );
 
         $collection = Collection::create([
             'collection_chain_id' => (string) fake()->unique()->numberBetween(2000),
