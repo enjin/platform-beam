@@ -106,7 +106,17 @@ class CreateBeamTest extends TestCaseGraphQL
         ], $response['error']);
         Event::assertNotDispatched(BeamCreated::class);
 
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', "1\n2..10");
+        $file = UploadedFile::fake()->createWithContent('tokens.txt', '1');
+        $response = $this->graphql($this->method, array_merge(
+            $this->generateBeamData(),
+            ['tokens' => [['tokenIdDataUpload' => $file]]]
+        ), true);
+        $this->assertArraySubset([
+            'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
+        ], $response['error']);
+        Event::assertNotDispatched(BeamCreated::class);
+
+        $file = UploadedFile::fake()->createWithContent('tokens.txt', '1..10');
         $response = $this->graphql($this->method, array_merge(
             $this->generateBeamData(),
             ['tokens' => [['tokenIdDataUpload' => $file]]]
