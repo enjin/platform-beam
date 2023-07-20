@@ -90,16 +90,20 @@ class ClaimBeamMutation extends Mutation implements PlatformPublicGraphQlOperati
      */
     protected function rules(array $args = []): array
     {
-        $singleUse = BeamService::isSingleUse($args['code']) || BeamService::hasSingleUse($args['code']);
+        $beamCode = null;
+        if ($singleUse = BeamService::isSingleUse($args['code'])) {
+            $beamCode = explode(':', decrypt($args['code']), 3)[1] ?? null;
+        }
 
         return [
             'code' => [
                 'bail',
                 'filled',
                 'max:1024',
-                $singleUse ? new SingleUseCodeExist() : new NotExpired(),
+                new NotExpired($beamCode),
+                $singleUse ? new SingleUseCodeExist() : '',
                 new CanClaim($singleUse),
-                new NotPaused(),
+                new NotPaused($beamCode),
             ],
             'account' => ['filled', new ValidSubstrateAccount(), new NotOwner($singleUse)],
             'signature' => ['sometimes', new VerifySignedMessage()],
