@@ -65,6 +65,25 @@ class GetBeamTest extends TestCaseGraphQL
     }
 
     /**
+     * Test get beam with scan limit.
+     */
+    public function test_it_will_fail_with_scan_limit(): void
+    {
+        config(['enjin-platform-beam.scan_limit' => 1]);
+        $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'account' => $publickKey = resolve(SubstrateProvider::class)->public_key(),
+        ]);
+
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'account' => $publickKey,
+        ], true);
+
+        $this->assertArraySubset(['account' => ['You have reached the maximum limit to retry.']], $response['error']);
+    }
+
+    /**
      * Test get beam with no more claims.
      */
     public function test_it_will_fail_with_no_more_claims(): void

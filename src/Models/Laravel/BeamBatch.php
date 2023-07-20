@@ -2,7 +2,6 @@
 
 namespace Enjin\Platform\Beam\Models\Laravel;
 
-use Enjin\Platform\Beam\Database\Factories\BeamFactory;
 use Enjin\Platform\Models\BaseModel;
 use Enjin\Platform\Models\Transaction;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -61,13 +60,5 @@ class BeamBatch extends BaseModel
     public function transaction(): BelongsTo
     {
         return $this->belongsTo(Transaction::class);
-    }
-
-    /**
-     * This model's factory.
-     */
-    protected static function newFactory(): BeamFactory
-    {
-        return BeamFactory::new();
     }
 }

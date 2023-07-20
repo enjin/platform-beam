@@ -4,10 +4,8 @@ namespace Enjin\Platform\Beam\Models\Laravel;
 
 use Enjin\Platform\Beam\Database\Factories\BeamScanFactory;
 use Enjin\Platform\Models\BaseModel;
-use Enjin\Platform\Models\Laravel\Wallet;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
 
@@ -59,23 +57,6 @@ class BeamScan extends BaseModel
     public function beam(): BelongsTo
     {
         return $this->belongsTo(Beam::class);
-    }
-
-    /**
-     * The wallet's relationship.
-     */
-    public function wallet(): BelongsTo
-    {
-        return $this->belongsTo(Wallet::class, 'wallet_public_key', 'public_key');
-    }
-
-    /**
-     * The claim's relationship.
-     */
-    public function claim(): HasOne
-    {
-        return $this->hasOne(BeamClaim::class, 'wallet_public_key', 'wallet_public_key')
-            ->where('beam_scans.beam_id', '=', 'beam_claims.beam_id');
     }
 
     /**

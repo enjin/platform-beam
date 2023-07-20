@@ -26,7 +26,16 @@ class RemoveTokensTest extends TestCaseGraphQL
         Event::fake();
         $response = $this->graphql($this->method, [
             'code' => $this->beam->code,
-            'tokenIds' => [$this->claims->random()->token_chain_id],
+            'tokenIds' => [$this->claims->shift()->token_chain_id],
+        ]);
+        $this->assertTrue($response);
+        Event::assertDispatched(TokensRemoved::class);
+
+        Event::fake();
+        $claim = $this->claims->shift();
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'tokenIds' => ["{$claim->token_chain_id}..{$claim->token_chain_id}"],
         ]);
         $this->assertTrue($response);
         Event::assertDispatched(TokensRemoved::class);
@@ -95,6 +104,15 @@ class RemoveTokensTest extends TestCaseGraphQL
         $response = $this->graphql($this->method, [
             'code' => $this->beam->code,
             'tokenIds' => ['0'],
+        ], true);
+        $this->assertArraySubset(
+            ['tokenIds.0' => ["The tokenIds.0 doesn't exist in beam."]],
+            $response['error']
+        );
+
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'tokenIds' => ['0..5'],
         ], true);
         $this->assertArraySubset(
             ['tokenIds.0' => ["The tokenIds.0 doesn't exist in beam."]],

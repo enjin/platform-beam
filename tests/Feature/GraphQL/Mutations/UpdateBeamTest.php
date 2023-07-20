@@ -70,6 +70,27 @@ class UpdateBeamTest extends TestCaseGraphQL
     }
 
     /**
+     * Test updating beam with attributes.
+     */
+    public function test_it_can_update_beam_with_attributes(): void
+    {
+        Event::fake();
+        $response = $this->graphql(
+            $this->method,
+            $this->generateBeamData(
+                BeamType::MINT_ON_DEMAND,
+                1,
+                [
+                    ['key' => 'test', 'value' => 'test'],
+                    ['key' => 'test2', 'value' => 'test2'],
+                ]
+            )
+        );
+        $this->assertTrue($response);
+        Event::assertDispatched(TokensAdded::class);
+    }
+
+    /**
      * Test updating beam with empty parameters.
      */
     public function test_it_will_fail_with_empty_parameters(): void
@@ -110,6 +131,26 @@ class UpdateBeamTest extends TestCaseGraphQL
             $response['error']
         );
 
+        $updates = array_merge(
+            $updates,
+            ['tokens' => [['tokenIds' => [$token->token_chain_id . '..' . $token->token_chain_id]]]]
+        );
+        $response = $this->graphql($this->method, $updates, true);
+        $this->assertArraySubset(
+            ['tokens.0.tokenIds' => ['The tokens.0.tokenIds already exist in beam.']],
+            $response['error']
+        );
+
+
+        $updates = array_merge(
+            $updates,
+            ['tokens' => [['tokenIds' => [$token->token_chain_id . '..' . $token->token_chain_id], 'type' => BeamType::MINT_ON_DEMAND->name]]]
+        );
+        $response = $this->graphql($this->method, $updates, true);
+        $this->assertArraySubset(
+            ['tokens.0.tokenIds' => ['The tokens.0.tokenIds exists in the specified collection.']],
+            $response['error']
+        );
 
         $collection = Collection::create([
             'collection_chain_id' => (string) fake()->unique()->numberBetween(2000),

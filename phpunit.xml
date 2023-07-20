@@ -7,6 +7,9 @@
     <testsuite name="Commands">
       <directory>tests/Feature/Commands</directory>
     </testsuite>
+    <testsuite name="Unit">
+      <directory>tests/Unit</directory>
+    </testsuite>
   </testsuites>
   <coverage>
     <report>
@@ -30,5 +33,10 @@
     <include>
       <directory suffix=".php">./src</directory>
     </include>
+    <exclude>
+        <directory>./src/Enums</directory>
+        <directory>./src/Exceptions</directory>
+        <directory>./src/Providers</directory>
+    </exclude>
   </source>
 </phpunit>
