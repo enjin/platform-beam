@@ -8,12 +8,16 @@ use Illuminate\Contracts\Validation\Rule;
 
 class NotPaused implements Rule
 {
+    public function __construct(protected ?string $code = null)
+    {
+    }
+
     /**
      * Determine if the validation rule passes.
      */
     public function passes(mixed $attribute, mixed $value)
     {
-        if ($beam = resolve(BeamService::class)->findByCode($value)) {
+        if ($beam = resolve(BeamService::class)->findByCode($this->code ?: $value)) {
             if ($beam->hasFlag(BeamFlag::PAUSED)) {
                 return false;
             }

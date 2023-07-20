@@ -9,6 +9,10 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 class NotExpired implements ValidationRule
 {
+    public function __construct(protected ?string $code = null)
+    {
+    }
+
     /**
      * Run the validation rule.
      *
@@ -16,7 +20,7 @@ class NotExpired implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!$beam = Beam::where('code', $value)->first()) {
+        if (!$beam = Beam::where('code', $this->code ?: $value)->first()) {
             $fail(__('validation.exists'));
 
             return;

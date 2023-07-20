@@ -282,9 +282,7 @@ class BeamService
         }
 
         try {
-            decrypt($code);
-
-            return true;
+            return static::hasSingleUse(explode(':', decrypt($code), 3)[1] ?? null);
         } catch (Throwable) {
         }
 
