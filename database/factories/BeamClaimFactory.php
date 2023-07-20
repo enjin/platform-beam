@@ -29,6 +29,8 @@ class BeamClaimFactory extends Factory
             'claimed_at' => Carbon::now()->toDateTimeString(),
             'token_chain_id' => (string) fake()->unique()->numberBetween(2000),
             'type' => fake()->randomElement(BeamType::caseNamesAsArray()),
+            'code' => bin2hex(openssl_random_pseudo_bytes(16)),
+            'nonce' => 1,
         ];
     }
 }

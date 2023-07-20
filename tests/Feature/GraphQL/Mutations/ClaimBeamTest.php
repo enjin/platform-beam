@@ -38,6 +38,30 @@ class ClaimBeamTest extends TestCaseGraphQL
     }
 
     /**
+     * Test claiming beam with updated single use codes.
+     */
+    public function test_it_can_claim_updated_single_use_codes(): void
+    {
+        $code = $this->graphql('CreateBeam', $this->generateBeamData(
+            BeamType::MINT_ON_DEMAND,
+            5,
+        ));
+        $this->assertNotEmpty($code);
+        $this->genericClaimTest(CryptoSignatureType::ED25519, $code);
+
+        $response = $this->graphql('UpdateBeam', [
+            'code' => $code,
+            'flags' => [['flag' => BeamFlag::SINGLE_USE->name]],
+        ]);
+        $this->assertTrue($response);
+
+        $response = $this->graphql('GetSingleUseCodes', ['code' => $code]);
+        $this->assertNotEmpty($response['totalCount']);
+
+        $this->genericClaimTest(CryptoSignatureType::ED25519, Arr::get($response, 'edges.0.node.code'));
+    }
+
+    /**
      * Test claiming beam with sr25519 for single use codes.
      */
     public function test_it_can_claim_beam_with_sr25519_single_use_codes(): void
