@@ -96,7 +96,17 @@ class CreateBeamTest extends TestCaseGraphQL
      */
     public function test_it_will_fail_to_create_beam_with_invalid_file_upload(): void
     {
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', "{$this->token->token_chain_id}\n{$this->token->token_chain_id}..{$this->token->token_chain_id}");
+        $file = UploadedFile::fake()->createWithContent('tokens.txt', $this->token->token_chain_id);
+        $response = $this->graphql($this->method, array_merge(
+            $this->generateBeamData(),
+            ['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]]]
+        ), true);
+        $this->assertArraySubset([
+            'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload exists in the specified collection.'],
+        ], $response['error']);
+        Event::assertNotDispatched(BeamCreated::class);
+
+        $file = UploadedFile::fake()->createWithContent('tokens.txt', "{$this->token->token_chain_id}..{$this->token->token_chain_id}");
         $response = $this->graphql($this->method, array_merge(
             $this->generateBeamData(),
             ['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]]]
