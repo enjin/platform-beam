@@ -8,6 +8,7 @@ use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Events\BeamClaimPending;
 use Enjin\Platform\Beam\Jobs\ClaimBeam;
+use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Tests\Feature\GraphQL\TestCaseGraphQL;
 use Enjin\Platform\Beam\Tests\Feature\Traits\CreateBeamData;
 use Enjin\Platform\Beam\Tests\Feature\Traits\SeedBeamData;
@@ -186,6 +187,35 @@ class ClaimBeamTest extends TestCaseGraphQL
 
         $this->assertNotEmpty($response);
         $this->assertArraySubset(['code' => ['The beam is paused.']], $response['error']);
+    }
+
+    /**
+     * Test claiming beam with invalid parameters (updated single use codes).
+     */
+    public function test_it_will_fail_with_invalid_params_updated_single_use_codes(): void
+    {
+        $code = $this->graphql('CreateBeam', $this->generateBeamData(
+            BeamType::MINT_ON_DEMAND,
+            5,
+        ));
+        $this->assertNotEmpty($code);
+
+        [$keypair, $publicKey, $privateKey] = $this->getKeyPair($type = CryptoSignatureType::ED25519);
+        $claim = BeamClaim::hasCode($code)->first();
+
+        $response = $this->graphql('GetBeam', [
+            'code' => $claim->singleUseCode,
+            'account' => $publicKey,
+        ], true);
+        $this->assertArraySubset(['code' => ['The selected code is invalid.']], $response['error']);
+
+        $response = $this->graphql($this->method, [
+            'code' => $claim->singleUseCode,
+            'account' => $publicKey,
+            'cryptoSignatureType' => $type->name,
+            'signature' => '',
+        ], true);
+        $this->assertArraySubset(['code' => ['The selected code is invalid.']], $response['error']);
     }
 
     /**
