@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Enjin\Platform\Beam\Tests\Feature\GraphQL\Mutations;
 
+use Enjin\Platform\Beam\Models\BeamScan;
 use Enjin\Platform\Beam\Tests\Feature\GraphQL\TestCaseGraphQL;
 use Enjin\Platform\Beam\Tests\Feature\Traits\SeedBeamData;
 
@@ -22,7 +23,8 @@ class DeleteBeamTest extends TestCaseGraphQL
     protected function setUp(): void
     {
         parent::setUp();
-        $this->seedBeam();
+        $this->seedBeam(1);
+        BeamScan::factory()->for($this->beam)->create();
     }
 
     /**
