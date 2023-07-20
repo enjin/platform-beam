@@ -1,8 +1,6 @@
 <?php
 
-declare(strict_types=1);
-
-namespace Enjin\Platform\Beam\Tests\Feature\GraphQL\Mutations;
+namespace Enjin\Platform\Beam\Tests\Unit;
 
 use Enjin\Platform\Beam\Enums\ClaimStatus;
 use Enjin\Platform\Beam\Jobs\ClaimBeam;

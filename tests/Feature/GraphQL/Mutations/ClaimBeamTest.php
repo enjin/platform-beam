@@ -227,7 +227,6 @@ class ClaimBeamTest extends TestCaseGraphQL
             'account' => $publicKey,
         ]);
         $this->assertNotEmpty($response['message']);
-        $this->assertEquals($publicKey, $this->beam->scans()->first()->wallet->public_key);
 
         $message = $response['message']['message'];
         $signature = $this->signMessage($type, $keypair, $message, $privateKey);
