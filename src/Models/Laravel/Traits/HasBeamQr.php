@@ -3,7 +3,7 @@
 namespace Enjin\Platform\Beam\Models\Laravel\Traits;
 
 use Enjin\Platform\Beam\Enums\BeamRoute;
-use Enjin\Platform\Beam\Services\Qr\Interfaces\QrAdapterInterface;
+use Enjin\Platform\Facades\Qr;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Support\Str;
 
@@ -25,7 +25,7 @@ trait HasBeamQr
     public function qrUrl(): Attribute
     {
         return Attribute::make(
-            get: fn () => resolve(QrAdapterInterface::class)->url($this->claimableCode)
+            get: fn () => Qr::url($this->claimableCode)
         );
     }
 }

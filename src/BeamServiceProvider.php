@@ -9,7 +9,6 @@ use Enjin\Platform\Beam\Listeners\RemoveClaimToken;
 use Enjin\Platform\Beam\Listeners\UnpauseBeam;
 use Enjin\Platform\Beam\Listeners\UpdateClaimCollectionIds;
 use Enjin\Platform\Beam\Listeners\UpdateClaimStatus;
-use Enjin\Platform\Beam\Providers\Deferred\QrServiceProvider;
 use Enjin\Platform\Events\Global\TransactionUpdated;
 use Enjin\Platform\Events\Substrate\Commands\PlatformSynced;
 use Enjin\Platform\Events\Substrate\MultiTokens\CollectionDestroyed;
@@ -69,8 +68,6 @@ class BeamServiceProvider extends PackageServiceProvider
     public function boot()
     {
         parent::boot();
-
-        $this->app->register(QrServiceProvider::class);
 
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         $this->loadRoutesFrom(__DIR__ . '/../routes/enjin-platform-beam.php');
