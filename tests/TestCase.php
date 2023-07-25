@@ -2,11 +2,13 @@
 
 namespace Enjin\Platform\Beam\Tests;
 
+use Enjin\Platform\Beam\BeamServiceProvider;
 use Enjin\Platform\CoreServiceProvider;
 use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
 use Illuminate\Support\Facades\Event;
+use Orchestra\Testbench\TestCase as BaseTestCase;
 
-abstract class TestCase extends CoreServiceProvider
+abstract class TestCase extends BaseTestCase
 {
     /**
      * Fake events flag.
@@ -14,16 +16,13 @@ abstract class TestCase extends CoreServiceProvider
     protected bool $fakeEvents = true;
 
     /**
-     * The package providers.
-     *
-     * @param mixed $app
-     *
-     * @return void
+     * Get package providers.
      */
     protected function getPackageProviders($app)
     {
         return [
             CoreServiceProvider::class,
+            BeamServiceProvider::class,
         ];
     }
 
