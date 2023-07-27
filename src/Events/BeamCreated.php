@@ -21,7 +21,7 @@ class BeamCreated extends PlatformBroadcastEvent
             $beam->withoutRelations()->toArray(),
             ['code', 'collection_chain_id']
         );
-        $this->broadcastData['beamId'] = $beam->id;
+        $this->broadcastData['beamCode'] = $beam->code;
 
         $this->broadcastChannels = [
             new Channel("collection;{$this->broadcastData['collection_chain_id']}"),

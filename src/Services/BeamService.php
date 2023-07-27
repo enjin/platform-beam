@@ -106,7 +106,7 @@ class BeamService
                     self::key($beam->code),
                     $this->createClaims($tokens, $beam)
                 );
-                TokensAdded::dispatch(['beamId' => $beam->id, 'code' => $code, 'tokenIds' => collect($tokens)->pluck('tokenIds')->all()]);
+                TokensAdded::dispatch(['beamCode' => $beam->code, 'code' => $code, 'tokenIds' => collect($tokens)->pluck('tokenIds')->all()]);
             }
             event(new BeamUpdated($beam));
 
