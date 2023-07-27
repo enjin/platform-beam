@@ -16,7 +16,12 @@ class BeamClaimPending extends PlatformBroadcastEvent
     public function __construct(array $claim)
     {
         parent::__construct();
-        $this->broadcastData = Arr::except($claim, 'code');
+
+        $this->broadcastData = array_merge(
+            Arr::only($claim['beam'], ['code', 'collection_chain_id']),
+            Arr::only($claim, ['wallet_public_key', 'claimed_at', 'state'])
+        );
+
         $this->broadcastChannels = [
             new Channel('collection;' . $claim['beam']['collection_chain_id']),
             new PlatformAppChannel(),
