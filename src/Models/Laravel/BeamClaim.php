@@ -13,6 +13,7 @@ use Enjin\Platform\Models\Laravel\Wallet;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -26,7 +27,7 @@ class BeamClaim extends BaseModel
     use SoftDeletes;
     use Traits\HasBeamQr;
     use Traits\HasCodeScope;
-    use Prunable;
+    use MassPrunable;
     use Traits\HasClaimable;
     use Traits\EagerLoadSelectFields;
     use HasEagerLimit;
