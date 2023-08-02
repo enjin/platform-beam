@@ -46,6 +46,7 @@ class Beam extends BaseModel
         'end',
         'collection_chain_id',
         'flags_mask',
+        'claim_limit',
     ];
 
     /**
@@ -170,5 +171,15 @@ class Beam extends BaseModel
         return Attribute::make(
             get: fn () => $this->code,
         );
+    }
+
+    public function whitelistedAddresses(): HasMany
+    {
+        return $this->hasMany(BeamClaimWhitelist::class);
+    }
+
+    public function claimConditions(): HasMany
+    {
+        return $this->hasMany(BeamClaimCondition::class);
     }
 }
