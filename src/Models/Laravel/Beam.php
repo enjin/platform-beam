@@ -52,7 +52,7 @@ class Beam extends BaseModel
     /**
      * Cascade softdeletes.
      */
-    protected $cascadeDeletes = ['claims', 'scans'];
+    protected $cascadeDeletes = ['claims', 'scans', 'claimConditions', 'whitelistedAddresses'];
 
     /**
      * The hidden fields.

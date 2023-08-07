@@ -19,6 +19,8 @@ use Enjin\Platform\Beam\Jobs\CreateClaim;
 use Enjin\Platform\Beam\Jobs\DispatchCreateBeamClaimsJobs;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
+use Enjin\Platform\Beam\Models\BeamClaimCondition;
+use Enjin\Platform\Beam\Models\BeamClaimWhitelist;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Support\BitMask;
 use Enjin\Platform\Support\Blake2;
@@ -72,7 +74,7 @@ class BeamService
     public function create(array $args): Model
     {
         $beam = Beam::create([
-            ...Arr::except($args, ['tokens', 'flags']),
+            ...Arr::except($args, ['tokens', 'flags', 'claim_conditions', 'claim_whitelist']),
             'flags_mask' => static::getFlagsValue(Arr::get($args, 'flags')),
             'code' => bin2hex(openssl_random_pseudo_bytes(16)),
         ]);
@@ -81,6 +83,9 @@ class BeamService
                 self::key($beam->code),
                 $this->createClaims(Arr::get($args, 'tokens', []), $beam)
             );
+
+            $this->createClaimConditions(Arr::get($args, 'claim_conditions', []), $beam);
+            $this->createClaimWhitelist(Arr::get($args, 'claim_whitelist', []), $beam);
             event(new BeamCreated($beam));
 
             return $beam;
@@ -431,5 +436,34 @@ class BeamService
     protected function buildExtrasClaimBeamData(string $wallet, Model $beam): array
     {
         return [];
+    }
+
+    private function createClaimConditions(array $conditions, Beam $beam): void
+    {
+        $beam->claimConditions()->delete();
+
+        foreach ($conditions as $condition) {
+            BeamClaimCondition::query()->create(
+                [
+                    'beam_id' => $beam->id,
+                    'type' => $condition['type'],
+                    'value' => $condition['value'],
+                ]
+            );
+        }
+    }
+
+    private function createClaimWhitelist(array $addresses, Beam $beam): void
+    {
+        $beam->whitelistedAddresses()->delete();
+
+        foreach ($addresses as $address) {
+            BeamClaimWhitelist::query()->create(
+                [
+                    'beam_id' => $beam->id,
+                    'address' => $address,
+                ]
+            );
+        }
     }
 }
