@@ -10,7 +10,7 @@ use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Events\BeamClaimPending;
 use Enjin\Platform\Beam\Jobs\ClaimBeam;
 use Enjin\Platform\Beam\Models\BeamClaim;
-use Enjin\Platform\Beam\Rules\PassesConditions;
+use Enjin\Platform\Beam\Rules\PassesClaimConditions;
 use Enjin\Platform\Beam\Tests\Feature\GraphQL\TestCaseGraphQL;
 use Enjin\Platform\Beam\Tests\Feature\Traits\CreateBeamData;
 use Enjin\Platform\Beam\Tests\Feature\Traits\SeedBeamData;
@@ -109,13 +109,13 @@ class ClaimBeamTest extends TestCaseGraphQL
      */
     public function test_it_can_claim_beam_with_conditions_that_pass(): void
     {
-        PassesConditions::$functions[] = function ($code, $singleUse, $data) {
+        PassesClaimConditions::$functions[] = function ($attribute, $code, $singleUse, $data) {
             return CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'];
         };
 
         $this->genericClaimTest(CryptoSignatureType::ED25519);
 
-        PassesConditions::$functions = [];
+        PassesClaimConditions::$functions = [];
     }
 
     /**
@@ -123,7 +123,7 @@ class ClaimBeamTest extends TestCaseGraphQL
      */
     public function test_it_cannot_claim_beam_with_conditions_that_fail(): void
     {
-        PassesConditions::$functions[] = function ($code, $singleUse, $data) {
+        PassesClaimConditions::$functions[] = function ($attribute, $code, $singleUse, $data) {
             return CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'];
         };
 
@@ -151,7 +151,7 @@ class ClaimBeamTest extends TestCaseGraphQL
 
         $this->assertArraySubset(['code' => ['Not all the conditions to claim have been met.']], $response['error']);
 
-        PassesConditions::$functions = [];
+        PassesClaimConditions::$functions = [];
     }
 
     /**

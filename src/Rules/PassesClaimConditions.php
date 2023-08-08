@@ -7,7 +7,7 @@ use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Contracts\Validation\ValidationRule;
 
-class PassesConditions implements DataAwareRule, ValidationRule
+class PassesClaimConditions implements DataAwareRule, ValidationRule
 {
     public static array $functions = [];
 
@@ -33,7 +33,7 @@ class PassesConditions implements DataAwareRule, ValidationRule
     {
         $conditions = collect(static::$functions);
 
-        if (!$conditions->every(fn ($function) => $function($value, $this->singleUse, $this->data))) {
+        if (!$conditions->every(fn ($function) => $function($attribute, $value, $this->singleUse, $this->data))) {
             $fail(__('enjin-platform-beam::validation.passes_conditions'));
         }
     }
