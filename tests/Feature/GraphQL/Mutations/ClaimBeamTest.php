@@ -10,6 +10,7 @@ use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Events\BeamClaimPending;
 use Enjin\Platform\Beam\Jobs\ClaimBeam;
 use Enjin\Platform\Beam\Models\BeamClaim;
+use Enjin\Platform\Beam\Rules\PassesConditions;
 use Enjin\Platform\Beam\Tests\Feature\GraphQL\TestCaseGraphQL;
 use Enjin\Platform\Beam\Tests\Feature\Traits\CreateBeamData;
 use Enjin\Platform\Beam\Tests\Feature\Traits\SeedBeamData;
@@ -101,6 +102,56 @@ class ClaimBeamTest extends TestCaseGraphQL
     public function test_it_can_claim_beam_with_ed25519(): void
     {
         $this->genericClaimTest(CryptoSignatureType::ED25519);
+    }
+
+    /**
+     * Test claiming beam with passing conditions.
+     */
+    public function test_it_can_claim_beam_with_conditions_that_pass(): void
+    {
+        PassesConditions::$functions[] = function ($code, $singleUse, $data) {
+            return CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'];
+        };
+
+        $this->genericClaimTest(CryptoSignatureType::ED25519);
+
+        PassesConditions::$functions = [];
+    }
+
+    /**
+     * Test claiming beam with failing conditions.
+     */
+    public function test_it_cannot_claim_beam_with_conditions_that_fail(): void
+    {
+        PassesConditions::$functions[] = function ($code, $singleUse, $data) {
+            return CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'];
+        };
+
+        [$keypair, $publicKey, $privateKey] = $this->getKeyPair(CryptoSignatureType::ED25519);
+
+        $response = $this->graphql('GetBeam', [
+            'code' => $this->beam->code,
+            'account' => $publicKey,
+        ]);
+        $this->assertNotEmpty($response['message']);
+
+        $message = $response['message']['message'];
+        $signature = $this->signMessage(CryptoSignatureType::ED25519, $keypair, $message, $privateKey);
+
+        Queue::fake();
+
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'account' => $publicKey,
+            'signature' => $signature,
+            'cryptoSignatureType' => CryptoSignatureType::ED25519->name,
+        ], true);
+
+        $this->assertNotEmpty($response);
+
+        $this->assertArraySubset(['code' => ['Not all the conditions to claim have been met.']], $response['error']);
+
+        PassesConditions::$functions = [];
     }
 
     /**
