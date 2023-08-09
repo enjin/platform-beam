@@ -19,6 +19,7 @@ return [
     'beam_claim.field.claimedAt' => 'The claim timestamp.',
     'beam_claim.field.token' => 'The token chain ID.',
     'beam_claim.field.code' => 'The single use code.',
+    'beam_claim.field.identifierCode' => 'The claim identifier code.',
     'beam_qr.description' => 'A beam QR which includes the beam host and code in its payload.',
     'beam_qr.field.payload' => 'A base64 encoded string containing the beam host and code.',
     'beam_qr.field.url' => 'A link to the QR image.',

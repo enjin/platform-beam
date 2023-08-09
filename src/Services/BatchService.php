@@ -67,8 +67,17 @@ class BatchService
      */
     public function getBatchesForProcessing(BeamType $type): Collection
     {
-        return BeamClaim::select('id', 'token_chain_id', 'beam_batch_id', 'wallet_public_key', 'beam_id', 'quantity', 'collection_id', 'attributes')
-            ->where('state', ClaimStatus::PENDING)
+        return BeamClaim::select(
+            'id',
+            'token_chain_id',
+            'beam_batch_id',
+            'wallet_public_key',
+            'beam_id',
+            'quantity',
+            'collection_id',
+            'attributes',
+            'code as identifierCode',
+        )->where('state', ClaimStatus::PENDING)
             ->with(['beam', 'collection.owner'])
             ->whereHas('collection')
             ->whereHas(
