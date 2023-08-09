@@ -8,6 +8,7 @@ use Enjin\Platform\Beam\Rules\CanClaim;
 use Enjin\Platform\Beam\Rules\NotExpired;
 use Enjin\Platform\Beam\Rules\NotOwner;
 use Enjin\Platform\Beam\Rules\NotPaused;
+use Enjin\Platform\Beam\Rules\PassesClaimConditions;
 use Enjin\Platform\Beam\Rules\SingleUseCodeExist;
 use Enjin\Platform\Beam\Rules\VerifySignedMessage;
 use Enjin\Platform\Beam\Services\BeamService;
@@ -104,6 +105,7 @@ class ClaimBeamMutation extends Mutation implements PlatformPublicGraphQlOperati
                 $singleUse ? new SingleUseCodeExist() : '',
                 new CanClaim($singleUse),
                 new NotPaused($beamCode),
+                new PassesClaimConditions($singleUse),
             ],
             'account' => ['filled', new ValidSubstrateAccount(), new NotOwner($singleUse)],
             'signature' => ['sometimes', new VerifySignedMessage()],

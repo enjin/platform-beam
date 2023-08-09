@@ -6,6 +6,7 @@ return [
     'end_date_after_start' => 'The :attribute must be a date after start.',
     'end_date_greater_than' => 'The :attribute must be a date greater than :value.',
     'is_paused' => 'The beam is paused.',
+    'passes_conditions' => 'Not all the conditions to claim have been met.',
     'scan_limit' => 'You have reached the maximum limit to retry.',
     'start_date_after_end' => 'The :attribute must be a date before end.',
     'start_date_has_passed' => 'The start date of this beam has passed, it can no longer be modified.',
