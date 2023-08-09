@@ -105,27 +105,79 @@ class ClaimBeamTest extends TestCaseGraphQL
     }
 
     /**
-     * Test claiming beam with passing conditions.
+     * Test it can remove a condition from the rule.
      */
-    public function test_it_can_claim_beam_with_conditions_that_pass(): void
+    public function test_it_can_remove_a_condition_from_the_rule(): void
     {
-        PassesClaimConditions::$functions[] = function ($attribute, $code, $singleUse, $data) {
-            return CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'];
-        };
+        PassesClaimConditions::addConditionalFunctions([
+            function ($attribute, $code, $singleUse, $data) {
+                return CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'];
+            },
+            function ($attribute, $code, $singleUse, $data) {
+                return 'code' == $attribute;
+            },
+        ]);
+        $this->assertCount(2, PassesClaimConditions::getConditionalFunctions());
+
+        PassesClaimConditions::removeConditionalFunctions(
+            function ($attribute, $code, $singleUse, $data) {
+                return 'code' == $attribute;
+            }
+        );
+        $this->assertCount(1, PassesClaimConditions::getConditionalFunctions());
 
         $this->genericClaimTest(CryptoSignatureType::ED25519);
 
-        PassesClaimConditions::$functions = [];
+        PassesClaimConditions::clearConditionalFunctions();
+        $this->assertEmpty(PassesClaimConditions::getConditionalFunctions());
+    }
+
+    /**
+     * Test claiming beam with a single passing condition.
+     */
+    public function test_it_can_claim_beam_with_single_condition_that_passes(): void
+    {
+        PassesClaimConditions::addConditionalFunctions(function ($attribute, $code, $singleUse, $data) {
+            return CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'];
+        });
+        $this->assertNotEmpty(PassesClaimConditions::getConditionalFunctions());
+
+        $this->genericClaimTest(CryptoSignatureType::ED25519);
+
+        PassesClaimConditions::clearConditionalFunctions();
+        $this->assertEmpty(PassesClaimConditions::getConditionalFunctions());
+    }
+
+    /**
+     * Test claiming beam with multiple passing conditions.
+     */
+    public function test_it_can_claim_beam_with_multiple_conditions_that_pass(): void
+    {
+        PassesClaimConditions::addConditionalFunctions([
+            function ($attribute, $code, $singleUse, $data) {
+                return CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'];
+            },
+            function ($attribute, $code, $singleUse, $data) {
+                return 'code' == $attribute;
+            },
+        ]);
+        $this->assertNotEmpty(PassesClaimConditions::getConditionalFunctions());
+
+        $this->genericClaimTest(CryptoSignatureType::ED25519);
+
+        PassesClaimConditions::clearConditionalFunctions();
+        $this->assertEmpty(PassesClaimConditions::getConditionalFunctions());
     }
 
     /**
      * Test claiming beam with failing conditions.
      */
-    public function test_it_cannot_claim_beam_with_conditions_that_fail(): void
+    public function test_it_cannot_claim_beam_with_single_condition_that_fails(): void
     {
-        PassesClaimConditions::$functions[] = function ($attribute, $code, $singleUse, $data) {
+        PassesClaimConditions::addConditionalFunctions(function ($attribute, $code, $singleUse, $data) {
             return CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'];
-        };
+        });
+        $this->assertNotEmpty(PassesClaimConditions::getConditionalFunctions());
 
         [$keypair, $publicKey, $privateKey] = $this->getKeyPair(CryptoSignatureType::ED25519);
 
@@ -151,7 +203,53 @@ class ClaimBeamTest extends TestCaseGraphQL
 
         $this->assertArraySubset(['code' => ['Not all the conditions to claim have been met.']], $response['error']);
 
-        PassesClaimConditions::$functions = [];
+        PassesClaimConditions::clearConditionalFunctions();
+        $this->assertEmpty(PassesClaimConditions::getConditionalFunctions());
+    }
+
+    /**
+     * Test claiming beam with multiple failing conditions.
+     */
+    public function test_it_cannot_claim_beam_with_multiple_conditions_that_fail(): void
+    {
+        $functions = collect([
+            function ($attribute, $code, $singleUse, $data) {
+                return 'code' == $attribute;
+            },
+            function ($attribute, $code, $singleUse, $data) {
+                return CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'];
+            },
+        ]);
+
+        PassesClaimConditions::addConditionalFunctions($functions);
+        $this->assertNotEmpty(PassesClaimConditions::getConditionalFunctions());
+
+        [$keypair, $publicKey, $privateKey] = $this->getKeyPair(CryptoSignatureType::ED25519);
+
+        $response = $this->graphql('GetBeam', [
+            'code' => $this->beam->code,
+            'account' => $publicKey,
+        ]);
+        $this->assertNotEmpty($response['message']);
+
+        $message = $response['message']['message'];
+        $signature = $this->signMessage(CryptoSignatureType::ED25519, $keypair, $message, $privateKey);
+
+        Queue::fake();
+
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'account' => $publicKey,
+            'signature' => $signature,
+            'cryptoSignatureType' => CryptoSignatureType::ED25519->name,
+        ], true);
+
+        $this->assertNotEmpty($response);
+
+        $this->assertArraySubset(['code' => ['Not all the conditions to claim have been met.']], $response['error']);
+
+        PassesClaimConditions::clearConditionalFunctions();
+        $this->assertEmpty(PassesClaimConditions::getConditionalFunctions());
     }
 
     /**
