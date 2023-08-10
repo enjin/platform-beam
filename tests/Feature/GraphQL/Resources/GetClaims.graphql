@@ -21,6 +21,7 @@ query GetClaims(
         claimedAt
         claimStatus
         quantity
+        identifierCode
         wallet {
           account {
             publicKey

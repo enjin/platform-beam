@@ -29,8 +29,10 @@ class UpdateClaimStatus implements ShouldQueue
         $states = [TransactionState::ABANDONED->name, TransactionState::FINALIZED->name];
         if (in_array($event->broadcastData['state'], $states)) {
             $claims = BeamClaim::whereHas('batch', fn ($query) => $query->where('transaction_id', $event->broadcastData['id']))
+                ->select('*', 'code as identifierCode')
                 ->with('beam')
                 ->get();
+
             if (!$claims->isEmpty()) {
                 $state = TransactionState::FINALIZED->name == $event->broadcastData['state']
                         && $event->broadcastData['result'] == SystemEventType::EXTRINSIC_SUCCESS->name

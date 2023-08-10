@@ -21,6 +21,7 @@ class BeamClaimPending extends PlatformBroadcastEvent
             Arr::only($claim['beam'], ['code', 'collection_chain_id']),
             Arr::only($claim, ['wallet_public_key', 'claimed_at', 'state'])
         );
+        $this->broadcastData['identifierCode'] = Arr::get($claim, 'identifierCode');
         $this->broadcastData['beamCode'] = $claim['beam']['code'];
 
         $this->broadcastChannels = [
