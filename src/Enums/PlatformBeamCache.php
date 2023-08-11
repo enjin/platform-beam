@@ -28,6 +28,8 @@ enum PlatformBeamCache: string implements PlatformCacheable
      */
     public static function clearable(): Collection
     {
-        return collect();
+        return collect([
+            self::CLAIM_PROBABILITIES,
+        ]);
     }
 }
