@@ -18,7 +18,7 @@ class ClaimProbabilities
     public function createOrUpdateProbabilities(string $code, array $claims): void
     {
         $formatted = $this->filterClaims($claims);
-        $current = $this->getProbabilities($code);
+        $current = self::getProbabilities($code);
         $this->computeProbabilities(
             $code,
             $this->mergeTokens(Arr::get($current, 'tokens.ft', []), $formatted['ft']),
@@ -29,7 +29,7 @@ class ClaimProbabilities
     /**
      * Check if the key has probabilities.
      */
-    public function hasProbabilities(string $code): bool
+    public static function hasProbabilities(string $code): bool
     {
         return Cache::has(PlatformBeamCache::CLAIM_PROBABILITIES->key($code));
     }
@@ -37,7 +37,7 @@ class ClaimProbabilities
     /**
      * Get the probabilities for a code.
      */
-    public function getProbabilities(string $code): array
+    public static function getProbabilities(string $code): array
     {
         return Cache::get(PlatformBeamCache::CLAIM_PROBABILITIES->key($code), []);
     }
@@ -47,7 +47,7 @@ class ClaimProbabilities
      */
     public function removeTokens(string $code, array $tokenIds): void
     {
-        if ($current = $this->getProbabilities($code)) {
+        if ($current = self::getProbabilities($code)) {
             foreach (Arr::get($current, 'tokens.ft', []) as $tokenId => $quantity) {
                 if (in_array($tokenId, $tokenIds)) {
                     unset($current['tokens']['ft'][$tokenId]);

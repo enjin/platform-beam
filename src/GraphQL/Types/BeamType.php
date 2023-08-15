@@ -94,7 +94,7 @@ class BeamType extends Type
             'probabilities' => [
                 'type' => GraphQL::type('Object'),
                 'description' => __('enjin-platform-beam::type.beam.field.probabilities'),
-                'resolve' => fn ($beam) => (new ClaimProbabilities())->getProbabilities($beam->code)['probabilities'] ?? null,
+                'resolve' => fn ($beam) => ClaimProbabilities::getProbabilities($beam->code)['probabilities'] ?? null,
                 'is_relation' => false,
             ],
             'claims' => [

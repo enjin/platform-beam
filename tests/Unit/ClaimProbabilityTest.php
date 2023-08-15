@@ -36,7 +36,7 @@ class ClaimProbabilityTest extends TestCaseGraphQL
                 ],
                 'nft' => 40,
             ],
-            $this->probabilities->getProbabilities($this->beam->code)['probabilities']
+            ClaimProbabilities::getProbabilities($this->beam->code)['probabilities']
         );
     }
 
@@ -52,7 +52,7 @@ class ClaimProbabilityTest extends TestCaseGraphQL
                 ],
                 'nft' => 40,
             ],
-            $this->probabilities->getProbabilities($this->beam->code)['probabilities']
+            ClaimProbabilities::getProbabilities($this->beam->code)['probabilities']
         );
 
         $this->probabilities->removeTokens($this->beam->code, ['42', '43..45']);
@@ -61,7 +61,7 @@ class ClaimProbabilityTest extends TestCaseGraphQL
                 'ft' => ['41' => 20],
                 'nft' => 80,
             ],
-            $this->probabilities->getProbabilities($this->beam->code)['probabilities']
+            ClaimProbabilities::getProbabilities($this->beam->code)['probabilities']
         );
     }
 
