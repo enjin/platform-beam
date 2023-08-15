@@ -19,7 +19,7 @@ class BeamClaimPending extends PlatformBroadcastEvent
 
         $this->broadcastData = array_merge(
             Arr::only($claim['beam'], ['code', 'collection_chain_id']),
-            Arr::only($claim, ['wallet_public_key', 'claimed_at', 'state','token_chain_id'])
+            Arr::only($claim, ['wallet_public_key', 'claimed_at', 'state', 'token_chain_id'])
         );
         $this->broadcastData['identifierCode'] = Arr::get($claim, 'identifierCode');
         $this->broadcastData['beamCode'] = $claim['beam']['code'];
