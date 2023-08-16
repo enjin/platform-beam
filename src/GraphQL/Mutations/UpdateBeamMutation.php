@@ -131,7 +131,7 @@ class UpdateBeamMutation extends Mutation
                     BeamType::TRANSFER_TOKEN == BeamType::getEnumCase(Arr::get($args, str_replace('tokenIds', 'type', $attribute)))
                         ? new TokensExistInCollection($beam?->collection_chain_id)
                         : new TokensDoNotExistInCollection($beam?->collection_chain_id),
-                    new TokensDoNotExistInBeam($beam?->collection_chain_id),
+                    new TokensDoNotExistInBeam($beam),
                 ];
             }),
             'tokens.*.tokenIdDataUpload' => Rule::forEach(function ($value, $attribute) use ($args, $beam) {
@@ -142,7 +142,7 @@ class UpdateBeamMutation extends Mutation
                     BeamType::TRANSFER_TOKEN == BeamType::getEnumCase(Arr::get($args, str_replace('tokenIdDataUpload', 'type', $attribute)))
                         ? new TokenUploadExistInCollection($beam?->collection_chain_id)
                         : new TokenUploadNotExistInCollection($beam?->collection_chain_id),
-                    new TokensDoNotExistInBeam($beam?->collection_chain_id),
+                    new TokensDoNotExistInBeam($beam),
                 ];
             }),
             'tokens.*.tokenQuantityPerClaim' => [

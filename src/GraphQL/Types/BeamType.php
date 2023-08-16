@@ -7,6 +7,7 @@ use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Services\BeamService;
+use Enjin\Platform\Beam\Support\ClaimProbabilities;
 use Enjin\Platform\GraphQL\Types\Pagination\ConnectionInput;
 use Enjin\Platform\Traits\HasSelectFields;
 use Illuminate\Pagination\Cursor;
@@ -88,6 +89,12 @@ class BeamType extends Type
                     ];
                 },
                 'selectable' => false,
+                'is_relation' => false,
+            ],
+            'probabilities' => [
+                'type' => GraphQL::type('Object'),
+                'description' => __('enjin-platform-beam::type.beam.field.probabilities'),
+                'resolve' => fn ($beam) => ClaimProbabilities::getProbabilities($beam->code)['probabilities'] ?? null,
                 'is_relation' => false,
             ],
             'claims' => [

@@ -11,6 +11,7 @@ enum PlatformBeamCache: string implements PlatformCacheable
     use EnumExtensions;
 
     case CLAIM_COUNT = 'claimCount';
+    case CLAIM_PROBABILITIES = 'claimProbabilities';
     case IDEMPOTENCY_KEY = 'idempotencyKey';
     case BATCH_PROCESS = 'batchProcessKey';
 

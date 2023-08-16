@@ -6,12 +6,13 @@ use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Enums\Substrate\TokenMintCapType;
 use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Database\Eloquent\Model;
 
 class TokensDoNotExistInBeam implements Rule
 {
     use IntegerRange;
 
-    public function __construct(protected ?string $collectionId)
+    public function __construct(protected ?Model $beam)
     {
     }
 
@@ -25,19 +26,19 @@ class TokensDoNotExistInBeam implements Rule
      */
     public function passes($attribute, $value)
     {
-        if ($this->collectionId) {
+        if ($this->beam) {
             $integers = collect($value)->filter(fn ($val) => false === $this->integerRange($val))->all();
             if ($integers) {
                 $exists = BeamClaim::whereIn('beam_claims.token_chain_id', $integers)
+                    ->join(
+                        'collections',
+                        fn ($join) => $join->on('collections.id', '=', 'beam_claims.collection_id')
+                            ->where('collections.collection_chain_id', $this->beam->collection_chain_id)
+                    )
                     ->leftJoin(
                         'tokens',
                         fn ($join) => $join->on('tokens.token_chain_id', '=', 'beam_claims.token_chain_id')
                             ->whereColumn('tokens.collection_id', 'beam_claims.collection_id')
-                    )
-                    ->join(
-                        'collections',
-                        fn ($join) => $join->on('collections.id', '=', 'beam_claims.collection_id')
-                            ->where('collections.collection_chain_id', $this->collectionId)
                     )
                     ->whereRaw("
                         (tokens.is_currency is false OR tokens.is_currency is NULL)
@@ -48,6 +49,7 @@ class TokensDoNotExistInBeam implements Rule
                             OR (tokens.cap='" . TokenMintCapType::SINGLE_MINT->name . "' AND tokens.supply = '1')
                         )
                     ")
+                    ->where('beam_claims.beam_id', $this->beam->id)
                     ->exists();
                 if ($exists) {
                     return false;
@@ -57,15 +59,15 @@ class TokensDoNotExistInBeam implements Rule
             foreach ($ranges as $range) {
                 [$from, $to] = $this->integerRange($range);
                 $exists = BeamClaim::whereBetween('beam_claims.token_chain_id', [(int) $from, (int) $to])
+                    ->join(
+                        'collections',
+                        fn ($join) => $join->on('collections.id', '=', 'beam_claims.collection_id')
+                            ->where('collections.collection_chain_id', $this->beam->collection_chain_id)
+                    )
                     ->leftJoin(
                         'tokens',
                         fn ($join) => $join->on('tokens.token_chain_id', '=', 'beam_claims.token_chain_id')
                             ->whereColumn('tokens.collection_id', 'beam_claims.collection_id')
-                    )
-                    ->join(
-                        'collections',
-                        fn ($join) => $join->on('collections.id', '=', 'beam_claims.collection_id')
-                            ->where('collections.collection_chain_id', $this->collectionId)
                     )
                     ->whereRaw("
                         (tokens.is_currency is false OR tokens.is_currency is NULL)
@@ -76,6 +78,7 @@ class TokensDoNotExistInBeam implements Rule
                             OR (tokens.cap='" . TokenMintCapType::SINGLE_MINT->name . "' AND tokens.supply = '1')
                         )
                     ")
+                    ->where('beam_claims.beam_id', $this->beam->id)
                     ->exists();
 
                 if ($exists) {
