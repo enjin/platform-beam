@@ -148,7 +148,10 @@ trait EagerLoadSelectFields
             ];
         }
 
-        foreach (BeamClaimType::getRelationFields($fieldKeys) as $relation) {
+        foreach ([
+            ...BeamClaimType::getRelationFields($fieldKeys),
+            ...($fields['code'] ? ['beam'] : []),
+        ] as $relation) {
             $with = array_merge(
                 $with,
                 static::getRelationQuery(
