@@ -150,7 +150,7 @@ trait EagerLoadSelectFields
 
         foreach ([
             ...BeamClaimType::getRelationFields($fieldKeys),
-            ...($fields['code'] ? ['beam'] : []),
+            ...(isset($fields['code']) ? ['beam'] : []),
         ] as $relation) {
             $with = array_merge(
                 $with,
