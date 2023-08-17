@@ -73,7 +73,7 @@ class BeamClaimType extends Type
             'code' => [
                 'type' => GraphQL::type('String!'),
                 'description' => __('enjin-platform-beam::type.beam_claim.field.code'),
-                'resolve' => fn ($claim) => $claim->singleUseCode,
+                'resolve' => fn ($claim) => $claim->code ? $claim->singleUseCode : '',
             ],
             'identifierCode' => [
                 'type' => GraphQL::type('String!'),
