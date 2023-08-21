@@ -37,11 +37,11 @@ class CreateBeamClaims implements ShouldQueue
 
             $this->chunk
                 ->pluck('beam_id', 'beam_id')
-                ->each(
-                    fn ($beamId) => event(
-                        new CreateBeamClaimsCompleted(Beam::select('id', 'code')->find($beamId)->toArray())
-                    )
-                );
+                ->each(function ($beamId) {
+                    if ($beam = Beam::select('id', 'code')->find($beamId)) {
+                        event(new CreateBeamClaimsCompleted($beam->toArray()));
+                    }
+                });
 
             unset($this->chunk);
         }
