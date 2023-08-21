@@ -151,7 +151,7 @@ class BeamClaim extends BaseModel
     public function singleUseCode(): Attribute
     {
         return Attribute::make(
-            get: fn () => encrypt(implode(':', [$this->code, $this->beam->code, $this->nonce]))
+            get: fn () => encrypt(implode(':', [$this->code, $this->beam?->code, $this->nonce]))
         );
     }
 

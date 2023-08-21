@@ -40,9 +40,8 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, gd, gmp, intl, json, mysql, readline, sodium, bcmath
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, gd, gmp, intl, json, mysql, readline, sodium, bcmath, pcov
           tools: composer:v2
-          coverage: xdebug
         env:
           COMPOSER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -67,7 +66,7 @@ jobs:
 
       - name: Execute tests
         run: |
-          XDEBUG_MODE=coverage ./vendor/bin/phpunit --colors=always --coverage-clover coverage.xml
+          php -d pcov.enabled=1 ./vendor/bin/phpunit --colors=always --coverage-clover coverage.xml
         env:
           DB_HOST: 127.0.0.1:${{ job.services.mysql.ports[3306] }}
           DB_DATABASE: platform
