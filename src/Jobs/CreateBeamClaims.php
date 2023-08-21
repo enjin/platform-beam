@@ -2,6 +2,8 @@
 
 namespace Enjin\Platform\Beam\Jobs;
 
+use Enjin\Platform\Beam\Events\CreateBeamClaimsCompleted;
+use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -32,6 +34,15 @@ class CreateBeamClaims implements ShouldQueue
         if ($this->chunk) {
             $timestamp = ['created_at' => $now = now(), 'updated_at' => $now];
             BeamClaim::insert($this->chunk->map(fn ($claim) => array_merge($claim, $timestamp))->toArray());
+
+            $this->chunk
+                ->pluck('beam_id', 'beam_id')
+                ->each(
+                    fn ($beamId) => event(
+                        new CreateBeamClaimsCompleted(Beam::select('id', 'code')->find($beamId)->toArray())
+                    )
+                );
+
             unset($this->chunk);
         }
     }
