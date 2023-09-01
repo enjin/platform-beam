@@ -156,6 +156,41 @@ class CreateBeamTest extends TestCaseGraphQL
     }
 
     /**
+     * Test creating beam token exist in beam.
+     */
+    public function test_it_will_fail_with_token_exist_in_beam(): void
+    {
+        $this->collection->update(['max_token_supply' => 1]);
+        $this->seedBeam(1, false, BeamType::TRANSFER_TOKEN);
+        $claim = $this->claims->first();
+        $claim->forceFill(['token_chain_id' => $this->token->token_chain_id])->save();
+        $response = $this->graphql(
+            $this->method,
+            array_merge(
+                $data = $this->generateBeamData(BeamType::TRANSFER_TOKEN),
+                ['tokens' => [['tokenIds' => [$claim->token_chain_id], 'type' => BeamType::TRANSFER_TOKEN->name]]]
+            ),
+            true
+        );
+        $this->assertArraySubset([
+            'tokens.0.tokenIds' => ['The tokens.0.tokenIds already exist in beam.'],
+        ], $response['error']);
+
+        $file = UploadedFile::fake()->createWithContent('tokens.txt', $this->token->token_chain_id);
+        $response = $this->graphql(
+            $this->method,
+            array_merge(
+                $data,
+                ['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::TRANSFER_TOKEN->name]]]
+            ),
+            true
+        );
+        $this->assertArraySubset([
+            'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload already exist in beam.'],
+        ], $response['error']);
+    }
+
+    /**
      * Test creating beam with max length attribute mint on demand.
      */
     public function test_it_will_fail_with_max_length_attribute_mint_on_demand(): void

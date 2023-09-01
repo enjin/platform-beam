@@ -14,6 +14,7 @@ use Enjin\Platform\Beam\Rules\TokensDoNotExistInBeam;
 use Enjin\Platform\Beam\Rules\TokensDoNotExistInCollection;
 use Enjin\Platform\Beam\Rules\TokensExistInCollection;
 use Enjin\Platform\Beam\Rules\TokenUploadExistInCollection;
+use Enjin\Platform\Beam\Rules\TokenUploadNotExistInBeam;
 use Enjin\Platform\Beam\Rules\TokenUploadNotExistInCollection;
 use Enjin\Platform\Beam\Rules\UniqueTokenIds;
 use Enjin\Platform\Beam\Services\BeamService;
@@ -142,7 +143,7 @@ class UpdateBeamMutation extends Mutation
                     BeamType::TRANSFER_TOKEN == BeamType::getEnumCase(Arr::get($args, str_replace('tokenIdDataUpload', 'type', $attribute)))
                         ? new TokenUploadExistInCollection($beam?->collection_chain_id)
                         : new TokenUploadNotExistInCollection($beam?->collection_chain_id),
-                    new TokensDoNotExistInBeam($beam),
+                    new TokenUploadNotExistInBeam($beam),
                 ];
             }),
             'tokens.*.tokenQuantityPerClaim' => [
