@@ -9,6 +9,7 @@ use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Models\Collection;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Support\Arr;
 
 class MaxTokenCount implements DataAwareRule, Rule
 {
@@ -42,7 +43,7 @@ class MaxTokenCount implements DataAwareRule, Rule
                     + collect($this->data['tokens'])
                         ->filter(fn ($token) => BeamType::getEnumCase($token['type']) == BeamType::MINT_ON_DEMAND)
                         ->reduce(function ($carry, $token) {
-                            return collect($token['tokenIds'])->reduce(function ($val, $tokenId) use ($token) {
+                            return collect(Arr::get($token, 'tokenIds'))->reduce(function ($val, $tokenId) use ($token) {
                                 $range = $this->integerRange($tokenId);
 
                                 return $val + (
