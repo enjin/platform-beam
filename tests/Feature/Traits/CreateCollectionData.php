@@ -5,6 +5,7 @@ namespace Enjin\Platform\Beam\Tests\Feature\Traits;
 use Enjin\Platform\Enums\Substrate\TokenMintCapType;
 use Enjin\Platform\Models\Collection;
 use Enjin\Platform\Models\Token;
+use Enjin\Platform\Models\TokenAccount;
 use Enjin\Platform\Models\Wallet;
 use Enjin\Platform\Support\Account;
 use Illuminate\Database\Eloquent\Model;
@@ -70,6 +71,13 @@ trait CreateCollectionData
             'mint_deposit' => (string) ($unitPrice * $supply),
             'minimum_balance' => '1',
             'attribute_count' => '0',
+        ]);
+
+        TokenAccount::create([
+            'collection_id' => $this->collection->id,
+            'token_id' => $this->token->id,
+            'wallet_id' => $this->wallet->id,
+            'balance' => 1,
         ]);
     }
 }
