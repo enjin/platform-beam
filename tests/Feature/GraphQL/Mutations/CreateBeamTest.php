@@ -32,7 +32,7 @@ class CreateBeamTest extends TestCaseGraphQL
      */
     public function test_it_can_create_beam_with_transfer_token(): void
     {
-        $this->genericTestCreateBeam(BeamType::TRANSFER_TOKEN, random_int(1, 20));
+        $this->genericTestCreateBeam(BeamType::TRANSFER_TOKEN, 1);
     }
 
     /**
@@ -152,6 +152,41 @@ class CreateBeamTest extends TestCaseGraphQL
         );
         $this->assertArraySubset([
             'tokens.0.tokenIds' => ['The tokens.0.tokenIds exists in the specified collection.'],
+        ], $response['error']);
+    }
+
+    /**
+     * Test creating beam token exist in beam.
+     */
+    public function test_it_will_fail_with_token_exist_in_beam(): void
+    {
+        $this->collection->update(['max_token_supply' => 1]);
+        $this->seedBeam(1, false, BeamType::TRANSFER_TOKEN);
+        $claim = $this->claims->first();
+        $claim->forceFill(['token_chain_id' => $this->token->token_chain_id])->save();
+        $response = $this->graphql(
+            $this->method,
+            array_merge(
+                $data = $this->generateBeamData(BeamType::TRANSFER_TOKEN),
+                ['tokens' => [['tokenIds' => [$claim->token_chain_id], 'type' => BeamType::TRANSFER_TOKEN->name]]]
+            ),
+            true
+        );
+        $this->assertArraySubset([
+            'tokens.0.tokenIds' => ['The tokens.0.tokenIds already exist in beam.'],
+        ], $response['error']);
+
+        $file = UploadedFile::fake()->createWithContent('tokens.txt', $this->token->token_chain_id);
+        $response = $this->graphql(
+            $this->method,
+            array_merge(
+                $data,
+                ['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::TRANSFER_TOKEN->name]]]
+            ),
+            true
+        );
+        $this->assertArraySubset([
+            'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload already exist in beam.'],
         ], $response['error']);
     }
 
@@ -346,6 +381,19 @@ class CreateBeamTest extends TestCaseGraphQL
             true
         );
         $this->assertArraySubset(['tokens.0.claimQuantity' => ['The token count exceeded the maximum limit of 0 for this collection.']], $response['error']);
+
+        $this->collection->update(['max_token_count' => 2]);
+        $response = $this->graphql(
+            $this->method,
+            $data = array_merge(
+                $this->generateBeamData(BeamType::MINT_ON_DEMAND, 1),
+                ['tokens' => [['tokenIds' => ['1'], 'type' => BeamType::MINT_ON_DEMAND->name]]]
+            )
+        );
+        $this->assertNotEmpty($response);
+
+        $response = $this->graphql($this->method, $data, true);
+        $this->assertArraySubset(['tokens.0.claimQuantity' => ['The token count exceeded the maximum limit of 2 for this collection.']], $response['error']);
     }
 
     /**
@@ -362,6 +410,19 @@ class CreateBeamTest extends TestCaseGraphQL
         );
         $this->assertArraySubset(
             ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for each token for this collection.']],
+            $response['error']
+        );
+
+        $this->collection->update(['max_token_supply' => 2]);
+        $response = $this->graphql(
+            $this->method,
+            $data = $this->generateBeamData(BeamType::TRANSFER_TOKEN, 1),
+        );
+        $this->assertNotEmpty($response);
+
+        $response = $this->graphql($this->method, $data, true);
+        $this->assertArraySubset(
+            ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim is invalid, the amount provided is bigger than the token account balance.']],
             $response['error']
         );
     }
