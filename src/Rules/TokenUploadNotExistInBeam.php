@@ -54,7 +54,6 @@ class TokenUploadNotExistInBeam implements Rule
             }
         }
 
-
         return true;
     }
 
