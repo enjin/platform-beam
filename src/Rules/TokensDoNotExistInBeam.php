@@ -54,14 +54,12 @@ class TokensDoNotExistInBeam implements DataAwareRule, Rule
      */
     public static function prepareStatement(?Model $beam, ?string $collectionId = null): Builder
     {
-        $collectionId = Arr::get($beam, 'collection_chain_id', $collectionId);
-
         return BeamClaim::whereHas('beam', fn ($query) => $query->where('end', '>', now()))
             ->join(
                 'collections',
                 fn ($join) => $join->on('collections.id', '=', 'beam_claims.collection_id')
                     ->when(
-                        $collectionId,
+                        $collectionId = Arr::get($beam, 'collection_chain_id', $collectionId),
                         fn ($query) => $query->where('collections.collection_chain_id', $collectionId)
                     )
             )->leftJoin(
