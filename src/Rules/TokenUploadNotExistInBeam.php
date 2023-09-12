@@ -2,14 +2,18 @@
 
 namespace Enjin\Platform\Beam\Rules;
 
+use Enjin\Platform\Beam\Rules\Traits\HasDataAwareRule;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
+use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use Illuminate\Support\LazyCollection;
 
-class TokenUploadNotExistInBeam implements Rule
+class TokenUploadNotExistInBeam implements DataAwareRule, Rule
 {
     use IntegerRange;
+    use HasDataAwareRule;
 
     public function __construct(protected ?Model $beam = null)
     {
@@ -37,7 +41,7 @@ class TokenUploadNotExistInBeam implements Rule
             fclose($handle);
         });
 
-        $prepare = TokensDoNotExistInBeam::prepareStatement($this->beam);
+        $prepare = TokensDoNotExistInBeam::prepareStatement($this->beam, Arr::get($this->data, 'collectionId'));
         foreach ($tokens->chunk(1000) as $tokenIds) {
             $integers = collect($tokenIds)->filter(fn ($val) => false === $this->integerRange($val))->all();
             if ($integers) {

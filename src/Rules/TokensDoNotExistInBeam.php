@@ -3,15 +3,19 @@
 namespace Enjin\Platform\Beam\Rules;
 
 use Enjin\Platform\Beam\Models\BeamClaim;
+use Enjin\Platform\Beam\Rules\Traits\HasDataAwareRule;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Enums\Substrate\TokenMintCapType;
+use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 
-class TokensDoNotExistInBeam implements Rule
+class TokensDoNotExistInBeam implements DataAwareRule, Rule
 {
     use IntegerRange;
+    use HasDataAwareRule;
 
     public function __construct(protected ?Model $beam = null)
     {
@@ -27,7 +31,7 @@ class TokensDoNotExistInBeam implements Rule
      */
     public function passes($attribute, $value)
     {
-        $prepare = static::prepareStatement($this->beam);
+        $prepare = static::prepareStatement($this->beam, Arr::get($this->data, 'collectionId'));
         $integers = collect($value)->filter(fn ($val) => false === $this->integerRange($val))->all();
         if ($integers) {
             if ($prepare->whereIn('beam_claims.token_chain_id', $integers)->exists()) {
@@ -48,15 +52,15 @@ class TokensDoNotExistInBeam implements Rule
     /**
      * Prepare the statement to check if the token ids exist in the beam.
      */
-    public static function prepareStatement(?Model $beam): Builder
+    public static function prepareStatement(?Model $beam, ?string $collectionId = null): Builder
     {
         return BeamClaim::whereHas('beam', fn ($query) => $query->where('end', '>', now()))
             ->join(
                 'collections',
                 fn ($join) => $join->on('collections.id', '=', 'beam_claims.collection_id')
                     ->when(
-                        $beam,
-                        fn ($query) => $query->where('collections.collection_chain_id', $beam->collection_chain_id)
+                        $collectionId = Arr::get($beam, 'collection_chain_id', $collectionId),
+                        fn ($query) => $query->where('collections.collection_chain_id', $collectionId)
                     )
             )->leftJoin(
                 'tokens',
