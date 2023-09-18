@@ -42,10 +42,12 @@ class UpdateClaimStatus implements ShouldQueue
                 BeamBatch::where('transaction_id', $event->broadcastData['id'])->update(['processed_at' => now()]);
                 foreach ($claims as $claim) {
                     $claim->state = $state;
+                    $data = [
+                        ...$claim->toArray(),
+                        'transactionHash' => $event->broadcastData['transactionHash'],
+                    ];
                     event(
-                        $state == ClaimStatus::COMPLETED->name
-                            ? new BeamClaimsComplete($claim->toArray())
-                            : new BeamClaimsFailed($claim->toArray())
+                        $state == ClaimStatus::COMPLETED->name ? new BeamClaimsComplete($data) : new BeamClaimsFailed($data)
                     );
                 }
             }
