@@ -11,6 +11,7 @@ use Enjin\Platform\Enums\Global\TransactionState;
 use Enjin\Platform\Enums\Substrate\SystemEventType;
 use Enjin\Platform\Events\PlatformBroadcastEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Arr;
 
 class UpdateClaimStatus implements ShouldQueue
 {
@@ -44,7 +45,7 @@ class UpdateClaimStatus implements ShouldQueue
                     $claim->state = $state;
                     $data = [
                         ...$claim->toArray(),
-                        'transactionHash' => $event->broadcastData['transactionHash'],
+                        ...Arr::only($event->broadcastData, ['transactionHash', 'transactionId']),
                     ];
                     event(
                         $state == ClaimStatus::COMPLETED->name ? new BeamClaimsComplete($data) : new BeamClaimsFailed($data)

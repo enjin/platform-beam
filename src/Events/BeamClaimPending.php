@@ -24,6 +24,7 @@ class BeamClaimPending extends PlatformBroadcastEvent
                 'identifierCode' => Arr::get($claim, 'identifierCode'),
                 'beamCode' => Arr::get($claim, 'beam.code'),
                 'transactionHash' => Arr::get($claim, 'transactionHash'),
+                'transactionId' => Arr::get($claim, 'transactionId'),
             ]
         );
 
