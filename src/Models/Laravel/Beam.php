@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Enjin\Platform\Beam\Database\Factories\BeamFactory;
 use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Services\BeamService;
+use Enjin\Platform\Beam\Support\ClaimProbabilities;
 use Enjin\Platform\Models\BaseModel;
 use Enjin\Platform\Models\Laravel\Collection;
 use Enjin\Platform\Support\BitMask;
@@ -139,6 +140,16 @@ class Beam extends BaseModel
     {
         return Attribute::make(
             get: fn () => Cache::get(BeamService::key($this->code), BeamService::claimsCountResolver($this->code))
+        );
+    }
+
+    /**
+     * Interact with the beam's claims remaining attribute.
+     */
+    protected function probabilities(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => ClaimProbabilities::getProbabilities($this->code)['probabilities'] ?? null
         );
     }
 

@@ -67,7 +67,7 @@
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": false,
+    "prefer-stable": true,
     "require-dev": {
         "dms/phpunit-arraysubset-asserts": "dev-master",
         "friendsofphp/php-cs-fixer": "^3.0",
