@@ -83,6 +83,10 @@ class TestCaseGraphQL extends BaseTestCase
             $data['error'] = $data['errors'][0]['message'];
         }
 
+        if ($expectError && !isset($data['error'])) {
+            throw new ExpectationFailedException('Test expected to yield an error, however returned successfully with the following: ' . json_encode($data));
+        }
+
         return $expectError ? $data : Arr::get($data['data'], $query);
     }
 

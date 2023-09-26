@@ -23,7 +23,7 @@
         "ext-bcmath": "*",
         "ext-json": "*",
         "ext-openssl": "*",
-        "enjin/platform-core": "*",
+        "enjin/platform-core": "dev-feature/pla-1081/authorizable-type-fields",
         "phrity/websocket": "^1.0",
         "rebing/graphql-laravel": "^9.0.0-rc1",
         "spatie/laravel-package-tools": "^1.0",
@@ -52,6 +52,7 @@
             "@php ./vendor/bin/testbench package:discover --ansi"
         ]
     },
+    "repositories": [],
     "config": {
         "optimize-autoloader": true,
         "sort-packages": true,
