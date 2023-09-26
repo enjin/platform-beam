@@ -96,7 +96,7 @@ class GetBeamsTest extends TestCaseGraphQL
         ]);
 
         $response = $this->graphql($this->method, [], true);
-        $this->assertEquals('Cannot query field "code" on type "BeamClaim".', $response['errors'][0]['message']);
+        $this->assertEquals('Cannot query field "code" on type "BeamClaim".', json_encode($response));
 
         config([
             'enjin-platform.auth' => null,
