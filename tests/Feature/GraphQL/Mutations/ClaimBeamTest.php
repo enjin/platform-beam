@@ -175,7 +175,7 @@ class ClaimBeamTest extends TestCaseGraphQL
     public function test_it_cannot_claim_beam_with_single_condition_that_fails(): void
     {
         PassesClaimConditions::addConditionalFunctions(function ($attribute, $code, $singleUse, $data) {
-            return CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'];
+            return CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'] ? true : 'Signature is not SR25519.';
         });
         $this->assertNotEmpty(PassesClaimConditions::getConditionalFunctions());
 
@@ -201,7 +201,7 @@ class ClaimBeamTest extends TestCaseGraphQL
 
         $this->assertNotEmpty($response);
 
-        $this->assertArraySubset(['code' => ['Not all the conditions to claim have been met.']], $response['error']);
+        $this->assertArraySubset(['code' => ['Signature is not SR25519.']], $response['error']);
 
         PassesClaimConditions::clearConditionalFunctions();
         $this->assertEmpty(PassesClaimConditions::getConditionalFunctions());
@@ -214,10 +214,10 @@ class ClaimBeamTest extends TestCaseGraphQL
     {
         $functions = collect([
             function ($attribute, $code, $singleUse, $data) {
-                return 'code' == $attribute;
+                return 'code' == $data[$attribute];
             },
             function ($attribute, $code, $singleUse, $data) {
-                return CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'];
+                return CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'] ? true : 'Signature is not SR25519.';
             },
         ]);
 
@@ -246,7 +246,10 @@ class ClaimBeamTest extends TestCaseGraphQL
 
         $this->assertNotEmpty($response);
 
-        $this->assertArraySubset(['code' => ['Not all the conditions to claim have been met.']], $response['error']);
+        $this->assertArraySubset(['code' => [
+            'A condition to claim has not been met.',
+            'Signature is not SR25519.',
+        ]], $response['error']);
 
         PassesClaimConditions::clearConditionalFunctions();
         $this->assertEmpty(PassesClaimConditions::getConditionalFunctions());
