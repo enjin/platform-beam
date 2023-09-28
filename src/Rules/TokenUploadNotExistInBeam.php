@@ -2,15 +2,16 @@
 
 namespace Enjin\Platform\Beam\Rules;
 
+use Closure;
 use Enjin\Platform\Beam\Rules\Traits\HasDataAwareRule;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Illuminate\Contracts\Validation\DataAwareRule;
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\LazyCollection;
 
-class TokenUploadNotExistInBeam implements DataAwareRule, Rule
+class TokenUploadNotExistInBeam implements DataAwareRule, ValidationRule
 {
     use IntegerRange;
     use HasDataAwareRule;
@@ -24,10 +25,11 @@ class TokenUploadNotExistInBeam implements DataAwareRule, Rule
      *
      * @param string $attribute
      * @param mixed  $value
+     * @param Closure $fail
      *
-     * @return bool
+     * @return void
      */
-    public function passes($attribute, $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $ids = collect();
         $tokens = LazyCollection::make(function () use ($value, $ids) {
@@ -46,19 +48,19 @@ class TokenUploadNotExistInBeam implements DataAwareRule, Rule
             $integers = collect($tokenIds)->filter(fn ($val) => false === $this->integerRange($val))->all();
             if ($integers) {
                 if ($prepare->whereIn('beam_claims.token_chain_id', $integers)->exists()) {
-                    return false;
+                    $fail($this->message());
+
+                    return;
                 }
             }
             $ranges = collect($tokenIds)->filter(fn ($val) => false !== $this->integerRange($val))->all();
             foreach ($ranges as $range) {
                 [$from, $to] = $this->integerRange($range);
                 if ($prepare->whereBetween('beam_claims.token_chain_id', [(int) $from, (int) $to])->exists()) {
-                    return false;
+                    $fail($this->message());
                 }
             }
         }
-
-        return true;
     }
 
     /**

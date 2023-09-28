@@ -2,12 +2,13 @@
 
 namespace Enjin\Platform\Beam\Rules;
 
+use Closure;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Models\Token;
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\LazyCollection;
 
-class TokenUploadNotExistInCollection implements Rule
+class TokenUploadNotExistInCollection implements ValidationRule
 {
     use IntegerRange;
 
@@ -20,10 +21,11 @@ class TokenUploadNotExistInCollection implements Rule
      *
      * @param string $attribute
      * @param mixed  $value
+     * @param Closure $fail
      *
-     * @return bool
+     * @return void
      */
-    public function passes($attribute, $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if ($this->collectionId && $value) {
             $ids = collect();
@@ -45,7 +47,9 @@ class TokenUploadNotExistInCollection implements Rule
                         ->whereHas('collection', fn ($query) => $query->where('collection_chain_id', $this->collectionId))
                         ->exists();
                     if ($exists) {
-                        return false;
+                        $fail($this->message());
+
+                        return;
                     }
                 }
 
@@ -56,13 +60,11 @@ class TokenUploadNotExistInCollection implements Rule
                         ->whereHas('collection', fn ($query) => $query->where('collection_chain_id', $this->collectionId))
                         ->exists();
                     if ($exists) {
-                        return false;
+                        $fail($this->message());
                     }
                 }
             }
         }
-
-        return true;
     }
 
     /**

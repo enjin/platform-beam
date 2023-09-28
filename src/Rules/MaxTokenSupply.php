@@ -2,6 +2,7 @@
 
 namespace Enjin\Platform\Beam\Rules;
 
+use Closure;
 use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Rules\Traits\HasDataAwareRule;
@@ -11,10 +12,10 @@ use Enjin\Platform\Models\TokenAccount;
 use Enjin\Platform\Models\Wallet;
 use Enjin\Platform\Support\Account;
 use Illuminate\Contracts\Validation\DataAwareRule;
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
 
-class MaxTokenSupply implements DataAwareRule, Rule
+class MaxTokenSupply implements DataAwareRule, ValidationRule
 {
     use HasDataAwareRule;
     use IntegerRange;
@@ -39,21 +40,36 @@ class MaxTokenSupply implements DataAwareRule, Rule
     }
 
     /**
+     * Get the validation error message.
+     *
+     * @return string
+     */
+    public function message()
+    {
+        return __($this->error, ['limit' => $this->limit]);
+    }
+
+    /**
      * Determine if the validation rule passes.
      *
      * @param string $attribute
      * @param mixed  $value
+     * @param Closure $fail
      *
-     * @return bool
+     * @return void
      */
-    public function passes($attribute, $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if ($this->collectionId
             && ($collection = Collection::firstWhere(['collection_chain_id' => $this->collectionId]))
             && !is_null($this->limit = $collection->max_token_supply)
         ) {
             if (Arr::get($this->data, str_replace('tokenQuantityPerClaim', 'type', $attribute)) == BeamType::MINT_ON_DEMAND->name) {
-                return $collection->max_token_supply >= $value;
+                if (!$collection->max_token_supply >= $value) {
+                    $fail($this->message());
+
+                    return;
+                }
             }
 
             $tokenIds = Arr::get($this->data, str_replace('tokenQuantityPerClaim', 'tokenIds', $attribute));
@@ -62,7 +78,7 @@ class MaxTokenSupply implements DataAwareRule, Rule
                 $wallet = Wallet::firstWhere(['public_key' => Account::daemonPublicKey()]);
                 $collection = Collection::firstWhere(['collection_chain_id' => $this->collectionId]);
                 if (!$wallet || !$collection) {
-                    return false;
+                    $fail($this->message());
                 }
                 $accounts = TokenAccount::join('tokens', 'tokens.id', '=', 'token_accounts.token_id')
                     ->where('token_accounts.wallet_id', $wallet->id)
@@ -85,7 +101,9 @@ class MaxTokenSupply implements DataAwareRule, Rule
                     if ((int) $account->balance < $value + Arr::get($claims, $account->token_chain_id, 0)) {
                         $this->error = 'enjin-platform::validation.max_token_balance';
 
-                        return false;
+                        $fail($this->message());
+
+                        return;
                     }
                 }
             }
@@ -95,7 +113,7 @@ class MaxTokenSupply implements DataAwareRule, Rule
                 $wallet = Wallet::firstWhere(['public_key' => Account::daemonPublicKey()]);
                 $collection = Collection::firstWhere(['collection_chain_id' => $this->collectionId]);
                 if (!$wallet || !$collection) {
-                    return false;
+                    $fail($this->message());
                 }
                 foreach ($ranges as $range) {
                     [$from, $to] = $this->integerRange($range);
@@ -120,23 +138,11 @@ class MaxTokenSupply implements DataAwareRule, Rule
                         if ((int) $account->balance < $value + Arr::get($claims, $account->token_chain_id, 0)) {
                             $this->error = 'enjin-platform::validation.max_token_balance';
 
-                            return false;
+                            $fail($this->message());
                         }
                     }
                 }
             }
         }
-
-        return true;
-    }
-
-    /**
-     * Get the validation error message.
-     *
-     * @return string
-     */
-    public function message()
-    {
-        return __($this->error, ['limit' => $this->limit]);
     }
 }

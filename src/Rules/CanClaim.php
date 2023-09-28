@@ -2,14 +2,15 @@
 
 namespace Enjin\Platform\Beam\Rules;
 
+use Closure;
 use Enjin\Platform\Beam\Rules\Traits\HasDataAwareRule;
 use Enjin\Platform\Beam\Services\BeamService;
 use Illuminate\Contracts\Validation\DataAwareRule;
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 
-class CanClaim implements DataAwareRule, Rule
+class CanClaim implements DataAwareRule, ValidationRule
 {
     use HasDataAwareRule;
 
@@ -25,25 +26,22 @@ class CanClaim implements DataAwareRule, Rule
      *
      * @param string $attribute
      * @param mixed  $value
+     * @param Closure $fail
      */
-    public function passes($attribute, $value): bool
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (!Arr::get($this->data, 'account')) {
-            return true;
+            return;
         }
 
         if ($this->singleUse) {
             $value = explode(':', decrypt($value), 3)[1];
         }
 
-        return ((int) Cache::get(BeamService::key($value), BeamService::claimsCountResolver($value))) > 0;
-    }
+        $passes = ((int) Cache::get(BeamService::key($value), BeamService::claimsCountResolver($value))) > 0;
 
-    /**
-     * Get the validation error message.
-     */
-    public function message(): string
-    {
-        return __('enjin-platform-beam::validation.can_claim');
+        if (!$passes) {
+            $fail(__('enjin-platform-beam::validation.can_claim'));
+        }
     }
 }
