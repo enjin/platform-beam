@@ -6,6 +6,7 @@ use Enjin\Platform\Beam\Models\BeamScan;
 use Enjin\Platform\Beam\Tests\Feature\GraphQL\TestCaseGraphQL;
 use Enjin\Platform\Beam\Tests\Feature\Traits\SeedBeamData;
 use Enjin\Platform\Providers\Faker\SubstrateProvider;
+use Illuminate\Support\Str;
 
 class GetBeamTest extends TestCaseGraphQL
 {
@@ -156,5 +157,20 @@ class GetBeamTest extends TestCaseGraphQL
         $response = $this->graphql($this->method, ['code' => fake()->text(2000)], true);
 
         $this->assertArraySubset(['code' => ['The code field must not be greater than 1024 characters.']], $response['error']);
+    }
+
+    public function test_it_hides_code_field_when_unauthenticated()
+    {
+        config([
+            'enjin-platform.auth' => 'basic_token',
+            'enjin-platform.auth_drivers.basic_token.token' => Str::random(),
+        ]);
+
+        $response = $this->graphql($this->method, ['code' => $this->beam->code], true);
+        $this->assertEquals('Cannot query field "code" on type "BeamClaim".', $response['error']);
+
+        config([
+            'enjin-platform.auth' => null,
+        ]);
     }
 }

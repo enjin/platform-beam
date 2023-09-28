@@ -3,12 +3,14 @@
 namespace Enjin\Platform\Beam\GraphQL\Types;
 
 use Enjin\Platform\Beam\Models\BeamClaim;
+use Enjin\Platform\GraphQL\Schemas\Traits\HasAuthorizableFields;
 use Enjin\Platform\Traits\HasSelectFields;
 use Rebing\GraphQL\Support\Facades\GraphQL;
 
 class BeamClaimType extends Type
 {
     use HasSelectFields;
+    use HasAuthorizableFields;
 
     /**
      * Get the type's attributes.
@@ -74,6 +76,7 @@ class BeamClaimType extends Type
                 'type' => GraphQL::type('String!'),
                 'description' => __('enjin-platform-beam::type.beam_claim.field.code'),
                 'resolve' => fn ($claim) => $claim->code ? $claim->singleUseCode : '',
+                'excludeFrom' => ['GetBeam', 'GetBeams'],
             ],
             'identifierCode' => [
                 'type' => GraphQL::type('String!'),
@@ -91,6 +94,7 @@ class BeamClaimType extends Type
                 },
                 'selectable' => false,
                 'is_relation' => false,
+                'excludeFrom' => ['GetBeam', 'GetBeams'],
             ],
         ];
     }

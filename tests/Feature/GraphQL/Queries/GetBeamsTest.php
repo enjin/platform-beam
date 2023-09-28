@@ -87,4 +87,19 @@ class GetBeamsTest extends TestCaseGraphQL
             'names.0' => ['The names.0 field must not be greater than 255 characters.'],
         ], $response['error']);
     }
+
+    public function test_it_hides_code_field_when_unauthenticated()
+    {
+        config([
+            'enjin-platform.auth' => 'basic_token',
+            'enjin-platform.auth_drivers.basic_token.token' => Str::random(),
+        ]);
+
+        $response = $this->graphql($this->method, [], true);
+        $this->assertEquals('Cannot query field "code" on type "BeamClaim".', $response['error']);
+
+        config([
+            'enjin-platform.auth' => null,
+        ]);
+    }
 }

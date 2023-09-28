@@ -69,7 +69,7 @@ trait EagerLoadSelectFields
         $fields = Arr::get($selections, $attribute, $selections);
         $select = array_filter([
             'id',
-            isset($fields['qr']) ? 'code' : null,
+            Arr::hasAny($fields, ['qr', 'probabilities', 'isClaimable']) ? 'code' : null,
             isset($fields['collection']) ? 'collection_chain_id' : null,
             ...(isset($fields['isClaimable']) ? ['start', 'end', 'flags_mask'] : []),
             ...BeamType::getSelectFields($fieldKeys = array_keys($fields)),
