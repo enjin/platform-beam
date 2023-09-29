@@ -21,7 +21,7 @@ class HasBeamFlag implements ValidationRule
      *
      * @param string $attribute
      * @param mixed  $value
-     * @param Closure $fail
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
      * @return void
      */
@@ -30,7 +30,7 @@ class HasBeamFlag implements ValidationRule
         $beam = Beam::whereCode($value)->first();
 
         if (!$beam || !$beam->hasFlag($this->flag)) {
-            $fail(__('enjin-platform-beam::validation.has_beam_flag'));
+            $fail('enjin-platform-beam::validation.has_beam_flag')->translate();
         }
     }
 }

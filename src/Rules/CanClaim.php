@@ -26,7 +26,9 @@ class CanClaim implements DataAwareRule, ValidationRule
      *
      * @param string $attribute
      * @param mixed  $value
-     * @param Closure $fail
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
+     *
+     * @return void
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
@@ -41,7 +43,7 @@ class CanClaim implements DataAwareRule, ValidationRule
         $passes = ((int) Cache::get(BeamService::key($value), BeamService::claimsCountResolver($value))) > 0;
 
         if (!$passes) {
-            $fail(__('enjin-platform-beam::validation.can_claim'));
+            $fail('enjin-platform-beam::validation.can_claim')->translate();
         }
     }
 }

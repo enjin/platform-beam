@@ -14,16 +14,16 @@ class SingleUseCodeExist implements ValidationRule
      *
      * @param string $attribute
      * @param mixed  $value
-     * @param Closure $fail
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
      * @return void
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (BeamService::isSingleUse($value) && null !== BeamClaim::withSingleUseCode($value)->claimable()->first()) {
+        if (BeamService::isSingleUse($value) && BeamClaim::withSingleUseCode($value)->claimable()->exists()) {
             return;
         }
 
-        $fail(__('enjin-platform-beam::validation.verify_signed_message'));
+        $fail('enjin-platform-beam::validation.verify_signed_message')->translate();
     }
 }

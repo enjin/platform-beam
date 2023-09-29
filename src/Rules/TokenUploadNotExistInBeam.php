@@ -25,7 +25,7 @@ class TokenUploadNotExistInBeam implements DataAwareRule, ValidationRule
      *
      * @param string $attribute
      * @param mixed  $value
-     * @param Closure $fail
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
      * @return void
      */
@@ -48,7 +48,7 @@ class TokenUploadNotExistInBeam implements DataAwareRule, ValidationRule
             $integers = collect($tokenIds)->filter(fn ($val) => false === $this->integerRange($val))->all();
             if ($integers) {
                 if ($prepare->whereIn('beam_claims.token_chain_id', $integers)->exists()) {
-                    $fail($this->message());
+                    $fail($this->message())->translate();
 
                     return;
                 }
@@ -57,7 +57,7 @@ class TokenUploadNotExistInBeam implements DataAwareRule, ValidationRule
             foreach ($ranges as $range) {
                 [$from, $to] = $this->integerRange($range);
                 if ($prepare->whereBetween('beam_claims.token_chain_id', [(int) $from, (int) $to])->exists()) {
-                    $fail($this->message());
+                    $fail($this->message())->translate();
                 }
             }
         }
@@ -70,6 +70,6 @@ class TokenUploadNotExistInBeam implements DataAwareRule, ValidationRule
      */
     public function message()
     {
-        return __('enjin-platform-beam::validation.tokens_doesnt_exist_in_beam');
+        return 'enjin-platform-beam::validation.tokens_doesnt_exist_in_beam';
     }
 }

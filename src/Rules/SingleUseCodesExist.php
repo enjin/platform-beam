@@ -11,7 +11,7 @@ class SingleUseCodesExist extends SingleUseCodeExist
      *
      * @param string $attribute
      * @param mixed  $value
-     * @param Closure $fail
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
      * @return void
      */

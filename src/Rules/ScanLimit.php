@@ -17,7 +17,7 @@ class ScanLimit implements DataAwareRule, ValidationRule
      *
      * @param string $attribute
      * @param mixed  $value
-     * @param Closure $fail
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
      * @return void
      */
@@ -30,7 +30,7 @@ class ScanLimit implements DataAwareRule, ValidationRule
                 ->hasCode($this->data['code'])
                 ->first()?->count)
         ) {
-            $fail(__('enjin-platform-beam::validation.scan_limit'));
+            $fail('enjin-platform-beam::validation.scan_limit')->translate();
         }
     }
 }

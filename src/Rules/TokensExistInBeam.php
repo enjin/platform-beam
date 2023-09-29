@@ -19,7 +19,7 @@ class TokensExistInBeam implements DataAwareRule, ValidationRule
      *
      * @param string $attribute
      * @param mixed  $value
-     * @param Closure $fail
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
      * @return void
      */
@@ -34,7 +34,7 @@ class TokensExistInBeam implements DataAwareRule, ValidationRule
                     ->whereHas('beam', fn ($query) => $query->where('code', $code))
                     ->count();
                 if ($count != count($integers)) {
-                    $fail($this->message());
+                    $fail($this->message())->translate();
 
                     return;
                 }
@@ -48,7 +48,7 @@ class TokensExistInBeam implements DataAwareRule, ValidationRule
                     ->whereHas('beam', fn ($query) => $query->where('code', $code))
                     ->count();
                 if ($count !== ($to - $from) + 1) {
-                    $fail($this->message());
+                    $fail($this->message())->translate();
                 }
             }
         }
@@ -61,6 +61,6 @@ class TokensExistInBeam implements DataAwareRule, ValidationRule
      */
     public function message()
     {
-        return __('enjin-platform-beam::validation.tokens_exist_in_beam');
+        return 'enjin-platform-beam::validation.tokens_exist_in_beam';
     }
 }

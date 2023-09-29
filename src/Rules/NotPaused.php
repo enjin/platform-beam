@@ -18,7 +18,7 @@ class NotPaused implements ValidationRule
      *
      * @param string $attribute
      * @param mixed  $value
-     * @param Closure $fail
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
      * @return void
      */
@@ -26,7 +26,7 @@ class NotPaused implements ValidationRule
     {
         if ($beam = resolve(BeamService::class)->findByCode($this->code ?: $value)) {
             if ($beam->hasFlag(BeamFlag::PAUSED)) {
-                $fail(__('enjin-platform-beam::validation.is_paused'));
+                $fail('enjin-platform-beam::validation.is_paused')->translate();
             }
         }
     }

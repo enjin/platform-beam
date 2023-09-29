@@ -22,14 +22,17 @@ class VerifySignedMessage implements DataAwareRule, ValidationRule
      *
      * @param string $attribute
      * @param mixed  $value
-     * @param Closure $fail
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
      * @return void
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (!$publicKey = SS58Address::getPublicKey($this->data['account'])) {
-            $fail(__('enjin-platform::validation.valid_substrate_account', ['attribute' => 'account']));
+            $fail('enjin-platform::validation.valid_substrate_account')
+                ->translate([
+                    'attribute' => 'account',
+                ]);
 
             return;
         }
@@ -39,7 +42,7 @@ class VerifySignedMessage implements DataAwareRule, ValidationRule
         }
 
         if (!$scan = BeamScan::hasCode($this->data['code'])->firstWhere(['wallet_public_key' => $publicKey])) {
-            $fail(__('enjin-platform-beam::validation.beam_scan_not_found'));
+            $fail('enjin-platform-beam::validation.beam_scan_not_found')->translate();
 
             return;
         }
@@ -58,7 +61,7 @@ class VerifySignedMessage implements DataAwareRule, ValidationRule
         );
 
         if (!$passes) {
-            $fail(__('enjin-platform-beam::validation.verify_signed_message'));
+            $fail('enjin-platform-beam::validation.verify_signed_message')->translate();
         }
     }
 }

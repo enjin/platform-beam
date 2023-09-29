@@ -28,9 +28,10 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
     protected $limit;
 
     /**
-     * The error message.
+     * The error messages.
      */
-    protected string $error = 'enjin-platform-beam::validation.max_token_supply';
+    protected string $maxTokenSupplyMessage = 'enjin-platform-beam::validation.max_token_supply';
+    protected string $maxTokenBalanceMessage = 'enjin-platform::validation.max_token_balance';
 
     /**
      * Create instance of rule.
@@ -40,21 +41,11 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
     }
 
     /**
-     * Get the validation error message.
-     *
-     * @return string
-     */
-    public function message()
-    {
-        return __($this->error, ['limit' => $this->limit]);
-    }
-
-    /**
      * Determine if the validation rule passes.
      *
      * @param string $attribute
      * @param mixed  $value
-     * @param Closure $fail
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
      * @return void
      */
@@ -66,7 +57,10 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
         ) {
             if (Arr::get($this->data, str_replace('tokenQuantityPerClaim', 'type', $attribute)) == BeamType::MINT_ON_DEMAND->name) {
                 if (!$collection->max_token_supply >= $value) {
-                    $fail($this->message());
+                    $fail($this->maxTokenSupplyMessage)
+                        ->translate([
+                            'limit' => $this->limit,
+                        ]);
 
                     return;
                 }
@@ -78,7 +72,12 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
                 $wallet = Wallet::firstWhere(['public_key' => Account::daemonPublicKey()]);
                 $collection = Collection::firstWhere(['collection_chain_id' => $this->collectionId]);
                 if (!$wallet || !$collection) {
-                    $fail($this->message());
+                    $fail($this->maxTokenSupplyMessage)
+                        ->translate([
+                            'limit' => $this->limit,
+                        ]);
+
+                    return;
                 }
                 $accounts = TokenAccount::join('tokens', 'tokens.id', '=', 'token_accounts.token_id')
                     ->where('token_accounts.wallet_id', $wallet->id)
@@ -99,9 +98,7 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
                     ->pluck('quantity', 'token_chain_id');
                 foreach ($accounts as $account) {
                     if ((int) $account->balance < $value + Arr::get($claims, $account->token_chain_id, 0)) {
-                        $this->error = 'enjin-platform::validation.max_token_balance';
-
-                        $fail($this->message());
+                        $fail($this->maxTokenBalanceMessage)->translate();
 
                         return;
                     }
@@ -113,7 +110,12 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
                 $wallet = Wallet::firstWhere(['public_key' => Account::daemonPublicKey()]);
                 $collection = Collection::firstWhere(['collection_chain_id' => $this->collectionId]);
                 if (!$wallet || !$collection) {
-                    $fail($this->message());
+                    $fail($this->maxTokenSupplyMessage)
+                        ->translate([
+                            'limit' => $this->limit,
+                        ]);
+
+                    return;
                 }
                 foreach ($ranges as $range) {
                     [$from, $to] = $this->integerRange($range);
@@ -136,9 +138,7 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
                         ->pluck('quantity', 'token_chain_id');
                     foreach ($accounts as $account) {
                         if ((int) $account->balance < $value + Arr::get($claims, $account->token_chain_id, 0)) {
-                            $this->error = 'enjin-platform::validation.max_token_balance';
-
-                            $fail($this->message());
+                            $fail($this->maxTokenBalanceMessage)->translate();
                         }
                     }
                 }

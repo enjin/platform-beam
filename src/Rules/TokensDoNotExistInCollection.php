@@ -20,7 +20,7 @@ class TokensDoNotExistInCollection implements ValidationRule
      *
      * @param string $attribute
      * @param mixed  $value
-     * @param Closure $fail
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
      * @return void
      */
@@ -33,7 +33,7 @@ class TokensDoNotExistInCollection implements ValidationRule
                     ->whereHas('collection', fn ($query) => $query->where('collection_chain_id', $this->collectionId))
                     ->exists();
                 if ($exists) {
-                    $fail($this->message());
+                    $fail($this->message())->translate();
 
                     return;
                 }
@@ -46,7 +46,7 @@ class TokensDoNotExistInCollection implements ValidationRule
                     ->exists();
 
                 if ($exists) {
-                    $fail($this->message());
+                    $fail($this->message())->translate();
                 }
             }
         }
@@ -59,6 +59,6 @@ class TokensDoNotExistInCollection implements ValidationRule
      */
     public function message()
     {
-        return __('enjin-platform-beam::validation.tokens_doesnt_exist_in_collection');
+        return 'enjin-platform-beam::validation.tokens_doesnt_exist_in_collection';
     }
 }

@@ -19,7 +19,7 @@ class IsEndDateValid implements DataAwareRule, ValidationRule
      *
      * @param string $attribute
      * @param mixed  $value
-     * @param Closure $fail
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
      * @return void
      */
@@ -36,7 +36,10 @@ class IsEndDateValid implements DataAwareRule, ValidationRule
         if ($beam = resolve(BeamService::class)->findByCode($this->data['code'])) {
             $startDate = Carbon::parse($beam->start);
             if ($date->lte($startDate)) {
-                $fail(__('enjin-platform-beam::validation.end_date_greater_than', ['value' => $startDate->toDateTimeString()]));
+                $fail('enjin-platform-beam::validation.end_date_greater_than')
+                    ->translate([
+                        'value' => $startDate->toDateTimeString(),
+                    ]);
             }
         }
     }

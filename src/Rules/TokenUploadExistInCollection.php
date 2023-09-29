@@ -27,7 +27,7 @@ class TokenUploadExistInCollection implements ValidationRule
      *
      * @param string $attribute
      * @param mixed  $value
-     * @param Closure $fail
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
      * @return void
      */
@@ -53,7 +53,7 @@ class TokenUploadExistInCollection implements ValidationRule
                         ->whereHas('collection', fn ($query) => $query->where('collection_chain_id', $this->collectionId))
                         ->count();
                     if ($count !== count($integers)) {
-                        $fail($this->message());
+                        $fail($this->message())->translate();
 
                         return;
                     }
@@ -66,7 +66,7 @@ class TokenUploadExistInCollection implements ValidationRule
                         ->whereHas('collection', fn ($query) => $query->where('collection_chain_id', $this->collectionId))
                         ->count();
                     if ($count !== ($to - $from) + 1) {
-                        $fail($this->message());
+                        $fail($this->message())->translate();
                     }
                 }
             }
@@ -80,6 +80,6 @@ class TokenUploadExistInCollection implements ValidationRule
      */
     public function message()
     {
-        return __('enjin-platform-beam::validation.tokens_exist_in_collection');
+        return 'enjin-platform-beam::validation.tokens_exist_in_collection';
     }
 }

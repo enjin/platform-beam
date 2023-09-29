@@ -19,9 +19,9 @@ class IsStartDateValid implements DataAwareRule, ValidationRule
      *
      * @param string $attribute
      * @param mixed  $value
-     * @param Closure $fail
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
-     * @return bool
+     * @return void
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
@@ -41,7 +41,10 @@ class IsStartDateValid implements DataAwareRule, ValidationRule
             }
             $endDate = Carbon::parse($beam->end);
             if (Carbon::parse($value)->gte($endDate)) {
-                $fail(__('enjin-platform-beam::validation.start_date_less_than', ['value' => $endDate->toDateTimeString()]));
+                $fail('enjin-platform-beam::validation.start_date_less_than')
+                    ->translate([
+                        'value' => $endDate->toDateTimeString(),
+                    ]);
             }
         }
     }

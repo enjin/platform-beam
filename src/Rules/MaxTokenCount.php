@@ -33,7 +33,7 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
      *
      * @param string $attribute
      * @param mixed  $value
-     * @param Closure $fail
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
      * @return void
      */
@@ -62,7 +62,10 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
                         ->count();
 
                 if (!$passes) {
-                    $fail(__('enjin-platform-beam::validation.max_token_count', ['limit' => $this->limit]));
+                    $fail('enjin-platform-beam::validation.max_token_count')
+                        ->translate([
+                            'limit' => $this->limit,
+                        ]);
                 }
             }
         }
