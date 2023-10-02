@@ -5,7 +5,7 @@ namespace Enjin\Platform\Beam\Rules;
 use Closure;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
-use Enjin\Platform\Beam\Rules\Traits\HasDataAwareRule;
+use Enjin\Platform\Rules\Traits\HasDataAwareRule;
 use Enjin\Platform\Support\SS58Address;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;

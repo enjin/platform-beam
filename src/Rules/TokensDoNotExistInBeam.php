@@ -4,9 +4,9 @@ namespace Enjin\Platform\Beam\Rules;
 
 use Closure;
 use Enjin\Platform\Beam\Models\BeamClaim;
-use Enjin\Platform\Beam\Rules\Traits\HasDataAwareRule;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Enums\Substrate\TokenMintCapType;
+use Enjin\Platform\Rules\Traits\HasDataAwareRule;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Database\Eloquent\Builder;
