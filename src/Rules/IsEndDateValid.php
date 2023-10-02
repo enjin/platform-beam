@@ -28,7 +28,7 @@ class IsEndDateValid implements DataAwareRule, ValidationRule
         $date = Carbon::parse($value);
         $start = Arr::get($this->data, 'start');
         if ($start && $date->lte(Carbon::parse($start))) {
-            $fail(__('enjin-platform-beam::validation.end_date_after_start'));
+            $fail('enjin-platform-beam::validation.end_date_after_start')->translate();
 
             return;
         }

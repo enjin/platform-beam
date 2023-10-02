@@ -27,7 +27,7 @@ class IsStartDateValid implements DataAwareRule, ValidationRule
     {
         if ($end = Arr::get($this->data, 'end')) {
             if (Carbon::parse($value)->gte(Carbon::parse($end))) {
-                $fail(__('enjin-platform-beam::validation.start_date_after_end'));
+                $fail('enjin-platform-beam::validation.start_date_after_end')->translate();
 
                 return;
             }
@@ -35,7 +35,7 @@ class IsStartDateValid implements DataAwareRule, ValidationRule
 
         if ($beam = resolve(BeamService::class)->findByCode($this->data['code'])) {
             if (Carbon::parse($beam->start)->isPast()) {
-                $fail(__('enjin-platform-beam::validation.start_date_has_passed'));
+                $fail('enjin-platform-beam::validation.start_date_has_passed')->translate();
 
                 return;
             }
