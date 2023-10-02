@@ -2,19 +2,20 @@
 
 namespace Enjin\Platform\Beam\Rules;
 
+use Closure;
 use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Models\BeamClaim;
-use Enjin\Platform\Beam\Rules\Traits\HasDataAwareRule;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Models\Collection;
 use Enjin\Platform\Models\TokenAccount;
 use Enjin\Platform\Models\Wallet;
+use Enjin\Platform\Rules\Traits\HasDataAwareRule;
 use Enjin\Platform\Support\Account;
 use Illuminate\Contracts\Validation\DataAwareRule;
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
 
-class MaxTokenSupply implements DataAwareRule, Rule
+class MaxTokenSupply implements DataAwareRule, ValidationRule
 {
     use HasDataAwareRule;
     use IntegerRange;
@@ -27,9 +28,10 @@ class MaxTokenSupply implements DataAwareRule, Rule
     protected $limit;
 
     /**
-     * The error message.
+     * The error messages.
      */
-    protected string $error = 'enjin-platform-beam::validation.max_token_supply';
+    protected string $maxTokenSupplyMessage = 'enjin-platform-beam::validation.max_token_supply';
+    protected string $maxTokenBalanceMessage = 'enjin-platform::validation.max_token_balance';
 
     /**
      * Create instance of rule.
@@ -43,17 +45,25 @@ class MaxTokenSupply implements DataAwareRule, Rule
      *
      * @param string $attribute
      * @param mixed  $value
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
-     * @return bool
+     * @return void
      */
-    public function passes($attribute, $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if ($this->collectionId
             && ($collection = Collection::firstWhere(['collection_chain_id' => $this->collectionId]))
             && !is_null($this->limit = $collection->max_token_supply)
         ) {
             if (Arr::get($this->data, str_replace('tokenQuantityPerClaim', 'type', $attribute)) == BeamType::MINT_ON_DEMAND->name) {
-                return $collection->max_token_supply >= $value;
+                if (!$collection->max_token_supply >= $value) {
+                    $fail($this->maxTokenSupplyMessage)
+                        ->translate([
+                            'limit' => $this->limit,
+                        ]);
+
+                    return;
+                }
             }
 
             $tokenIds = Arr::get($this->data, str_replace('tokenQuantityPerClaim', 'tokenIds', $attribute));
@@ -62,7 +72,12 @@ class MaxTokenSupply implements DataAwareRule, Rule
                 $wallet = Wallet::firstWhere(['public_key' => Account::daemonPublicKey()]);
                 $collection = Collection::firstWhere(['collection_chain_id' => $this->collectionId]);
                 if (!$wallet || !$collection) {
-                    return false;
+                    $fail($this->maxTokenSupplyMessage)
+                        ->translate([
+                            'limit' => $this->limit,
+                        ]);
+
+                    return;
                 }
                 $accounts = TokenAccount::join('tokens', 'tokens.id', '=', 'token_accounts.token_id')
                     ->where('token_accounts.wallet_id', $wallet->id)
@@ -83,9 +98,9 @@ class MaxTokenSupply implements DataAwareRule, Rule
                     ->pluck('quantity', 'token_chain_id');
                 foreach ($accounts as $account) {
                     if ((int) $account->balance < $value + Arr::get($claims, $account->token_chain_id, 0)) {
-                        $this->error = 'enjin-platform::validation.max_token_balance';
+                        $fail($this->maxTokenBalanceMessage)->translate();
 
-                        return false;
+                        return;
                     }
                 }
             }
@@ -95,7 +110,12 @@ class MaxTokenSupply implements DataAwareRule, Rule
                 $wallet = Wallet::firstWhere(['public_key' => Account::daemonPublicKey()]);
                 $collection = Collection::firstWhere(['collection_chain_id' => $this->collectionId]);
                 if (!$wallet || !$collection) {
-                    return false;
+                    $fail($this->maxTokenSupplyMessage)
+                        ->translate([
+                            'limit' => $this->limit,
+                        ]);
+
+                    return;
                 }
                 foreach ($ranges as $range) {
                     [$from, $to] = $this->integerRange($range);
@@ -118,25 +138,11 @@ class MaxTokenSupply implements DataAwareRule, Rule
                         ->pluck('quantity', 'token_chain_id');
                     foreach ($accounts as $account) {
                         if ((int) $account->balance < $value + Arr::get($claims, $account->token_chain_id, 0)) {
-                            $this->error = 'enjin-platform::validation.max_token_balance';
-
-                            return false;
+                            $fail($this->maxTokenBalanceMessage)->translate();
                         }
                     }
                 }
             }
         }
-
-        return true;
-    }
-
-    /**
-     * Get the validation error message.
-     *
-     * @return string
-     */
-    public function message()
-    {
-        return __($this->error, ['limit' => $this->limit]);
     }
 }

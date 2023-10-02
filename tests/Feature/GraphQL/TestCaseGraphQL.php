@@ -67,9 +67,16 @@ class TestCaseGraphQL extends BaseTestCase
                 $appendErrors = "\n\n" . $this->formatSafeTrace($data['errors'][0]['trace']);
             }
 
+            $validationMessages = collect($result->errors)->map(function ($error) {
+                if ('validation' == $error->getMessage()) {
+                    return $error->getPrevious()->getValidator()->getMessageBag()->getMessages();
+                }
+            })->all();
+
             $assertMessage = "Probably unexpected error in GraphQL response:\n"
                 . var_export($data, true)
-                . $appendErrors;
+                . $appendErrors . "\n\n"
+                . "Validation messages:\n" . json_encode($validationMessages);
         }
         unset($data['errors'][0]['trace']);
 

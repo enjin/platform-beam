@@ -2,11 +2,12 @@
 
 namespace Enjin\Platform\Beam\Rules;
 
+use Closure;
 use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Services\BeamService;
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class NotPaused implements Rule
+class NotPaused implements ValidationRule
 {
     public function __construct(protected ?string $code = null)
     {
@@ -14,23 +15,19 @@ class NotPaused implements Rule
 
     /**
      * Determine if the validation rule passes.
+     *
+     * @param string $attribute
+     * @param mixed  $value
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
+     *
+     * @return void
      */
-    public function passes(mixed $attribute, mixed $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if ($beam = resolve(BeamService::class)->findByCode($this->code ?: $value)) {
             if ($beam->hasFlag(BeamFlag::PAUSED)) {
-                return false;
+                $fail('enjin-platform-beam::validation.is_paused')->translate();
             }
         }
-
-        return true;
-    }
-
-    /**
-     * Get the validation error message.
-     */
-    public function message(): array|string
-    {
-        return __('enjin-platform-beam::validation.is_paused');
     }
 }

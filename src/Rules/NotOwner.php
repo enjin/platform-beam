@@ -5,7 +5,7 @@ namespace Enjin\Platform\Beam\Rules;
 use Closure;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
-use Enjin\Platform\Beam\Rules\Traits\HasDataAwareRule;
+use Enjin\Platform\Rules\Traits\HasDataAwareRule;
 use Enjin\Platform\Support\SS58Address;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -20,9 +20,13 @@ class NotOwner implements DataAwareRule, ValidationRule
     }
 
     /**
-     * Run the validation rule.
+     * Determine if the validation rule passes.
      *
-     * @param  \Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
+     * @param string $attribute
+     * @param mixed  $value
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
+     *
+     * @return void
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
@@ -34,7 +38,7 @@ class NotOwner implements DataAwareRule, ValidationRule
                    ->first()
                : Beam::with('collection.owner')->where('code', $code)->first();
             if ($beam?->collection?->owner && SS58Address::isSameAddress($value, $beam?->collection?->owner?->public_key)) {
-                $fail(__('enjin-platform-beam::validation.not_owner'));
+                $fail('enjin-platform-beam::validation.not_owner')->translate();
             }
         }
     }

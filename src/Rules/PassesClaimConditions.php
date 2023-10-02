@@ -3,6 +3,7 @@
 namespace Enjin\Platform\Beam\Rules;
 
 use Closure;
+use Enjin\Platform\Rules\Traits\HasDataAwareRule;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
@@ -11,9 +12,9 @@ use Laravel\SerializableClosure\Support\ReflectionClosure;
 
 class PassesClaimConditions implements DataAwareRule, ValidationRule
 {
-    protected static array $functions = [];
+    use HasDataAwareRule;
 
-    protected array $data = [];
+    protected static array $functions = [];
 
     /**
      * Create new rule instance.
@@ -68,26 +69,20 @@ class PassesClaimConditions implements DataAwareRule, ValidationRule
     }
 
     /**
-     * Get the validation error message.
+     * Determine if the validation rule passes.
+     *
+     * @param string $attribute
+     * @param mixed  $value
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
+     *
+     * @return void
      */
-    public function message()
-    {
-        return __('enjin-platform-beam::validation.passes_conditions');
-    }
-
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $conditions = collect(static::$functions);
 
         if (!$conditions->every(fn ($function) => $function($attribute, $value, $this->singleUse, $this->data))) {
-            $fail(__('enjin-platform-beam::validation.passes_conditions'));
+            $fail('enjin-platform-beam::validation.passes_conditions')->translate();
         }
-    }
-
-    public function setData(array $data)
-    {
-        $this->data = $data;
-
-        return $this;
     }
 }

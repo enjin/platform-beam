@@ -3,63 +3,49 @@
 namespace Enjin\Platform\Beam\Rules;
 
 use Carbon\Carbon;
-use Enjin\Platform\Beam\Rules\Traits\HasDataAwareRule;
+use Closure;
 use Enjin\Platform\Beam\Services\BeamService;
+use Enjin\Platform\Rules\Traits\HasDataAwareRule;
 use Illuminate\Contracts\Validation\DataAwareRule;
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
 
-class IsStartDateValid implements DataAwareRule, Rule
+class IsStartDateValid implements DataAwareRule, ValidationRule
 {
     use HasDataAwareRule;
-
-    /**
-     * The error message.
-     */
-    protected string $message;
 
     /**
      * Determine if the validation rule passes.
      *
      * @param string $attribute
      * @param mixed  $value
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
-     * @return bool
+     * @return void
      */
-    public function passes($attribute, $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if ($end = Arr::get($this->data, 'end')) {
             if (Carbon::parse($value)->gte(Carbon::parse($end))) {
-                $this->message = __('enjin-platform-beam::validation.start_date_after_end');
+                $fail('enjin-platform-beam::validation.start_date_after_end')->translate();
 
-                return false;
+                return;
             }
         }
 
         if ($beam = resolve(BeamService::class)->findByCode($this->data['code'])) {
             if (Carbon::parse($beam->start)->isPast()) {
-                $this->message = __('enjin-platform-beam::validation.start_date_has_passed');
+                $fail('enjin-platform-beam::validation.start_date_has_passed')->translate();
 
-                return false;
+                return;
             }
             $endDate = Carbon::parse($beam->end);
             if (Carbon::parse($value)->gte($endDate)) {
-                $this->message = __('enjin-platform-beam::validation.start_date_less_than', ['value' => $endDate->toDateTimeString()]);
-
-                return false;
+                $fail('enjin-platform-beam::validation.start_date_less_than')
+                    ->translate([
+                        'value' => $endDate->toDateTimeString(),
+                    ]);
             }
         }
-
-        return true;
-    }
-
-    /**
-     * Get the validation error message.
-     *
-     * @return string
-     */
-    public function message()
-    {
-        return $this->message;
     }
 }

@@ -2,39 +2,39 @@
 
 namespace Enjin\Platform\Beam\Rules;
 
+use Closure;
 use Enjin\BlockchainTools\HexConverter;
 use Enjin\Platform\Beam\Models\BeamScan;
-use Enjin\Platform\Beam\Rules\Traits\HasDataAwareRule;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Enums\Substrate\CryptoSignatureType;
+use Enjin\Platform\Rules\Traits\HasDataAwareRule;
 use Enjin\Platform\Services\Blockchain\Interfaces\BlockchainServiceInterface;
 use Enjin\Platform\Support\SS58Address;
 use Illuminate\Contracts\Validation\DataAwareRule;
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class VerifySignedMessage implements DataAwareRule, Rule
+class VerifySignedMessage implements DataAwareRule, ValidationRule
 {
     use HasDataAwareRule;
-
-    /**
-     * The error message.
-     */
-    protected string $message;
 
     /**
      * Determine if the validation rule passes.
      *
      * @param string $attribute
      * @param mixed  $value
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
-     * @return bool
+     * @return void
      */
-    public function passes($attribute, $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if (!$publicKey = SS58Address::getPublicKey($this->data['account'])) {
-            $this->message = __('enjin-platform::validation.valid_substrate_account', ['attribute' => 'account']);
+            $fail('enjin-platform::validation.valid_substrate_account')
+                ->translate([
+                    'attribute' => 'account',
+                ]);
 
-            return false;
+            return;
         }
 
         if (BeamService::isSingleUse($this->data['code'])) {
@@ -42,33 +42,26 @@ class VerifySignedMessage implements DataAwareRule, Rule
         }
 
         if (!$scan = BeamScan::hasCode($this->data['code'])->firstWhere(['wallet_public_key' => $publicKey])) {
-            $this->message = __('enjin-platform-beam::validation.beam_scan_not_found');
+            $fail('enjin-platform-beam::validation.beam_scan_not_found')->translate();
 
-            return false;
+            return;
         }
 
-        $this->message = __('enjin-platform-beam::validation.verify_signed_message');
         $type = $this->data['cryptoSignatureType'] ?? CryptoSignatureType::SR25519->name;
         $message = $scan->message;
         if ($type == CryptoSignatureType::ED25519->name) {
             $message = HexConverter::stringToHex($message);
         }
 
-        return resolve(BlockchainServiceInterface::class)->verifyMessage(
+        $passes = resolve(BlockchainServiceInterface::class)->verifyMessage(
             $message,
             $value,
             $scan->wallet_public_key,
             $type
         );
-    }
 
-    /**
-     * Get the validation error message.
-     *
-     * @return string
-     */
-    public function message()
-    {
-        return $this->message;
+        if (!$passes) {
+            $fail('enjin-platform-beam::validation.verify_signed_message')->translate();
+        }
     }
 }

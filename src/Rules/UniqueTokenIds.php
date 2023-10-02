@@ -10,6 +10,15 @@ class UniqueTokenIds implements ValidationRule
 {
     use IntegerRange;
 
+    /**
+     * Determine if the validation rule passes.
+     *
+     * @param string $attribute
+     * @param mixed  $value
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
+     *
+     * @return void
+     */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $tokenIds = [];
@@ -21,7 +30,7 @@ class UniqueTokenIds implements ValidationRule
 
         foreach ($tokens->all() as $tokenId) {
             if ($this->tokenIdExists($tokenIds, $tokenId)) {
-                $fail(__('enjin-platform-beam::validation.duplicate_token_ids'));
+                $fail('enjin-platform-beam::validation.duplicate_token_ids')->translate();
 
                 return;
             }

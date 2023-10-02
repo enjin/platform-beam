@@ -2,11 +2,12 @@
 
 namespace Enjin\Platform\Beam\Rules;
 
+use Closure;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Models\Token;
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class TokensDoNotExistInCollection implements Rule
+class TokensDoNotExistInCollection implements ValidationRule
 {
     use IntegerRange;
 
@@ -19,10 +20,11 @@ class TokensDoNotExistInCollection implements Rule
      *
      * @param string $attribute
      * @param mixed  $value
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
-     * @return bool
+     * @return void
      */
-    public function passes($attribute, $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if ($this->collectionId) {
             $integers = collect($value)->filter(fn ($val) => false === $this->integerRange($val))->all();
@@ -31,7 +33,9 @@ class TokensDoNotExistInCollection implements Rule
                     ->whereHas('collection', fn ($query) => $query->where('collection_chain_id', $this->collectionId))
                     ->exists();
                 if ($exists) {
-                    return false;
+                    $fail($this->message())->translate();
+
+                    return;
                 }
             }
             $ranges = collect($value)->filter(fn ($val) => false !== $this->integerRange($val))->all();
@@ -42,12 +46,10 @@ class TokensDoNotExistInCollection implements Rule
                     ->exists();
 
                 if ($exists) {
-                    return false;
+                    $fail($this->message())->translate();
                 }
             }
         }
-
-        return true;
     }
 
     /**
@@ -57,6 +59,6 @@ class TokensDoNotExistInCollection implements Rule
      */
     public function message()
     {
-        return __('enjin-platform-beam::validation.tokens_doesnt_exist_in_collection');
+        return 'enjin-platform-beam::validation.tokens_doesnt_exist_in_collection';
     }
 }

@@ -2,13 +2,14 @@
 
 namespace Enjin\Platform\Beam\Rules;
 
+use Closure;
 use Enjin\Platform\Beam\Models\BeamClaim;
-use Enjin\Platform\Beam\Rules\Traits\HasDataAwareRule;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
+use Enjin\Platform\Rules\Traits\HasDataAwareRule;
 use Illuminate\Contracts\Validation\DataAwareRule;
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class TokensExistInBeam implements DataAwareRule, Rule
+class TokensExistInBeam implements DataAwareRule, ValidationRule
 {
     use IntegerRange;
     use HasDataAwareRule;
@@ -18,10 +19,11 @@ class TokensExistInBeam implements DataAwareRule, Rule
      *
      * @param string $attribute
      * @param mixed  $value
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
-     * @return bool
+     * @return void
      */
-    public function passes($attribute, $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if ($code = $this->data['code']) {
             $integers = collect($value)->filter(fn ($val) => false === $this->integerRange($val))->all();
@@ -32,7 +34,9 @@ class TokensExistInBeam implements DataAwareRule, Rule
                     ->whereHas('beam', fn ($query) => $query->where('code', $code))
                     ->count();
                 if ($count != count($integers)) {
-                    return false;
+                    $fail($this->message())->translate();
+
+                    return;
                 }
             }
             $ranges = collect($value)->filter(fn ($val) => false !== $this->integerRange($val))->all();
@@ -44,12 +48,10 @@ class TokensExistInBeam implements DataAwareRule, Rule
                     ->whereHas('beam', fn ($query) => $query->where('code', $code))
                     ->count();
                 if ($count !== ($to - $from) + 1) {
-                    return false;
+                    $fail($this->message())->translate();
                 }
             }
         }
-
-        return true;
     }
 
     /**
@@ -59,6 +61,6 @@ class TokensExistInBeam implements DataAwareRule, Rule
      */
     public function message()
     {
-        return __('enjin-platform-beam::validation.tokens_exist_in_beam');
+        return 'enjin-platform-beam::validation.tokens_exist_in_beam';
     }
 }

@@ -2,38 +2,28 @@
 
 namespace Enjin\Platform\Beam\Rules;
 
+use Closure;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Services\BeamService;
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class SingleUseCodeExist implements Rule
+class SingleUseCodeExist implements ValidationRule
 {
     /**
      * Determine if the validation rule passes.
      *
      * @param string $attribute
      * @param mixed  $value
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
-     * @return bool
+     * @return void
      */
-    public function passes($attribute, $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (BeamService::isSingleUse($value)) {
-            return BeamClaim::withSingleUseCode($value)
-                ->claimable()
-                ->first();
+        if (BeamService::isSingleUse($value) && BeamClaim::withSingleUseCode($value)->claimable()->exists()) {
+            return;
         }
 
-        return false;
-    }
-
-    /**
-     * Get the validation error message.
-     *
-     * @return string
-     */
-    public function message()
-    {
-        return __('enjin-platform-beam::validation.verify_signed_message');
+        $fail('enjin-platform-beam::validation.verify_signed_message')->translate();
     }
 }

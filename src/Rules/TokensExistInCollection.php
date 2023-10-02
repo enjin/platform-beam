@@ -2,11 +2,12 @@
 
 namespace Enjin\Platform\Beam\Rules;
 
+use Closure;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Models\Token;
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class TokensExistInCollection implements Rule
+class TokensExistInCollection implements ValidationRule
 {
     use IntegerRange;
 
@@ -19,10 +20,11 @@ class TokensExistInCollection implements Rule
      *
      * @param string $attribute
      * @param mixed  $value
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
-     * @return bool
+     * @return void
      */
-    public function passes($attribute, $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if ($this->collectionId) {
             $integers = collect($value)->filter(fn ($val) => false === $this->integerRange($val))->all();
@@ -31,7 +33,9 @@ class TokensExistInCollection implements Rule
                     ->whereHas('collection', fn ($query) => $query->where('collection_chain_id', $this->collectionId))
                     ->count();
                 if ($count !== count($integers)) {
-                    return false;
+                    $fail($this->message())->translate();
+
+                    return;
                 }
             }
             $ranges = collect($value)->filter(fn ($val) => false !== $this->integerRange($val))->all();
@@ -41,12 +45,10 @@ class TokensExistInCollection implements Rule
                     ->whereHas('collection', fn ($query) => $query->where('collection_chain_id', $this->collectionId))
                     ->count();
                 if ($count !== ($to - $from) + 1) {
-                    return false;
+                    $fail($this->message())->translate();
                 }
             }
         }
-
-        return true;
     }
 
     /**
@@ -56,6 +58,6 @@ class TokensExistInCollection implements Rule
      */
     public function message()
     {
-        return __('enjin-platform-beam::validation.tokens_exist_in_collection');
+        return 'enjin-platform-beam::validation.tokens_exist_in_collection';
     }
 }

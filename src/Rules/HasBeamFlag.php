@@ -2,11 +2,12 @@
 
 namespace Enjin\Platform\Beam\Rules;
 
+use Closure;
 use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Models\Beam;
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class HasBeamFlag implements Rule
+class HasBeamFlag implements ValidationRule
 {
     /**
      * Create new rule instance.
@@ -17,21 +18,19 @@ class HasBeamFlag implements Rule
 
     /**
      * Determine if the validation rule passes.
+     *
+     * @param string $attribute
+     * @param mixed  $value
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
+     *
+     * @return void
      */
-    public function passes($attribute, $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!$beam = Beam::whereCode($value)->first()) {
-            return false;
+        $beam = Beam::whereCode($value)->first();
+
+        if (!$beam || !$beam->hasFlag($this->flag)) {
+            $fail('enjin-platform-beam::validation.has_beam_flag')->translate();
         }
-
-        return $beam->hasFlag($this->flag);
-    }
-
-    /**
-     * Get the validation error message.
-     */
-    public function message()
-    {
-        return __('enjin-platform-beam::validation.has_beam_flag');
     }
 }

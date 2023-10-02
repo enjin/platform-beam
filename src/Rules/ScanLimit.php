@@ -2,12 +2,13 @@
 
 namespace Enjin\Platform\Beam\Rules;
 
+use Closure;
 use Enjin\Platform\Beam\Models\BeamScan;
-use Enjin\Platform\Beam\Rules\Traits\HasDataAwareRule;
+use Enjin\Platform\Rules\Traits\HasDataAwareRule;
 use Illuminate\Contracts\Validation\DataAwareRule;
-use Illuminate\Contracts\Validation\Rule;
+use Illuminate\Contracts\Validation\ValidationRule;
 
-class ScanLimit implements DataAwareRule, Rule
+class ScanLimit implements DataAwareRule, ValidationRule
 {
     use HasDataAwareRule;
 
@@ -16,27 +17,20 @@ class ScanLimit implements DataAwareRule, Rule
      *
      * @param string $attribute
      * @param mixed  $value
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
-     * @return bool
+     * @return void
      */
-    public function passes($attribute, $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!$limit = config('enjin-platform-beam.scan_limit')) {
-            return true;
+        $limit = config('enjin-platform-beam.scan_limit');
+
+        if ($limit &&
+            !($limit > (int) BeamScan::whereWalletPublicKey($value)
+                ->hasCode($this->data['code'])
+                ->first()?->count)
+        ) {
+            $fail('enjin-platform-beam::validation.scan_limit')->translate();
         }
-
-        return $limit > (int) BeamScan::whereWalletPublicKey($value)
-            ->hasCode($this->data['code'])
-            ->first()?->count;
-    }
-
-    /**
-     * Get the validation error message.
-     *
-     * @return string
-     */
-    public function message()
-    {
-        return __('enjin-platform-beam::validation.scan_limit');
     }
 }

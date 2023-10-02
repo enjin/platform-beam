@@ -2,6 +2,8 @@
 
 namespace Enjin\Platform\Beam\Rules;
 
+use Closure;
+
 class SingleUseCodesExist extends SingleUseCodeExist
 {
     /**
@@ -9,17 +11,14 @@ class SingleUseCodesExist extends SingleUseCodeExist
      *
      * @param string $attribute
      * @param mixed  $value
+     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
      *
-     * @return bool
+     * @return void
      */
-    public function passes($attribute, $value)
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         foreach ($value as $code) {
-            if (!parent::passes($attribute, $code)) {
-                return false;
-            }
+            parent::validate($attribute, $code, $fail);
         }
-
-        return true;
     }
 }
