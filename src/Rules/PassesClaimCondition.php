@@ -3,12 +3,13 @@
 namespace Enjin\Platform\Beam\Rules;
 
 use Closure;
+use Enjin\Platform\Rules\Traits\HasDataAwareRule;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
 
 class PassesClaimCondition implements DataAwareRule, ValidationRule
 {
-    protected array $data = [];
+    use HasDataAwareRule;
 
     /**
      * Create new rule instance.
@@ -26,12 +27,5 @@ class PassesClaimCondition implements DataAwareRule, ValidationRule
         if (true !== $result) {
             $fail(is_string($result) ? $result : __('enjin-platform-beam::validation.passes_condition'));
         }
-    }
-
-    public function setData(array $data)
-    {
-        $this->data = $data;
-
-        return $this;
     }
 }
