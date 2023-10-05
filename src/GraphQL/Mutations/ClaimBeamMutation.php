@@ -3,12 +3,12 @@
 namespace Enjin\Platform\Beam\GraphQL\Mutations;
 
 use Closure;
+use Enjin\Platform\Beam\GraphQL\Traits\HasBeamClaimConditions;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
 use Enjin\Platform\Beam\Rules\CanClaim;
 use Enjin\Platform\Beam\Rules\NotExpired;
 use Enjin\Platform\Beam\Rules\NotOwner;
 use Enjin\Platform\Beam\Rules\NotPaused;
-use Enjin\Platform\Beam\Rules\PassesClaimConditions;
 use Enjin\Platform\Beam\Rules\SingleUseCodeExist;
 use Enjin\Platform\Beam\Rules\VerifySignedMessage;
 use Enjin\Platform\Beam\Services\BeamService;
@@ -23,6 +23,7 @@ use Rebing\GraphQL\Support\Facades\GraphQL;
 class ClaimBeamMutation extends Mutation implements PlatformPublicGraphQlOperation
 {
     use HasBeamCommonFields;
+    use HasBeamClaimConditions;
 
     /**
      * Get the mutation's attributes.
@@ -98,14 +99,13 @@ class ClaimBeamMutation extends Mutation implements PlatformPublicGraphQlOperati
 
         return [
             'code' => [
-                'bail',
                 'filled',
                 'max:1024',
                 new NotExpired($beamCode),
                 $singleUse ? new SingleUseCodeExist() : '',
                 new CanClaim($singleUse),
                 new NotPaused($beamCode),
-                new PassesClaimConditions($singleUse),
+                ...$this->getClaimConditionRules($singleUse),
             ],
             'account' => ['filled', new ValidSubstrateAccount(), new NotOwner($singleUse)],
             'signature' => ['sometimes', new VerifySignedMessage()],
