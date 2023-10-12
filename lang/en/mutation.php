@@ -26,4 +26,5 @@ return [
     'delete_beam.description' => 'Mutation for deleting a beam',
     'remove_tokens.description' => 'Removes tokens from a beam.',
     'remove_tokens.args.tokenIds' => 'The token IDs to remove.',
+    'add_tokens.description' => 'Add tokens to a beam.',
 ];
