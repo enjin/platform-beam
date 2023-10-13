@@ -46,9 +46,29 @@ class AddTokensTest extends TestCaseGraphQL
         Event::assertDispatched(TokensAdded::class);
     }
 
-    /**
-     * Test creating update with file upload.
-     */
+    public function test_it_can_add_token_with_attributes(): void
+    {
+        Event::fake();
+        $response = $this->graphql(
+            $this->method,
+            [
+                'code' => $this->beam->code,
+                'tokens'  => [
+                    [
+                        'tokenIds' => ['1..5'],
+                        'type' => BeamType::MINT_ON_DEMAND->name,
+                        'attributes' => [
+                            ['key' => 'test', 'value' => 'test'],
+                            ['key' => 'test2', 'value' => 'test2'],
+                        ],
+                    ],
+                ],
+            ],
+        );
+        $this->assertTrue($response);
+        Event::assertDispatched(TokensAdded::class);
+    }
+
     public function test_it_can_update_beam_with_file_upload(): void
     {
         $file = UploadedFile::fake()->createWithContent('tokens.txt', "1\n2..10");
@@ -74,9 +94,6 @@ class AddTokensTest extends TestCaseGraphQL
         Event::assertDispatched(TokensAdded::class);
     }
 
-    /**
-     * Test updating beam token exist in beam.
-     */
     public function test_it_will_fail_with_token_exist_in_beam(): void
     {
         $this->collection->update(['max_token_supply' => 1]);
