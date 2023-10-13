@@ -1,0 +1,9 @@
+mutation AddTokens(
+  $code: String!
+  $tokens: [ClaimToken!]!
+) {
+  AddTokens(
+    code: $code
+    tokens: $tokens
+  )
+}
