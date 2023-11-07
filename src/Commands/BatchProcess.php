@@ -160,7 +160,7 @@ class BatchProcess extends Command
                                 'source' => Account::daemonPublicKey() !== $claim->collection->owner->public_key
                                     ? $claim->collection->owner->public_key
                                     : null,
-                            ]),
+                            ])->toEncodable(),
                         ];
                     } else {
                         $key = $claim->token_chain_id . '|' . $claim->collection_id;
@@ -191,7 +191,7 @@ class BatchProcess extends Command
                                 'behaviour' => null,
                                 'unitPrice' => config('enjin-platform-beam.unit_price'),
                                 'attributes' => $claim->attributes ?: [],
-                            ]),
+                            ])->toEncodable(),
                         ];
 
                         if (!$this->tokenCreatedCache[$key]) {
