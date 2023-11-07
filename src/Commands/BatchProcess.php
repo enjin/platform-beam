@@ -203,11 +203,6 @@ class BatchProcess extends Command
 
                 $method = BeamType::MINT_ON_DEMAND == $type ? 'BatchMint' : 'BatchTransfer';
                 foreach ($params as $param) {
-                    if (!$signingAccount = $this->resolveSigningAccount($param['beamId'])) {
-                        $this->error("Signing account not found for beam ID: {$param['beamId']}, batch ID: {$batchId}");
-
-                        continue;
-                    }
                     $transaction = $this->transaction->store([
                         'method' => $method,
                         'encoded_data' => $this->serialize->encode($method, [
@@ -215,7 +210,7 @@ class BatchProcess extends Command
                             'recipients' => $param['recipients'],
                         ]),
                         'idempotency_key' => Str::uuid()->toString(),
-                    ], $signingAccount);
+                    ], $this->resolveSigningAccount($param['beamId']));
                     BeamBatch::where('id', $batchId)->update(['transaction_id' => $transaction->id]);
                     BeamBatchTransactionCreated::safeBroadcast($param['beamId'], $param['collectionId'], $transaction->id);
                 }
@@ -236,6 +231,6 @@ class BatchProcess extends Command
             return call_user_func(static::$signingAccountResolver, $beamId);
         }
 
-        return Account::daemon();
+        return null;
     }
 }
