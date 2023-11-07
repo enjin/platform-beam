@@ -160,7 +160,7 @@ class BatchProcess extends Command
                                 'source' => Account::daemonPublicKey() !== $claim->collection->owner->public_key
                                     ? $claim->collection->owner->public_key
                                     : null,
-                            ]),
+                            ])->toEncodable(),
                         ];
                     } else {
                         $key = $claim->token_chain_id . '|' . $claim->collection_id;
@@ -191,7 +191,7 @@ class BatchProcess extends Command
                                 'behaviour' => null,
                                 'unitPrice' => config('enjin-platform-beam.unit_price'),
                                 'attributes' => $claim->attributes ?: [],
-                            ]),
+                            ])->toEncodable(),
                         ];
 
                         if (!$this->tokenCreatedCache[$key]) {
@@ -203,11 +203,6 @@ class BatchProcess extends Command
 
                 $method = BeamType::MINT_ON_DEMAND == $type ? 'BatchMint' : 'BatchTransfer';
                 foreach ($params as $param) {
-                    if (!$signingAccount = $this->resolveSigningAccount($param['beamId'])) {
-                        $this->error("Signing account not found for beam ID: {$param['beamId']}, batch ID: {$batchId}");
-
-                        continue;
-                    }
                     $transaction = $this->transaction->store([
                         'method' => $method,
                         'encoded_data' => $this->serialize->encode($method, [
@@ -215,7 +210,7 @@ class BatchProcess extends Command
                             'recipients' => $param['recipients'],
                         ]),
                         'idempotency_key' => Str::uuid()->toString(),
-                    ], $signingAccount);
+                    ]);
                     BeamBatch::where('id', $batchId)->update(['transaction_id' => $transaction->id]);
                     BeamBatchTransactionCreated::safeBroadcast($param['beamId'], $param['collectionId'], $transaction->id);
                 }
@@ -236,6 +231,6 @@ class BatchProcess extends Command
             return call_user_func(static::$signingAccountResolver, $beamId);
         }
 
-        return Account::daemon();
+        return null;
     }
 }
