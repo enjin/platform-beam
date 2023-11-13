@@ -96,6 +96,10 @@ class BeamClaimType extends Type
                 'is_relation' => false,
                 'excludeFrom' => ['GetBeam', 'GetBeams'],
             ],
+            'attributes' => [
+                'type' => GraphQL::type('[AttributeType]'),
+                'description' => __('enjin-platform-beam::type.attribute.description'),
+            ],
         ];
     }
 }
