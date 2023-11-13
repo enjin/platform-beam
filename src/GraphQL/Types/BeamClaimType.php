@@ -97,7 +97,7 @@ class BeamClaimType extends Type
                 'excludeFrom' => ['GetBeam', 'GetBeams'],
             ],
             'attributes' => [
-                'type' => GraphQL::type('[AttributeType]!'),
+                'type' => GraphQL::type('[AttributeType]'),
                 'description' => __('enjin-platform-beam::type.attribute.description'),
             ],
         ];
