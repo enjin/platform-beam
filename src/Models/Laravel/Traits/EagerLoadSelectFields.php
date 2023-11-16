@@ -127,7 +127,6 @@ trait EagerLoadSelectFields
         $select = array_filter([
             'id',
             'beam_id',
-            'token_chain_id',
             isset($fields['wallet']) ? 'wallet_public_key' : null,
             isset($fields['collection']) ? 'collection_id' : null,
             ...(isset($fields['qr']) ? ['code'] : []),
