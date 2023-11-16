@@ -28,5 +28,5 @@ return [
     'beam_scan.field.message' => 'The message to sign.',
     'beam_scan.field.walletPublicKey' => 'The wallet public key.',
     'integer_range.description' => "A string value that can be used to represent a range of integer numbers.  Use a double full stop to supply a range between 2 integers. \n\nExample \[\"1\",\"2\",\"3..8\"\]",
-    'attribute.description' => 'The initial attribute for the token.',
+    'attribute.description' => 'An initial attribute to set for the token when minting on demand.',
 ];
