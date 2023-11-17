@@ -39,6 +39,7 @@ trait EagerLoadSelectFields
                 );
 
                 break;
+            case 'GetPendingClaims':
             case 'GetClaims':
             case 'GetSingleUseCodes':
                 [$select, $with, $withCount] = static::loadClaims(

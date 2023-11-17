@@ -1,0 +1,75 @@
+query GetPendingClaims(
+  $code: String!
+  $account: String!
+  $after: String
+  $first: Int
+) {
+  GetPendingClaims(
+    code: $code
+    account: $account
+    after: $after
+    first: $first
+  ) {
+    edges {
+      cursor
+      node {
+        id
+        claimedAt
+        claimStatus
+        quantity
+        identifierCode
+        attributes {
+          key
+          value
+        }
+        wallet {
+          account {
+            publicKey
+            address
+          }
+        }
+        collection {
+          collectionId
+          maxTokenCount
+          maxTokenSupply
+          forceSingleMint
+          frozen
+          network
+        }
+        beam {
+          id
+          code
+          name
+          description
+          image
+          start
+          end
+          isClaimable
+          qr {
+            url
+            payload
+          }
+          message {
+            walletPublicKey
+            message
+          }
+          collection {
+            collectionId
+            maxTokenCount
+            maxTokenSupply
+            forceSingleMint
+            frozen
+            network
+          }
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      startCursor
+      endCursor
+      hasPreviousPage
+      hasNextPage
+    }
+  }
+}
