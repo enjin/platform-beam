@@ -30,11 +30,24 @@ class ClaimProbabilityTest extends TestCaseGraphQL
         $this->assertEquals(
             [
                 'ft' => [
-                    '41' => 10,
-                    '42' => 20,
-                    '43..45' => 30,
+                    '7' => 10.0,
+                    '8..10' => 60.0,
                 ],
-                'nft' => 40,
+                'nft' => 30.0,
+                'ftTokenIds' => [
+                    '7' => 10.0,
+                    '8' => 20.0,
+                    '9' => 20.0,
+                    '10' => 20.0,
+                ],
+                'nftTokenIds' => [
+                    '1' => 5.0,
+                    '2' => 5.0,
+                    '3' => 5.0,
+                    '4' => 5.0,
+                    '5' => 5.0,
+                    '6' => 5.0,
+                ],
             ],
             ClaimProbabilities::getProbabilities($this->beam->code)['probabilities']
         );
@@ -46,20 +59,46 @@ class ClaimProbabilityTest extends TestCaseGraphQL
         $this->assertEquals(
             [
                 'ft' => [
-                    '41' => 10,
-                    '42' => 20,
-                    '43..45' => 30,
+                    '7' => 10.0,
+                    '8..10' => 60.0,
                 ],
-                'nft' => 40,
+                'nft' => 30.0,
+                'ftTokenIds' => [
+                    '7' => 10.0,
+                    '8' => 20.0,
+                    '9' => 20.0,
+                    '10' => 20.0,
+                ],
+                'nftTokenIds' => [
+                    '1' => 5.0,
+                    '2' => 5.0,
+                    '3' => 5.0,
+                    '4' => 5.0,
+                    '5' => 5.0,
+                    '6' => 5.0,
+                ],
             ],
             ClaimProbabilities::getProbabilities($this->beam->code)['probabilities']
         );
 
-        $this->probabilities->removeTokens($this->beam->code, ['42', '43..45']);
+        $this->probabilities->removeTokens($this->beam->code, ['8..10']);
         $this->assertEquals(
             [
-                'ft' => ['41' => 20],
-                'nft' => 80,
+                'ft' => [
+                    '7' => 25.0,
+                ],
+                'nft' => 75.0,
+                'ftTokenIds' => [
+                    '7' => 25.0,
+                ],
+                'nftTokenIds' => [
+                    '1' => 12.5,
+                    '2' => 12.5,
+                    '3' => 12.5,
+                    '4' => 12.5,
+                    '5' => 12.5,
+                    '6' => 12.5,
+                ],
             ],
             ClaimProbabilities::getProbabilities($this->beam->code)['probabilities']
         );
@@ -70,26 +109,26 @@ class ClaimProbabilityTest extends TestCaseGraphQL
         return [
             [
                 'type' => BeamType::MINT_ON_DEMAND->name,
-                'tokenIds' => ['1..40'],
+                'tokenIds' => ['1..5'],
                 'claimQuantity' => 1,
                 'tokenQuantityPerClaim' => 1,
             ],
             [
                 'type' => BeamType::MINT_ON_DEMAND->name,
-                'tokenIds' => ['41'],
-                'claimQuantity' => 10,
+                'tokenIds' => ['6'],
+                'claimQuantity' => 1,
                 'tokenQuantityPerClaim' => 1,
             ],
             [
                 'type' => BeamType::MINT_ON_DEMAND->name,
-                'tokenIds' => ['42'],
-                'claimQuantity' => 20,
+                'tokenIds' => ['7'],
+                'claimQuantity' => 2,
                 'tokenQuantityPerClaim' => 1,
             ],
             [
                 'type' => BeamType::MINT_ON_DEMAND->name,
-                'tokenIds' => ['43..45'],
-                'claimQuantity' => 10,
+                'tokenIds' => ['8..10'],
+                'claimQuantity' => 4,
                 'tokenQuantityPerClaim' => 1,
             ],
         ];
