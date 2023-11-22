@@ -43,7 +43,7 @@ class ClaimProbabilities
      */
     public static function getCacheKey(string $code): string
     {
-        return PlatformBeamCache::CLAIM_PROBABILITIES->key($code).':'.static::FORMAT_VERSION;
+        return PlatformBeamCache::CLAIM_PROBABILITIES->key($code) . ':' . static::FORMAT_VERSION;
     }
 
     /**
