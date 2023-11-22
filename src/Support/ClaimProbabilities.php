@@ -14,6 +14,8 @@ class ClaimProbabilities
 {
     use IntegerRange;
 
+    public const FORMAT_VERSION = 'v1';
+
     /**
      * Create or update the probabilities for a claim.
      */
@@ -33,7 +35,15 @@ class ClaimProbabilities
      */
     public static function hasProbabilities(string $code): bool
     {
-        return Cache::has(PlatformBeamCache::CLAIM_PROBABILITIES->key($code));
+        return Cache::has(static::getCacheKey($code));
+    }
+
+    /**
+     * Get the cache key for the code.
+     */
+    public static function getCacheKey(string $code): string
+    {
+        return PlatformBeamCache::CLAIM_PROBABILITIES->key($code, static::FORMAT_VERSION);
     }
 
     /**
@@ -42,7 +52,7 @@ class ClaimProbabilities
     public static function getProbabilities(string $code): array
     {
         return Cache::get(
-            PlatformBeamCache::CLAIM_PROBABILITIES->key($code),
+            static::getCacheKey($code),
             static::getProbabilitiesFromDB($code)
         );
     }
@@ -74,7 +84,7 @@ class ClaimProbabilities
                 $formatted['nft'],
             );
 
-            return Cache::get(PlatformBeamCache::CLAIM_PROBABILITIES->key($code), []);
+            return Cache::get(static::getCacheKey($code), []);
         };
     }
 
@@ -127,7 +137,7 @@ class ClaimProbabilities
         ];
 
         Cache::forever(
-            PlatformBeamCache::CLAIM_PROBABILITIES->key($code),
+            static::getCacheKey($code),
             $data
         );
     }
