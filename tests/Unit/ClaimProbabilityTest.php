@@ -30,11 +30,24 @@ class ClaimProbabilityTest extends TestCaseGraphQL
         $this->assertEquals(
             [
                 'ft' => [
-                    '41' => 10,
-                    '42' => 20,
-                    '43..45' => 30,
+                    '7' => 14.285714285714,
+                    '8..10' => 42.857142857143,
                 ],
-                'nft' => 40,
+                'nft' => 42.857142857143,
+                'ftTokenIds' => [
+                    '7' => 14.285714285714,
+                    '8' => 14.285714285714,
+                    '9' => 14.285714285714,
+                    '10' => 14.285714285714,
+                ],
+                'nftTokenIds' => [
+                    '1' => 7.1428571428571,
+                    '2' => 7.1428571428571,
+                    '3' => 7.1428571428571,
+                    '4' => 7.1428571428571,
+                    '5' => 7.1428571428571,
+                    '6' => 7.1428571428571,
+                ],
             ],
             ClaimProbabilities::getProbabilities($this->beam->code)['probabilities']
         );
@@ -46,20 +59,45 @@ class ClaimProbabilityTest extends TestCaseGraphQL
         $this->assertEquals(
             [
                 'ft' => [
-                    '41' => 10,
-                    '42' => 20,
-                    '43..45' => 30,
+                    '7' => 14.285714285714,
+                    '8..10' => 42.857142857143,
                 ],
-                'nft' => 40,
+                'nft' => 42.857142857143,
+                'ftTokenIds' => [
+                    '7' => 14.285714285714,
+                    '8' => 14.285714285714,
+                    '9' => 14.285714285714,
+                    '10' => 14.285714285714,
+                ],
+                'nftTokenIds' => [
+                    '1' => 7.1428571428571,
+                    '2' => 7.1428571428571,
+                    '3' => 7.1428571428571,
+                    '4' => 7.1428571428571,
+                    '5' => 7.1428571428571,
+                    '6' => 7.1428571428571,
+                ],
             ],
             ClaimProbabilities::getProbabilities($this->beam->code)['probabilities']
         );
 
-        $this->probabilities->removeTokens($this->beam->code, ['42', '43..45']);
+        $this->probabilities->removeTokens($this->beam->code, ['6', '8..10']);
         $this->assertEquals(
             [
-                'ft' => ['41' => 20],
-                'nft' => 80,
+                'ft' => [
+                    '7' => 28.571428571429,
+                ],
+                'nft' => 71.428571428571,
+                'ftTokenIds' => [
+                    '7' => 28.571428571429,
+                ],
+                'nftTokenIds' => [
+                    '1' => 14.285714285714,
+                    '2' => 14.285714285714,
+                    '3' => 14.285714285714,
+                    '4' => 14.285714285714,
+                    '5' => 14.285714285714,
+                ],
             ],
             ClaimProbabilities::getProbabilities($this->beam->code)['probabilities']
         );
@@ -70,26 +108,26 @@ class ClaimProbabilityTest extends TestCaseGraphQL
         return [
             [
                 'type' => BeamType::MINT_ON_DEMAND->name,
-                'tokenIds' => ['1..40'],
+                'tokenIds' => ['1..5'],
                 'claimQuantity' => 1,
                 'tokenQuantityPerClaim' => 1,
             ],
             [
                 'type' => BeamType::MINT_ON_DEMAND->name,
-                'tokenIds' => ['41'],
-                'claimQuantity' => 10,
+                'tokenIds' => ['6'],
+                'claimQuantity' => 1,
                 'tokenQuantityPerClaim' => 1,
             ],
             [
                 'type' => BeamType::MINT_ON_DEMAND->name,
-                'tokenIds' => ['42'],
-                'claimQuantity' => 20,
+                'tokenIds' => ['7'],
+                'claimQuantity' => 2,
                 'tokenQuantityPerClaim' => 1,
             ],
             [
                 'type' => BeamType::MINT_ON_DEMAND->name,
-                'tokenIds' => ['43..45'],
-                'claimQuantity' => 10,
+                'tokenIds' => ['8..10'],
+                'claimQuantity' => 2,
                 'tokenQuantityPerClaim' => 1,
             ],
         ];
