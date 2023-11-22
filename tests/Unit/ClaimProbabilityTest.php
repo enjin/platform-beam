@@ -30,23 +30,23 @@ class ClaimProbabilityTest extends TestCaseGraphQL
         $this->assertEquals(
             [
                 'ft' => [
-                    '7' => 14.285714285714,
-                    '8..10' => 42.857142857143,
+                    '7' => 10.0,
+                    '8..10' => 60.0,
                 ],
-                'nft' => 42.857142857143,
+                'nft' => 30.0,
                 'ftTokenIds' => [
-                    '7' => 14.285714285714,
-                    '8' => 14.285714285714,
-                    '9' => 14.285714285714,
-                    '10' => 14.285714285714,
+                    '7' => 10.0,
+                    '8' => 20.0,
+                    '9' => 20.0,
+                    '10' => 20.0,
                 ],
                 'nftTokenIds' => [
-                    '1' => 7.1428571428571,
-                    '2' => 7.1428571428571,
-                    '3' => 7.1428571428571,
-                    '4' => 7.1428571428571,
-                    '5' => 7.1428571428571,
-                    '6' => 7.1428571428571,
+                    '1' => 5.0,
+                    '2' => 5.0,
+                    '3' => 5.0,
+                    '4' => 5.0,
+                    '5' => 5.0,
+                    '6' => 5.0,
                 ],
             ],
             ClaimProbabilities::getProbabilities($this->beam->code)['probabilities']
@@ -59,44 +59,45 @@ class ClaimProbabilityTest extends TestCaseGraphQL
         $this->assertEquals(
             [
                 'ft' => [
-                    '7' => 14.285714285714,
-                    '8..10' => 42.857142857143,
+                    '7' => 10.0,
+                    '8..10' => 60.0,
                 ],
-                'nft' => 42.857142857143,
+                'nft' => 30.0,
                 'ftTokenIds' => [
-                    '7' => 14.285714285714,
-                    '8' => 14.285714285714,
-                    '9' => 14.285714285714,
-                    '10' => 14.285714285714,
+                    '7' => 10.0,
+                    '8' => 20.0,
+                    '9' => 20.0,
+                    '10' => 20.0,
                 ],
                 'nftTokenIds' => [
-                    '1' => 7.1428571428571,
-                    '2' => 7.1428571428571,
-                    '3' => 7.1428571428571,
-                    '4' => 7.1428571428571,
-                    '5' => 7.1428571428571,
-                    '6' => 7.1428571428571,
+                    '1' => 5.0,
+                    '2' => 5.0,
+                    '3' => 5.0,
+                    '4' => 5.0,
+                    '5' => 5.0,
+                    '6' => 5.0,
                 ],
             ],
             ClaimProbabilities::getProbabilities($this->beam->code)['probabilities']
         );
 
-        $this->probabilities->removeTokens($this->beam->code, ['6', '8..10']);
+        $this->probabilities->removeTokens($this->beam->code, ['8..10']);
         $this->assertEquals(
             [
                 'ft' => [
-                    '7' => 28.571428571429,
+                    '7' => 25.0,
                 ],
-                'nft' => 71.428571428571,
+                'nft' => 75.0,
                 'ftTokenIds' => [
-                    '7' => 28.571428571429,
+                    '7' => 25.0,
                 ],
                 'nftTokenIds' => [
-                    '1' => 14.285714285714,
-                    '2' => 14.285714285714,
-                    '3' => 14.285714285714,
-                    '4' => 14.285714285714,
-                    '5' => 14.285714285714,
+                    '1' => 12.5,
+                    '2' => 12.5,
+                    '3' => 12.5,
+                    '4' => 12.5,
+                    '5' => 12.5,
+                    '6' => 12.5,
                 ],
             ],
             ClaimProbabilities::getProbabilities($this->beam->code)['probabilities']
@@ -127,7 +128,7 @@ class ClaimProbabilityTest extends TestCaseGraphQL
             [
                 'type' => BeamType::MINT_ON_DEMAND->name,
                 'tokenIds' => ['8..10'],
-                'claimQuantity' => 2,
+                'claimQuantity' => 4,
                 'tokenQuantityPerClaim' => 1,
             ],
         ];
