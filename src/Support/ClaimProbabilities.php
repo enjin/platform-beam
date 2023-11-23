@@ -126,7 +126,7 @@ class ClaimProbabilities
         }
 
         $probabilities = [
-            'ft' => collect($fts)->mapWithKeys(fn ($quantity, $key) => [$key => ($quantity / $total) * 100]) ?: new stdClass(),
+            'ft' => collect($fts)->mapWithKeys(fn ($quantity, $key) => [$key => ($quantity / $total) * 100])->toArray() ?: new stdClass(),
             'nft' => ($totalNft / $total) * 100,
             'ftTokenIds' => $this->extractTokenIds($fts, $total) ?: new stdClass(),
             'nftTokenIds' => $this->extractTokenIds($nfts, $total) ?: new stdClass(),
