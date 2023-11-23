@@ -29,6 +29,7 @@ use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Str;
 use Throwable;
@@ -213,6 +214,7 @@ class BeamService
             ClaimBeam::dispatch($claim = $this->buildClaimBeamData($wallet, $beam, $singleUseCode));
             event(new BeamClaimPending($claim));
             Cache::decrement($key);
+            Log::info("Claim beam: {$code}, Remaining: " . Cache::get($key), $claim);
         } catch (LockTimeoutException $e) {
             throw new BeamException(__('enjin-platform-beam::error.unable_to_process'));
         } finally {
