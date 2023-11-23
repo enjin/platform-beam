@@ -9,12 +9,13 @@ use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use stdClass;
 
 class ClaimProbabilities
 {
     use IntegerRange;
 
-    public const FORMAT_VERSION = 'v1';
+    public const FORMAT_VERSION = 'v2';
 
     /**
      * Create or update the probabilities for a claim.
@@ -125,10 +126,10 @@ class ClaimProbabilities
         }
 
         $probabilities = [
-            'ft' => collect($fts)->mapWithKeys(fn ($quantity, $key) => [$key => ($quantity / $total) * 100])->toArray(),
+            'ft' => collect($fts)->mapWithKeys(fn ($quantity, $key) => [$key => ($quantity / $total) * 100]) ?: new stdClass(),
             'nft' => ($totalNft / $total) * 100,
-            'ftTokenIds' => $this->extractTokenIds($fts, $total),
-            'nftTokenIds' => $this->extractTokenIds($nfts, $total),
+            'ftTokenIds' => $this->extractTokenIds($fts, $total) ?: new stdClass(),
+            'nftTokenIds' => $this->extractTokenIds($nfts, $total) ?: new stdClass(),
         ];
 
         $data = [
