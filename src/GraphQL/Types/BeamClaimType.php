@@ -76,7 +76,7 @@ class BeamClaimType extends Type
                 'type' => GraphQL::type('String!'),
                 'description' => __('enjin-platform-beam::type.beam_claim.field.code'),
                 'resolve' => fn ($claim) => $claim->code ? $claim->singleUseCode : '',
-                'excludeFrom' => ['GetBeam', 'GetBeams'],
+                'excludeFrom' => ['GetBeam', 'GetBeams', 'GetPendingClaims'],
             ],
             'identifierCode' => [
                 'type' => GraphQL::type('String!'),
@@ -94,7 +94,7 @@ class BeamClaimType extends Type
                 },
                 'selectable' => false,
                 'is_relation' => false,
-                'excludeFrom' => ['GetBeam', 'GetBeams'],
+                'excludeFrom' => ['GetBeam', 'GetBeams', 'GetPendingClaims'],
             ],
             'attributes' => [
                 'type' => GraphQL::type('[AttributeType]'),
