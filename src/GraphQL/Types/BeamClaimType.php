@@ -100,6 +100,11 @@ class BeamClaimType extends Type
                 'type' => GraphQL::type('[AttributeType]'),
                 'description' => __('enjin-platform-beam::type.attribute.description'),
             ],
+            'transaction' => [
+                'type' => GraphQL::type('Transaction'),
+                'description' => __('enjin-platform::type.transaction.description'),
+                'is_relation' => true,
+            ],
         ];
     }
 }
