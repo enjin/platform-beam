@@ -26,6 +26,9 @@ query GetClaims(
           key
           value
         }
+        transaction {
+          transactionHash
+        }
         wallet {
           account {
             publicKey

@@ -9,6 +9,7 @@ use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Models\BaseModel;
 use Enjin\Platform\Models\Laravel\Collection;
 use Enjin\Platform\Models\Laravel\Token;
+use Enjin\Platform\Models\Laravel\Transaction;
 use Enjin\Platform\Models\Laravel\Wallet;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
@@ -192,6 +194,21 @@ class BeamClaim extends BaseModel
 
         // If we don't have a prune expired claims config, we'll just return a query that will never return any results.
         return static::where('id', 0);
+    }
+
+    /**
+     * The transaction relationship.
+     */
+    public function transaction(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            Transaction::class,
+            BeamBatch::class,
+            'id',
+            'id',
+            'beam_batch_id',
+            'transaction_id'
+        );
     }
 
     /**

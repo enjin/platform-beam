@@ -28,6 +28,9 @@ query GetPendingClaims(
             address
           }
         }
+        transaction {
+          transactionHash
+        }
         collection {
           collectionId
           maxTokenCount
