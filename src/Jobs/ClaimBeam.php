@@ -18,6 +18,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class ClaimBeam implements ShouldQueue
@@ -56,9 +57,16 @@ class ClaimBeam implements ShouldQueue
                     BeamScan::firstWhere(['wallet_public_key' => $data['wallet_public_key'], 'beam_id' => $data['beam']['id']])?->delete();
 
                     DB::commit();
+
+                    Log::info('Claim beam assigned.', $data);
+                } else {
+                    Log::info('Claim beam cannot assign.', $data);
+                    $this->release(1);
                 }
             } catch (Throwable $e) {
                 DB::rollBack();
+
+                Log::error('Claim beam error, message:' . $e->getMessage(), $data);
 
                 throw $e;
             }

@@ -2,15 +2,20 @@
 
 namespace Enjin\Platform\Beam\Support;
 
+use Closure;
 use Enjin\Platform\Beam\Enums\PlatformBeamCache;
+use Enjin\Platform\Beam\Models\Laravel\BeamClaim;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use stdClass;
 
 class ClaimProbabilities
 {
     use IntegerRange;
+
+    public const FORMAT_VERSION = 'v2';
 
     /**
      * Create or update the probabilities for a claim.
@@ -31,7 +36,15 @@ class ClaimProbabilities
      */
     public static function hasProbabilities(string $code): bool
     {
-        return Cache::has(PlatformBeamCache::CLAIM_PROBABILITIES->key($code));
+        return Cache::has(static::getCacheKey($code));
+    }
+
+    /**
+     * Get the cache key for the code.
+     */
+    public static function getCacheKey(string $code): string
+    {
+        return PlatformBeamCache::CLAIM_PROBABILITIES->key($code) . ':' . static::FORMAT_VERSION;
     }
 
     /**
@@ -39,7 +52,41 @@ class ClaimProbabilities
      */
     public static function getProbabilities(string $code): array
     {
-        return Cache::get(PlatformBeamCache::CLAIM_PROBABILITIES->key($code), []);
+        return Cache::get(
+            static::getCacheKey($code),
+            static::getProbabilitiesFromDB($code)
+        );
+    }
+
+    /**
+     * Get the probabilities from the database.
+     */
+    public static function getProbabilitiesFromDB(string $code): Closure
+    {
+        return function () use ($code) {
+            $claims = BeamClaim::selectRaw('
+                    token_chain_id,
+                    quantity as tokenQuantityPerClaim,
+                    count(*) as claimQuantity
+                ')->hasCode($code)
+                ->groupBy('token_chain_id', 'quantity')
+                ->get()
+                ->map(function ($claim) {
+                    $claim->tokenIds = [$claim->token_chain_id];
+
+                    return $claim;
+                })->toArray();
+
+            $instance = resolve(static::class);
+            $formatted = $instance->filterClaims($claims);
+            $instance->computeProbabilities(
+                $code,
+                $formatted['ft'],
+                $formatted['nft'],
+            );
+
+            return Cache::get(static::getCacheKey($code), []);
+        };
     }
 
     /**
@@ -66,6 +113,34 @@ class ClaimProbabilities
                 Arr::get($current, 'tokens.nft'),
             );
         }
+    }
+
+    /**
+     * Compute the probabilities for the items.
+     */
+    public function computeProbabilities(string $code, array $fts, array $nfts): void
+    {
+        $total = collect($fts)->sum() + ($totalNft = collect($nfts)->sum());
+        if (!$total) {
+            return;
+        }
+
+        $probabilities = [
+            'ft' => collect($fts)->mapWithKeys(fn ($quantity, $key) => [$key => ($quantity / $total) * 100])->toArray() ?: new stdClass(),
+            'nft' => ($totalNft / $total) * 100,
+            'ftTokenIds' => $this->extractTokenIds($fts, $total) ?: new stdClass(),
+            'nftTokenIds' => $this->extractTokenIds($nfts, $total) ?: new stdClass(),
+        ];
+
+        $data = [
+            'tokens' => ['ft' => $fts, 'nft' => $nfts],
+            'probabilities' => $probabilities,
+        ];
+
+        Cache::forever(
+            static::getCacheKey($code),
+            $data
+        );
     }
 
     /**
@@ -116,28 +191,22 @@ class ClaimProbabilities
     }
 
     /**
-     * Compute the probabilities for the items.
+     * Extract the token ids from the array.
      */
-    protected function computeProbabilities(string $code, array $fts, array $nfts): void
+    protected function extractTokenIds(array $tokenIds, int $total): array
     {
-        $totalNft = collect($nfts)->sum();
-        $total = collect($fts)->sum() + $totalNft;
-        $probabilities = [];
-        if ($total > 0) {
-            foreach ($fts as $key => $quantity) {
-                $probabilities['ft'][$key] = ($quantity / $total) * 100;
+        $tokens = [];
+        foreach ($tokenIds as $key => $quantity) {
+            if (($range = $this->integerRange($key)) !== false) {
+                $count = $quantity / (($range[1] - $range[0]) + 1);
+                for ($i = $range[0]; $i <= $range[1]; $i++) {
+                    $tokens[$i] = ($count / $total) * 100;
+                }
+            } else {
+                $tokens[$key] = ($quantity / $total) * 100;
             }
-            $probabilities['nft'] = ($totalNft / $total) * 100;
         }
 
-        $data = [
-            'tokens' => ['ft' => $fts, 'nft' => $nfts],
-            'probabilities' => $probabilities,
-        ];
-
-        Cache::forever(
-            PlatformBeamCache::CLAIM_PROBABILITIES->key($code),
-            $data
-        );
+        return $tokens;
     }
 }

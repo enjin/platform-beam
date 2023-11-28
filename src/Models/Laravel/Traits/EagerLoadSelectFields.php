@@ -39,6 +39,7 @@ trait EagerLoadSelectFields
                 );
 
                 break;
+            case 'GetPendingClaims':
             case 'GetClaims':
             case 'GetSingleUseCodes':
                 [$select, $with, $withCount] = static::loadClaims(
@@ -128,6 +129,7 @@ trait EagerLoadSelectFields
             'beam_id',
             isset($fields['wallet']) ? 'wallet_public_key' : null,
             isset($fields['collection']) ? 'collection_id' : null,
+            isset($fields['transaction']) ? 'beam_batch_id' : null,
             ...(isset($fields['qr']) ? ['code'] : []),
             ...(static::$query == 'GetSingleUseCodes' ? ['code', 'nonce'] : ['nonce']),
             ...BeamClaimType::getSelectFields($fieldKeys = array_keys($fields)),

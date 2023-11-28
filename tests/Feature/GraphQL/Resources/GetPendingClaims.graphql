@@ -1,16 +1,12 @@
-query GetClaims(
-  $ids: [BigInt]
-  $codes: [String]
-  $accounts: [String]
-  $states: [ClaimStatus]
+query GetPendingClaims(
+  $code: String!
+  $account: String!
   $after: String
   $first: Int
 ) {
-  GetClaims(
-    ids: $ids
-    codes: $codes
-    accounts: $accounts
-    states: $states
+  GetPendingClaims(
+    code: $code
+    account: $account
     after: $after
     first: $first
   ) {
@@ -26,14 +22,14 @@ query GetClaims(
           key
           value
         }
-        transaction {
-          transactionHash
-        }
         wallet {
           account {
             publicKey
             address
           }
+        }
+        transaction {
+          transactionHash
         }
         collection {
           collectionId
