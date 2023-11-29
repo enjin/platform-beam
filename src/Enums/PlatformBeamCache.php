@@ -14,6 +14,7 @@ enum PlatformBeamCache: string implements PlatformCacheable
     case CLAIM_PROBABILITIES = 'claimProbabilities';
     case IDEMPOTENCY_KEY = 'idempotencyKey';
     case BATCH_PROCESS = 'batchProcessKey';
+    case CLAIM_BEAM_JOB = 'claimBeamJob';
 
     /**
      * The key for the cache item.
