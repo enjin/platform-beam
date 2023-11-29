@@ -10,6 +10,7 @@ use Enjin\Platform\Beam\Services\BatchService;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Services\Database\WalletService;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -41,7 +42,10 @@ class ClaimBeam implements ShouldQueue
     public function handle(BatchService $batch, WalletService $wallet): void
     {
         if ($data = $this->data) {
+            $lock = Cache::lock(PlatformBeamCache::CLAIM_BEAM_JOB->key($data['beam']['id']), 5);
+
             try {
+                $lock->block(5);
                 $claim = BeamClaim::where('beam_id', $data['beam']['id'])
                     ->claimable()
                     ->when($data['code'], fn ($query) => $query->withSingleUseCode($data['code']))
@@ -58,17 +62,22 @@ class ClaimBeam implements ShouldQueue
 
                     DB::commit();
 
-                    Log::info('Claim beam assigned.', $data);
+                    Log::info('ClaimBeamJob: Claim assigned.', $claim->toArray());
                 } else {
-                    Log::info('Claim beam cannot assign.', $data);
+                    Log::info('ClaimBeamJob: No claim assigned.', $data);
                     $this->release(1);
                 }
+            } catch(LockTimeoutException) {
+                Log::info('ClaimBeamJob: Cannot obtain lock, retrying', $data);
+                $this->release(1);
             } catch (Throwable $e) {
                 DB::rollBack();
 
-                Log::error('Claim beam error, message:' . $e->getMessage(), $data);
+                Log::error('ClaimBeamJob: Claim error, message:' . $e->getMessage(), $data);
 
                 throw $e;
+            } finally {
+                $lock?->release();
             }
         }
     }
