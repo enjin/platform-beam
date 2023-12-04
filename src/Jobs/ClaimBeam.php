@@ -58,7 +58,8 @@ class ClaimBeam implements ShouldQueue
 
                     Log::info('ClaimBeamJob: Claim assigned.', $claim->toArray());
                 } else {
-                    Log::info('ClaimBeamJob: No claim assigned.', $data);
+                    Cache::put(BeamService::key(Arr::get($data, 'beam.code')), 0);
+                    Log::info('ClaimBeamJob: No claim available, setting remaining count to 0', $data);
                 }
             } catch(LockTimeoutException) {
                 Log::info('ClaimBeamJob: Cannot obtain lock, retrying', $data);
@@ -89,6 +90,9 @@ class ClaimBeam implements ShouldQueue
                     Cache::increment(BeamService::key(Arr::get($data, 'beam.code')));
                     Log::info('ClaimBeamJob: Job failed, incrementing remaining count to 1', $data);
                 }
+            } else {
+                Log::info('ClaimBeamJob: Job failed, no more claims avaialble setting count to 0', $data);
+                Cache::put(BeamService::key(Arr::get($data, 'beam.code')), 0);
             }
         }
     }
