@@ -46,13 +46,7 @@ class ClaimBeam implements ShouldQueue
 
             try {
                 $lock->block(5);
-                $claim = BeamClaim::where('beam_id', $data['beam']['id'])
-                    ->claimable()
-                    ->when($data['code'], fn ($query) => $query->withSingleUseCode($data['code']))
-                    ->unless($data['code'], fn ($query) => $query->inRandomOrder())
-                    ->first();
-
-                if ($claim) {
+                if ($claim = $this->claimQuery($data)->first()) {
                     DB::beginTransaction();
                     $wallet->firstOrStore(['public_key' => $data['wallet_public_key']]);
                     $claim->forceFill($this->buildBeamClaimAttributes($batch, $claim))->save();
@@ -65,7 +59,6 @@ class ClaimBeam implements ShouldQueue
                     Log::info('ClaimBeamJob: Claim assigned.', $claim->toArray());
                 } else {
                     Log::info('ClaimBeamJob: No claim assigned.', $data);
-                    $this->release(1);
                 }
             } catch(LockTimeoutException) {
                 Log::info('ClaimBeamJob: Cannot obtain lock, retrying', $data);
@@ -87,12 +80,28 @@ class ClaimBeam implements ShouldQueue
      */
     public function failed(Throwable $exception): void
     {
-        // Idempotency key prevents incrementing cache on same claim request even with manual retry on horizon
-        $key = Arr::get($this->data, 'idempotency_key');
-        if (!Cache::get(PlatformBeamCache::IDEMPOTENCY_KEY->key($key))) {
-            Cache::forever($key, true);
-            Cache::increment(BeamService::key(Arr::get($this->data, 'beam.code')));
+        if ($data = $this->data) {
+            if ($this->claimQuery($data)->count() > 0) {
+                // Idempotency key prevents incrementing cache on same claim request even with manual retry on horizon
+                $key = Arr::get($data, 'idempotency_key');
+                if (!Cache::get(PlatformBeamCache::IDEMPOTENCY_KEY->key($key))) {
+                    Cache::forever($key, true);
+                    Cache::increment(BeamService::key(Arr::get($data, 'beam.code')));
+                    Log::info('ClaimBeamJob: Job failed, incrementing remaining count to 1', $data);
+                }
+            }
         }
+    }
+
+    /**
+     * Get the claim query.
+     */
+    protected function claimQuery(array $data)
+    {
+        return BeamClaim::where('beam_id', $data['beam']['id'])
+            ->claimable()
+            ->when($data['code'], fn ($query) => $query->withSingleUseCode($data['code']))
+            ->unless($data['code'], fn ($query) => $query->inRandomOrder());
     }
 
     /**
