@@ -12,6 +12,7 @@ use Enjin\Platform\Services\Database\WalletService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -100,7 +101,7 @@ class ClaimBeam implements ShouldQueue
     /**
      * Get the claim query.
      */
-    protected function claimQuery(array $data)
+    protected function claimQuery(array $data): Builder
     {
         return BeamClaim::where('beam_id', $data['beam']['id'])
             ->claimable()
