@@ -73,7 +73,7 @@ class GetPendingClaimsQuery extends Query implements PlatformPublicGraphQlOperat
     protected function rules(array $args = []): array
     {
         return [
-            'code' => ['filled', 'max:1024'],
+            'code' => ['filled', 'max:1024', 'exists:beams,code,deleted_at,NULL'],
             'account' => ['filled', new ValidSubstrateAccount()],
         ];
     }
