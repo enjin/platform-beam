@@ -86,7 +86,8 @@ class UpdateBeamMutation extends Mutation
             fn () => (bool) $beam->updateByCode(
                 Arr::get($args, 'code'),
                 Arr::except($args, 'code')
-            )
+            ),
+            3
         );
     }
 

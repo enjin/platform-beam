@@ -81,7 +81,7 @@ class CreateBeamMutation extends Mutation
         Closure $getSelectFields,
         BeamService $beam
     ) {
-        return DB::transaction(fn () => $beam->create($args)->code);
+        return DB::transaction(fn () => $beam->create($args)->code, 3);
     }
 
     /**
