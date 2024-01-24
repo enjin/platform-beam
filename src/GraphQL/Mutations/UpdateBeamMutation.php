@@ -103,7 +103,7 @@ class UpdateBeamMutation extends Mutation
             'code' => [
                 'filled',
                 'max:1024',
-                new BeamExists()
+                new BeamExists(),
             ],
             'name' => ['filled', 'max:255'],
             'description' => ['filled', 'max:1024'],
