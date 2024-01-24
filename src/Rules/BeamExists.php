@@ -19,7 +19,7 @@ class BeamExists implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!Beam::where([$this->column => $value])->exists()) {
+        if (!Beam::where($this->column, $value)->exists()) {
             $fail('validation.exists')->translate();
         }
     }
