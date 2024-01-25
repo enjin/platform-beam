@@ -3,6 +3,7 @@
 namespace Enjin\Platform\Beam\GraphQL\Mutations;
 
 use Closure;
+use Enjin\Platform\Beam\Rules\BeamExists;
 use Enjin\Platform\Beam\Rules\TokensExistInBeam;
 use Enjin\Platform\Beam\Services\BeamService;
 use GraphQL\Type\Definition\ResolveInfo;
@@ -68,7 +69,11 @@ class RemoveTokensMutation extends Mutation
     protected function rules(array $args = []): array
     {
         return [
-            'code' => ['filled', 'max:1024', 'exists:beams,code,deleted_at,NULL'],
+            'code' => [
+                'filled',
+                'max:1024',
+                new BeamExists(),
+            ],
             'tokenIds' => [
                 'array',
                 'min:1',
