@@ -100,7 +100,7 @@ class CreateBeamMutation extends Mutation
                 'bail',
                 'filled',
                 function (string $attribute, mixed $value, Closure $fail) {
-                    if (!Collection::whereIn('collection_chain_id', $value)->exists()) {
+                    if (!Collection::where('collection_chain_id', $value)->exists()) {
                         $fail('validation.exists')->translate();
                     }
                 },
