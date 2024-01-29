@@ -95,7 +95,7 @@ class CreateBeamMutation extends Mutation
             'image' => ['filled', 'url', 'max:1024'],
             'start' => ['filled', 'date', 'before:end'],
             'end' => ['filled', 'date', 'after:start'],
-            'collectionId' => ['bail', 'filled', 'exists:collections,collection_chain_id', new IsCollectionOwnerOrApproved()],
+            'collectionId' => ['bail', 'filled',  new IsCollectionOwnerOrApproved()],
             'tokens' => ['bail', 'array', 'min:1', 'max:1000', new UniqueTokenIds()],
             'tokens.*.attributes' => Rule::forEach(function ($value, $attribute) use ($args) {
                 if (empty($value)) {
