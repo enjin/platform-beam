@@ -15,6 +15,7 @@ use Enjin\Platform\Beam\Rules\TokenUploadNotExistInBeam;
 use Enjin\Platform\Beam\Rules\TokenUploadNotExistInCollection;
 use Enjin\Platform\Beam\Rules\UniqueTokenIds;
 use Enjin\Platform\Beam\Services\BeamService;
+use Enjin\Platform\Models\Collection;
 use Enjin\Platform\Rules\DistinctAttributes;
 use Enjin\Platform\Rules\IsCollectionOwnerOrApproved;
 use GraphQL\Type\Definition\ResolveInfo;
@@ -95,7 +96,16 @@ class CreateBeamMutation extends Mutation
             'image' => ['filled', 'url', 'max:1024'],
             'start' => ['filled', 'date', 'before:end'],
             'end' => ['filled', 'date', 'after:start'],
-            'collectionId' => ['bail', 'filled',  new IsCollectionOwnerOrApproved()],
+            'collectionId' => [
+                'bail',
+                'filled',
+                function (string $attribute, mixed $value, Closure $fail) {
+                    if (!Collection::whereIn('collection_chain_id', $value)->exists()) {
+                        $fail('validation.exists')->translate();
+                    }
+                },
+                new IsCollectionOwnerOrApproved(),
+            ],
             'tokens' => ['bail', 'array', 'min:1', 'max:1000', new UniqueTokenIds()],
             'tokens.*.attributes' => Rule::forEach(function ($value, $attribute) use ($args) {
                 if (empty($value)) {
