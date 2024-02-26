@@ -61,6 +61,7 @@ class BeamClaim extends BaseModel
         'ip_address',
         'code',
         'nonce',
+        'idempotency_key',
     ];
 
     /**

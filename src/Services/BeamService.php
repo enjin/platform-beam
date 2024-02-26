@@ -181,7 +181,7 @@ class BeamService
     /**
      * Claim a beam.
      */
-    public function claim(string $code, string $wallet): bool
+    public function claim(string $code, string $wallet, ?string $idempotencyKey = null): bool
     {
         $singleUseCode = null;
         $singleUse = static::isSingleUse($code);
@@ -211,7 +211,7 @@ class BeamService
                 throw new BeamException(__('enjin-platform-beam::error.no_more_claims'));
             }
 
-            ClaimBeam::dispatch($claim = $this->buildClaimBeamData($wallet, $beam, $singleUseCode));
+            ClaimBeam::dispatch($claim = $this->buildClaimBeamData($wallet, $beam, $singleUseCode, $idempotencyKey));
             event(new BeamClaimPending($claim));
             Cache::decrement($key);
             Log::info("Claim beam: {$code}, Remaining: " . Cache::get($key), $claim);
@@ -428,10 +428,14 @@ class BeamService
     /**
      * Build claim payload.
      */
-    protected function buildClaimBeamData(string $wallet, Model $beam, ?string $singleUseCode = null): array
-    {
+    protected function buildClaimBeamData(
+        string $wallet,
+        Model $beam,
+        ?string $singleUseCode = null,
+        ?string $idempotencyKey = null
+    ): array {
         return array_merge(
-            $this->buildRequiredClaimBeamData($wallet, $beam, $singleUseCode),
+            $this->buildRequiredClaimBeamData($wallet, $beam, $singleUseCode, $idempotencyKey),
             ['extras' => $this->buildExtrasClaimBeamData($wallet, $beam)]
         );
     }
@@ -439,8 +443,12 @@ class BeamService
     /**
      * Build claim default data.
      */
-    protected function buildRequiredClaimBeamData(string $wallet, Model $beam, ?string $singleUseCode = null): array
-    {
+    protected function buildRequiredClaimBeamData(
+        string $wallet,
+        Model $beam,
+        ?string $singleUseCode = null,
+        ?string $idempotencyKey = null
+    ): array {
         return [
             'wallet_public_key' => SS58Address::getPublicKey($wallet),
             'claimed_at' => now(),
@@ -449,7 +457,7 @@ class BeamService
             'beam_id' => $beam->id,
             'ip_address' => request()->getClientIp(),
             'code' => $singleUseCode,
-            'idempotency_key' => Str::uuid()->toString(),
+            'idempotency_key' => $idempotencyKey ?: Str::uuid()->toString(),
         ];
     }
 

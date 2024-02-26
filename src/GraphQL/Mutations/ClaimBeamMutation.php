@@ -5,6 +5,7 @@ namespace Enjin\Platform\Beam\GraphQL\Mutations;
 use Closure;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamClaimConditions;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
+use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Rules\CanClaim;
 use Enjin\Platform\Beam\Rules\NotExpired;
 use Enjin\Platform\Beam\Rules\NotOwner;
@@ -13,10 +14,12 @@ use Enjin\Platform\Beam\Rules\SingleUseCodeExist;
 use Enjin\Platform\Beam\Rules\VerifySignedMessage;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Enums\Substrate\CryptoSignatureType;
+use Enjin\Platform\GraphQL\Types\Input\Substrate\Traits\HasIdempotencyField;
 use Enjin\Platform\Interfaces\PlatformPublicGraphQlOperation;
 use Enjin\Platform\Rules\ValidSubstrateAccount;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Rebing\GraphQL\Support\Facades\GraphQL;
 
@@ -24,6 +27,7 @@ class ClaimBeamMutation extends Mutation implements PlatformPublicGraphQlOperati
 {
     use HasBeamCommonFields;
     use HasBeamClaimConditions;
+    use HasIdempotencyField;
 
     /**
      * Get the mutation's attributes.
@@ -67,6 +71,7 @@ class ClaimBeamMutation extends Mutation implements PlatformPublicGraphQlOperati
                 'description' => __('enjin-platform-beam::mutation.claim_beam.args.cryptoSignatureType'),
                 'defaultValue' => CryptoSignatureType::SR25519->name,
             ],
+            ...$this->getIdempotencyField(),
         ];
     }
 
@@ -81,9 +86,15 @@ class ClaimBeamMutation extends Mutation implements PlatformPublicGraphQlOperati
         Closure $getSelectFields,
         BeamService $beam
     ) {
+        $idempotencyKey = Arr::get($args, 'idempotencyKey');
+        if ($idempotencyKey && BeamClaim::where('idempotency_key', $idempotencyKey)->exists()) {
+            return true;
+        }
+
         return DB::transaction(fn () => $beam->claim(
             $args['code'],
-            $args['account']
+            $args['account'],
+            $idempotencyKey,
         ));
     }
 
