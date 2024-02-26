@@ -76,6 +76,7 @@ class BatchService
             'quantity',
             'collection_id',
             'attributes',
+            'idempotency_key',
             'code as identifierCode',
         )->where('state', ClaimStatus::PENDING)
             ->with(['beam', 'collection.owner'])
