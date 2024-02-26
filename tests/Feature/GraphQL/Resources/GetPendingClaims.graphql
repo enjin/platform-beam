@@ -18,6 +18,7 @@ query GetPendingClaims(
         claimStatus
         quantity
         identifierCode
+        idempotencyKey
         attributes {
           key
           value

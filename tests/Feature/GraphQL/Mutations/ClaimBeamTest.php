@@ -11,11 +11,13 @@ use Enjin\Platform\Beam\Events\BeamClaimPending;
 use Enjin\Platform\Beam\Jobs\ClaimBeam;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Rules\PassesClaimConditions;
+use Enjin\Platform\Beam\Services\BatchService;
 use Enjin\Platform\Beam\Tests\Feature\GraphQL\TestCaseGraphQL;
 use Enjin\Platform\Beam\Tests\Feature\Traits\CreateBeamData;
 use Enjin\Platform\Beam\Tests\Feature\Traits\SeedBeamData;
 use Enjin\Platform\Enums\Substrate\CryptoSignatureType;
 use Enjin\Platform\Providers\Faker\SubstrateProvider;
+use Enjin\Platform\Services\Database\WalletService;
 use Enjin\Platform\Support\Account;
 use Enjin\Platform\Support\SS58Address;
 use Illuminate\Support\Arr;
@@ -102,6 +104,27 @@ class ClaimBeamTest extends TestCaseGraphQL
     public function test_it_can_claim_beam_with_ed25519(): void
     {
         $this->genericClaimTest(CryptoSignatureType::ED25519);
+    }
+
+    public function test_it_can_claim_beam_job_with_idempotency_key(): void
+    {
+        $data = [
+            'wallet_public_key' => $this->wallet->public_key,
+            'claimed_at' => Carbon::now()->toDateTimeString(),
+            'state' => 'PENDING',
+            'ip_address' => fake()->ipv4(),
+            'idempotency_key' => $uuid = fake()->uuid(),
+            'beam' => $this->beam->toArray(),
+            'beam_id' => $this->beam->id,
+            'code' => '',
+        ];
+
+        (new ClaimBeam($data))->handle(
+            resolve(BatchService::class),
+            resolve(WalletService::class)
+        );
+
+        $this->assertTrue(BeamClaim::where('idempotency_key', $uuid)->exists());
     }
 
     /**

@@ -22,6 +22,7 @@ query GetClaims(
         claimStatus
         quantity
         identifierCode
+        idempotencyKey
         attributes {
           key
           value

@@ -126,7 +126,13 @@ class ClaimBeam implements ShouldQueue
     protected function buildRequiredClaimAttributes(BatchService $batchService, Model $claim): array
     {
         return [
-            ...Arr::only($this->data, ['wallet_public_key', 'claimed_at', 'state', 'ip_address']),
+            ...Arr::only($this->data, [
+                'wallet_public_key',
+                'claimed_at',
+                'state',
+                'ip_address',
+                'idempotency_key',
+            ]),
             'beam_batch_id' => $batchService->getNextBatchId(
                 BeamType::getEnumCase($claim->type),
                 $claim->beam->collection_chain_id

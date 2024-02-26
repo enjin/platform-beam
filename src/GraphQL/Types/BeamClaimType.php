@@ -105,6 +105,11 @@ class BeamClaimType extends Type
                 'description' => __('enjin-platform::type.transaction.description'),
                 'is_relation' => true,
             ],
+            'idempotencyKey' => [
+                'type' => GraphQL::type('String'),
+                'description' => __('enjin-platform::type.transaction.field.idempotencyKey'),
+                'alias' => 'idempotency_key',
+            ],
         ];
     }
 }
