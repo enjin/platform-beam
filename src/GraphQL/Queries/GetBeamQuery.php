@@ -85,8 +85,7 @@ class GetBeamQuery extends Query implements PlatformPublicGraphQlOperation
                 'bail',
                 'filled',
                 'max:1024',
-                $singleUse ? new SingleUseCodeExist() : 'exists:beams,code,deleted_at,NULL',
-                new CanClaim($singleUse),
+                $singleUse ? new SingleUseCodeExist() : 'exists:beams,code,deleted_at,NULL'
             ],
             'account' => ['sometimes', 'bail', new ValidSubstrateAccount(), new ScanLimit()],
         ];

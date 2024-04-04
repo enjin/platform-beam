@@ -112,21 +112,6 @@ class GetBeamTest extends TestCaseGraphQL
     }
 
     /**
-     * Test get beam with no more claims.
-     */
-    public function test_it_will_fail_with_no_more_claims(): void
-    {
-        $this->claimAllBeams(resolve(SubstrateProvider::class)->public_key());
-
-        $response = $this->graphql($this->method, [
-            'code' => $this->beam->code,
-            'account' => resolve(SubstrateProvider::class)->public_key(),
-        ], true);
-
-        $this->assertArraySubset(['code' => ['There are no more claims available.']], $response['error']);
-    }
-
-    /**
      * Test isclaimable flag with no more claims.
      */
     public function test_isclaimable_flag_with_no_more_claims(): void
