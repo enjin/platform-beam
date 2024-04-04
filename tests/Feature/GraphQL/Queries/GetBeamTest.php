@@ -2,7 +2,9 @@
 
 namespace Enjin\Platform\Beam\Tests\Feature\GraphQL\Queries;
 
+use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Models\BeamScan;
+use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Beam\Tests\Feature\GraphQL\TestCaseGraphQL;
 use Enjin\Platform\Beam\Tests\Feature\Traits\SeedBeamData;
 use Enjin\Platform\Providers\Faker\SubstrateProvider;
@@ -32,6 +34,31 @@ class GetBeamTest extends TestCaseGraphQL
     public function test_it_can_get_beam_without_wallet(): void
     {
         $response = $this->graphql($this->method, ['code' => $this->beam->code]);
+        $this->assertNotEmpty($response);
+    }
+
+    public function test_it_can_get_beam_with_single_use_codes(): void
+    {
+        $this->seedBeam(
+            1,
+            false,
+            BeamType::MINT_ON_DEMAND,
+            ['flags_mask' => BeamService::getFlagsValue([['flag'=> 'SINGLE_USE']])]
+        );
+        $claim = $this->claims->first();
+        $singleUseCode = encrypt(implode(':', [$claim->code, $this->beam->code, $claim->nonce]));
+        $response = $this->graphql($this->method, ['code' => $singleUseCode]);
+        $this->assertNotEmpty($response);
+
+        $this->seedBeam(
+            1,
+            true,
+            BeamType::MINT_ON_DEMAND,
+            ['flags_mask' => BeamService::getFlagsValue([['flag'=> 'SINGLE_USE']])]
+        );
+        $claim = $this->claims->first();
+        $singleUseCode = encrypt(implode(':', [$claim->code, $this->beam->code, $claim->nonce]));
+        $response = $this->graphql($this->method, ['code' => $singleUseCode]);
         $this->assertNotEmpty($response);
     }
 

@@ -113,7 +113,7 @@ class ClaimBeamMutation extends Mutation implements PlatformPublicGraphQlOperati
                 'filled',
                 'max:1024',
                 new NotExpired($beamCode),
-                $singleUse ? new SingleUseCodeExist() : '',
+                $singleUse ? new SingleUseCodeExist(true) : '',
                 new CanClaim($singleUse),
                 new NotPaused($beamCode),
                 ...$this->getClaimConditionRules($singleUse),

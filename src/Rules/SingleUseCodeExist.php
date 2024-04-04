@@ -9,6 +9,10 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 class SingleUseCodeExist implements ValidationRule
 {
+    public function __construct(protected bool $isClaiming = false)
+    {
+    }
+
     /**
      * Determine if the validation rule passes.
      *
@@ -20,7 +24,11 @@ class SingleUseCodeExist implements ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (BeamService::isSingleUse($value) && BeamClaim::withSingleUseCode($value)->claimable()->exists()) {
+        if (BeamService::isSingleUse($value) &&
+                BeamClaim::withSingleUseCode($value)
+                    ->when($this->isClaiming, fn ($query) => $query->claimable())
+                    ->exists()
+        ) {
             return;
         }
 
