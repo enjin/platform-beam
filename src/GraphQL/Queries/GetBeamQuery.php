@@ -5,7 +5,6 @@ namespace Enjin\Platform\Beam\GraphQL\Queries;
 use Closure;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
 use Enjin\Platform\Beam\Models\Beam;
-use Enjin\Platform\Beam\Rules\CanClaim;
 use Enjin\Platform\Beam\Rules\ScanLimit;
 use Enjin\Platform\Beam\Rules\SingleUseCodeExist;
 use Enjin\Platform\Beam\Services\BeamService;
@@ -86,7 +85,6 @@ class GetBeamQuery extends Query implements PlatformPublicGraphQlOperation
                 'filled',
                 'max:1024',
                 $singleUse ? new SingleUseCodeExist() : 'exists:beams,code,deleted_at,NULL',
-                new CanClaim($singleUse),
             ],
             'account' => ['sometimes', 'bail', new ValidSubstrateAccount(), new ScanLimit()],
         ];
