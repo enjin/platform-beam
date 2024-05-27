@@ -56,6 +56,11 @@ class GetClaimsQuery extends Query
                 'description' => __('enjin-platform-beam::mutation.claim_beam.args.code'),
                 'rules' => ['prohibits:ids'],
             ],
+            'singleUseCodes' => [
+                'type' => GraphQL::type('[String]'),
+                'description' => __('enjin-platform-beam::mutation.claim_beam.args.single_use_code'),
+                'rules' => ['prohibits:ids'],
+            ],
             'accounts' => [
                 'type' => GraphQL::type('[String]'),
                 'description' => __('enjin-platform-beam::mutation.claim_beam.args.account'),
@@ -80,6 +85,7 @@ class GetClaimsQuery extends Query
         return BeamClaim::loadSelectFields($resolveInfo, $this->name)
             ->when(Arr::get($args, 'ids'), fn ($query) => $query->whereIn('id', $args['ids']))
             ->when(Arr::get($args, 'codes'), fn ($query) => $query->hasCode($args['codes']))
+            ->when(Arr::get($args, 'singleUseCodes'), fn ($query) => $query->hasSingleUseCode($args['singleUseCodes']))
             ->when(Arr::get($args, 'accounts'), fn ($query) => $query->whereIn(
                 'wallet_public_key',
                 collect($args['accounts'])->map(fn ($account) => SS58Address::getPublicKey($account))

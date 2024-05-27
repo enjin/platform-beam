@@ -52,6 +52,15 @@ class GetClaimsTest extends TestCaseGraphQL
     }
 
     /**
+     * Test get beam with codes.
+     */
+    public function test_it_can_get_claims_with_single_use_codes(): void
+    {
+        $response = $this->graphql($this->method, ['codes' => [$this->beam->claims[0]->singleUseCode]]);
+        $this->assertNotEmpty($response['totalCount']);
+    }
+
+    /**
      * Test get beam with accounts.
      */
     public function test_it_can_get_claims_with_accounts(): void

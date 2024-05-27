@@ -1,6 +1,7 @@
 query GetClaims(
   $ids: [BigInt]
   $codes: [String]
+  $singleUseCodes: [String]
   $accounts: [String]
   $states: [ClaimStatus]
   $after: String
@@ -9,6 +10,7 @@ query GetClaims(
   GetClaims(
     ids: $ids
     codes: $codes
+    singleUseCodes: $singleUseCodes
     accounts: $accounts
     states: $states
     after: $after
