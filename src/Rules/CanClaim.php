@@ -38,12 +38,10 @@ class CanClaim implements DataAwareRule, ValidationRule
 
         if ($this->singleUse) {
             $value = explode(':', decrypt($value), 3)[1];
-        } else {
-            if (BeamService::hasSingleUse($value)) {
-                $fail('enjin-platform-beam::validation.can_claim')->translate();
+        } elseif (BeamService::hasSingleUse($value)) {
+            $fail('enjin-platform-beam::validation.can_claim')->translate();
 
-                return;
-            }
+            return;
         }
 
         $passes = ((int) Cache::get(BeamService::key($value), BeamService::claimsCountResolver($value))) > 0;
