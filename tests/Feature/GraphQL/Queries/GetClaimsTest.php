@@ -92,15 +92,38 @@ class GetClaimsTest extends TestCaseGraphQL
      */
     public function test_will_fail_with_invalid_parameters(): void
     {
+        $codes = array_fill(0, 10, fake()->text(32));
+        $codes[0] = fake()->text(2000);
         $response = $this->graphql($this->method, [
             'ids' => [1],
-            'codes' => [fake()->text(2000)],
+            'codes' => $codes,
+            'singleUseCodes' => [fake()->text(2000)],
         ], true);
 
         $this->assertArraySubset([
             'ids' => ['The ids field prohibits codes from being present.'],
             'codes' => ['The codes field prohibits ids from being present.'],
-            'codes.0' => ['The codes.0 field must not be greater than 1024 characters.'],
+            'codes.0' => ['The codes.0 field must not be greater than 32 characters.'],
+            'singleUseCodes' => ['The single use codes field prohibits ids from being present.'],
+            'singleUseCodes.0' => ['The singleUseCodes.0 field must not be greater than 512 characters.'],
+        ], $response['error']);
+    }
+
+    /**
+     * Test get claims too many codes.
+     */
+    public function test_will_fail_with_too_many_codes(): void
+    {
+        $codes = array_fill(0, 101, fake()->text(32));
+        $singleUseCodes = array_fill(0, 101, fake()->text(384));
+        $response = $this->graphql($this->method, [
+            'codes' => $codes,
+            'singleUseCodes' => $singleUseCodes,
+        ], true);
+
+        $this->assertArraySubset([
+            'codes' => ['The codes field must not have more than 100 items.'],
+            'singleUseCodes' => ['The single use codes field must not have more than 100 items.'],
         ], $response['error']);
     }
 }

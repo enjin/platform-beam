@@ -54,12 +54,12 @@ class GetClaimsQuery extends Query
             'codes' => [
                 'type' => GraphQL::type('[String]'),
                 'description' => __('enjin-platform-beam::mutation.claim_beam.args.code'),
-                'rules' => ['prohibits:ids'],
+                'rules' => ['prohibits:ids', 'array', 'max:100'],
             ],
             'singleUseCodes' => [
                 'type' => GraphQL::type('[String]'),
                 'description' => __('enjin-platform-beam::mutation.claim_beam.args.single_use_code'),
-                'rules' => ['prohibits:ids'],
+                'rules' => ['prohibits:ids', 'array', 'max:100'],
             ],
             'accounts' => [
                 'type' => GraphQL::type('[String]'),
@@ -101,7 +101,8 @@ class GetClaimsQuery extends Query
     {
         return [
             'ids.*' => [new MinBigInt(1), new MaxBigInt()],
-            'codes.*' => ['max:1024'],
+            'codes.*' => ['max:32'],
+            'singleUseCodes.*' => ['max:512'],
             'accounts.*' => [new ValidSubstrateAccount()],
         ];
     }
