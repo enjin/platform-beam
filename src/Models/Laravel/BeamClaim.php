@@ -5,6 +5,7 @@ namespace Enjin\Platform\Beam\Models\Laravel;
 use Enjin\Platform\Beam\Database\Factories\BeamClaimFactory;
 use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Enums\BeamRoute;
+use Enjin\Platform\Beam\Models\Laravel\Traits\HasSingleUseCodeScope;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Models\BaseModel;
 use Enjin\Platform\Models\Laravel\Collection;
@@ -25,15 +26,15 @@ use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
 
 class BeamClaim extends BaseModel
 {
-    use HasFactory;
-    use SoftDeletes;
-    use Traits\HasBeamQr;
-    use Traits\HasCodeScope;
-    use MassPrunable;
-    use Traits\HasClaimable;
-    use Traits\EagerLoadSelectFields;
     use HasEagerLimit;
-
+    use HasFactory;
+    use HasSingleUseCodeScope;
+    use MassPrunable;
+    use SoftDeletes;
+    use Traits\EagerLoadSelectFields;
+    use Traits\HasBeamQr;
+    use Traits\HasClaimable;
+    use Traits\HasCodeScope;
 
     /**
      * The attributes that aren't mass assignable.

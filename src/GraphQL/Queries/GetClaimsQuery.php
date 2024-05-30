@@ -54,7 +54,12 @@ class GetClaimsQuery extends Query
             'codes' => [
                 'type' => GraphQL::type('[String]'),
                 'description' => __('enjin-platform-beam::mutation.claim_beam.args.code'),
-                'rules' => ['prohibits:ids'],
+                'rules' => ['prohibits:ids', 'array', 'max:100'],
+            ],
+            'singleUseCodes' => [
+                'type' => GraphQL::type('[String]'),
+                'description' => __('enjin-platform-beam::mutation.claim_beam.args.single_use_code'),
+                'rules' => ['prohibits:ids', 'array', 'max:100'],
             ],
             'accounts' => [
                 'type' => GraphQL::type('[String]'),
@@ -80,6 +85,7 @@ class GetClaimsQuery extends Query
         return BeamClaim::loadSelectFields($resolveInfo, $this->name)
             ->when(Arr::get($args, 'ids'), fn ($query) => $query->whereIn('id', $args['ids']))
             ->when(Arr::get($args, 'codes'), fn ($query) => $query->hasCode($args['codes']))
+            ->when(Arr::get($args, 'singleUseCodes'), fn ($query) => $query->hasSingleUseCode($args['singleUseCodes']))
             ->when(Arr::get($args, 'accounts'), fn ($query) => $query->whereIn(
                 'wallet_public_key',
                 collect($args['accounts'])->map(fn ($account) => SS58Address::getPublicKey($account))
@@ -95,7 +101,8 @@ class GetClaimsQuery extends Query
     {
         return [
             'ids.*' => [new MinBigInt(1), new MaxBigInt()],
-            'codes.*' => ['max:1024'],
+            'codes.*' => ['max:32'],
+            'singleUseCodes.*' => ['max:512'],
             'accounts.*' => [new ValidSubstrateAccount()],
         ];
     }
