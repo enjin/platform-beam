@@ -19,6 +19,7 @@ use Enjin\Platform\Enums\Substrate\CryptoSignatureType;
 use Enjin\Platform\Providers\Faker\SubstrateProvider;
 use Enjin\Platform\Services\Database\WalletService;
 use Enjin\Platform\Support\Account;
+use Enjin\Platform\Support\BitMask;
 use Enjin\Platform\Support\SS58Address;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Event;
@@ -292,6 +293,22 @@ class ClaimBeamTest extends TestCaseGraphQL
         ], true);
 
         $this->assertArraySubset(['code' => ['The beam has expired.']], $response['error']);
+    }
+
+    /**
+     * Test claiming single use beam from multi-use code.
+     */
+    public function test_it_will_fail_claiming_single_use_from_multi_use(): void
+    {
+        [$keypair, $publicKey, $privateKey] = $this->getKeyPair(CryptoSignatureType::ED25519);
+        $this->beam->update(['flags_mask' => BitMask::setBit(BeamFlag::SINGLE_USE->value, $this->beam->flags_mask)]);
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'account' => $publicKey,
+            'signature' => fake()->text(10),
+        ], true);
+
+        $this->assertArraySubset(['code' => ['There are no more claims available.']], $response['error']);
     }
 
     /**
