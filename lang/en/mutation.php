@@ -3,6 +3,7 @@
 return [
     'claim_beam.args.account' => 'The wallet account.',
     'claim_beam.args.code' => 'The beam code.',
+    'claim_beam.args.single_use_code' => 'The beam single use code.',
     'claim_beam.args.cryptoSignatureType' => 'The signature crypto type. This field is optional and it will use sr25519 by default.',
     'claim_beam.args.signature' => 'The signed message.',
     'claim_beam.description' => 'Mutation for claiming a beam.',
