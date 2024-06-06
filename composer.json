@@ -69,7 +69,7 @@
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": true,
+    "prefer-stable": false,
     "require-dev": {
         "dms/phpunit-arraysubset-asserts": "dev-master",
         "laravel/pint": "^1.16",
