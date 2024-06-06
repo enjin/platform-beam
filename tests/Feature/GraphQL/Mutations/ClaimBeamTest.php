@@ -69,7 +69,6 @@ class ClaimBeamTest extends TestCaseGraphQL
         $response = $this->graphql('GetSingleUseCodes', ['code' => $code]);
         $this->assertNotEmpty($response['totalCount']);
 
-
         Queue::fake();
         $response = $this->graphql($this->method, [
             'code' => Arr::get($response, 'edges.0.node.code'),
@@ -488,7 +487,7 @@ class ClaimBeamTest extends TestCaseGraphQL
             'account' => $publicKey,
         ]);
         $this->assertNotEmpty($response['message']);
-        if (!$singleUseCode) {
+        if (! $singleUseCode) {
             $this->assertEquals(1, $this->beam->scans()->count());
         }
 

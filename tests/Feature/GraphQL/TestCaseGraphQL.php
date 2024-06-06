@@ -40,7 +40,7 @@ class TestCaseGraphQL extends BaseTestCase
     {
         parent::setUp();
 
-        if (!self::$initialized) {
+        if (! self::$initialized) {
             $this->artisan('migrate:fresh');
             $this->loadQueries();
 
@@ -60,7 +60,7 @@ class TestCaseGraphQL extends BaseTestCase
 
         $assertMessage = null;
 
-        if (!$expectError && isset($data['errors'])) {
+        if (! $expectError && isset($data['errors'])) {
             $appendErrors = '';
 
             if (isset($data['errors'][0]['trace'])) {
@@ -90,7 +90,7 @@ class TestCaseGraphQL extends BaseTestCase
             $data['error'] = $data['errors'][0]['message'];
         }
 
-        if ($expectError && !isset($data['error'])) {
+        if ($expectError && ! isset($data['error'])) {
             throw new ExpectationFailedException('Test expected to yield an error, however returned successfully with the following: ' . json_encode($data));
         }
 
@@ -127,7 +127,7 @@ class TestCaseGraphQL extends BaseTestCase
         }
 
         $assertMessage = null;
-        if (!$expectErrors && isset($result['errors'])) {
+        if (! $expectErrors && isset($result['errors'])) {
             $appendErrors = '';
             if (isset($result['errors'][0]['trace'])) {
                 $appendErrors = "\n\n" . $this->formatSafeTrace($result['errors'][0]['trace']);
