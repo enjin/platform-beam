@@ -14,9 +14,9 @@ use Illuminate\Support\Str;
 
 class AddTokensTest extends TestCaseGraphQL
 {
-    use SeedBeamData;
     use HasIntegerRanges;
     use IntegerRange;
+    use SeedBeamData;
 
     /**
      * The graphql method.

@@ -27,7 +27,7 @@ trait EagerLoadSelectFields
         static::$query = $query;
         $queryPlan = $resolveInfo->lookAhead()->queryPlan();
 
-        switch($query) {
+        switch ($query) {
             case 'GetBeams':
             case 'GetBeam':
                 [$select, $with, $withCount] = static::loadBeams(
@@ -52,7 +52,6 @@ trait EagerLoadSelectFields
 
                 break;
         }
-
 
         return [$select, $with, $withCount];
     }
@@ -79,7 +78,7 @@ trait EagerLoadSelectFields
         $with = [];
         $withCount = [];
 
-        if (!$isParent) {
+        if (! $isParent) {
             $with = [
                 $key => function ($query) use ($select, $args) {
                     $query->select(array_unique($select))
@@ -138,7 +137,7 @@ trait EagerLoadSelectFields
         $with = [];
         $withCount = [];
 
-        if (!$isParent) {
+        if (! $isParent) {
             $with = [
                 $key => function ($query) use ($select, $args) {
                     $query->select(array_unique($select))
@@ -184,7 +183,7 @@ trait EagerLoadSelectFields
         $key = $parent ? "{$parent}.{$attribute}" : $attribute;
         $alias = static::getAlias($attribute, $parentType);
         $args = Arr::get($selections, $attribute . '.args', []);
-        switch($alias) {
+        switch ($alias) {
             case 'claims':
                 $relations = static::loadClaims(
                     $selections,

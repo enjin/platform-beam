@@ -19,11 +19,7 @@ class TokenUploadNotExistInCollection implements ValidationRule
     /**
      * Determine if the validation rule passes.
      *
-     * @param string $attribute
-     * @param mixed  $value
-     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
-     *
-     * @return void
+     * @param  Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
@@ -32,7 +28,7 @@ class TokenUploadNotExistInCollection implements ValidationRule
             $tokens = LazyCollection::make(function () use ($value, $ids) {
                 $handle = fopen($value->getPathname(), 'r');
                 while (($line = fgets($handle)) !== false) {
-                    if (!$this->tokenIdExists($ids->all(), $tokenId = trim($line))) {
+                    if (! $this->tokenIdExists($ids->all(), $tokenId = trim($line))) {
                         $ids->push($tokenId);
                         yield $tokenId;
                     }
@@ -41,7 +37,7 @@ class TokenUploadNotExistInCollection implements ValidationRule
             });
 
             foreach ($tokens->chunk(10000) as $tokenIds) {
-                $integers = $tokenIds->filter(fn ($val) => false === $this->integerRange($val))->all();
+                $integers = $tokenIds->filter(fn ($val) => $this->integerRange($val) === false)->all();
                 if ($integers) {
                     $exists = Token::whereIn('token_chain_id', $integers)
                         ->whereHas('collection', fn ($query) => $query->where('collection_chain_id', $this->collectionId))
@@ -53,7 +49,7 @@ class TokenUploadNotExistInCollection implements ValidationRule
                     }
                 }
 
-                $ranges = collect($tokenIds)->filter(fn ($val) => false !== $this->integerRange($val))->all();
+                $ranges = collect($tokenIds)->filter(fn ($val) => $this->integerRange($val) !== false)->all();
                 foreach ($ranges as $range) {
                     [$from, $to] = $this->integerRange($range);
                     $exists = Token::whereBetween('token_chain_id', [(int) $from, (int) $to])

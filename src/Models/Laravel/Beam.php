@@ -20,11 +20,11 @@ use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
 
 class Beam extends BaseModel
 {
-    use Traits\HasBeamQr;
-    use Traits\EagerLoadSelectFields;
+    use HasEagerLimit;
     use HasFactory;
     use SoftDeletes;
-    use HasEagerLimit;
+    use Traits\EagerLoadSelectFields;
+    use Traits\HasBeamQr;
 
     /**
      * The attributes that aren't mass assignable.

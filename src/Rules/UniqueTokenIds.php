@@ -13,11 +13,7 @@ class UniqueTokenIds implements ValidationRule
     /**
      * Determine if the validation rule passes.
      *
-     * @param string $attribute
-     * @param mixed  $value
-     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
-     *
-     * @return void
+     * @param  Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
@@ -26,7 +22,7 @@ class UniqueTokenIds implements ValidationRule
             ->pluck('tokenIds')
             ->filter()
             ->flatten()
-            ->sortBy(fn ($tokenId) => false !== $this->integerRange($tokenId));
+            ->sortBy(fn ($tokenId) => $this->integerRange($tokenId) !== false);
 
         foreach ($tokens->all() as $tokenId) {
             if ($this->tokenIdExists($tokenIds, $tokenId)) {

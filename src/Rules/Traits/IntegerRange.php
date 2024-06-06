@@ -21,11 +21,11 @@ trait IntegerRange
      */
     protected function tokenIdExists(array $tokenIds, string $value): bool
     {
-        $integers = array_filter($tokenIds, fn ($val) => false === $this->integerRange($val));
-        $integerRanges = array_filter($tokenIds, fn ($val) => false !== $this->integerRange($val));
+        $integers = array_filter($tokenIds, fn ($val) => $this->integerRange($val) === false);
+        $integerRanges = array_filter($tokenIds, fn ($val) => $this->integerRange($val) !== false);
 
         $valueRange = $this->integerRange($value);
-        if (false === $valueRange) {
+        if ($valueRange === false) {
             if (in_array($value, $integers)) {
                 return true;
             }

@@ -60,7 +60,7 @@ class BeamService
     /**
      * Get flags bitmask value.
      */
-    public static function getFlagsValue(?array $flags, int $initial = 0): int|null
+    public static function getFlagsValue(?array $flags, int $initial = 0): ?int
     {
         if (is_null($flags)) {
             return 0;
@@ -142,7 +142,7 @@ class BeamService
     /**
      * Find beam by code.
      */
-    public function findByCode(string $code): Model|null
+    public function findByCode(string $code): ?Model
     {
         return Beam::whereCode($code)->first();
     }
@@ -150,7 +150,7 @@ class BeamService
     /**
      * Scan beam by code.
      */
-    public function scanByCode(string $code, ?string $wallet = null): Model|null
+    public function scanByCode(string $code, ?string $wallet = null): ?Model
     {
         $isSingleUse = static::isSingleUse($code);
 
@@ -197,7 +197,7 @@ class BeamService
             $beam = $this->findByCode($code);
         }
 
-        if (!$beam) {
+        if (! $beam) {
             throw new BeamException(__('enjin-platform-beam::error.beam_not_found', ['code' => $code]));
         }
 
@@ -269,7 +269,7 @@ class BeamService
         $beams = [];
         collect($codes)->each(function ($code) use (&$beams) {
             if ($claim = BeamClaim::claimable()->withSingleUseCode($code)->first()) {
-                if (!isset($beams[$claim->beam_id])) {
+                if (! isset($beams[$claim->beam_id])) {
                     $beams[$claim->beam_id] = 0;
                 }
                 $beams[$claim->beam_id] += $claim->increment('nonce');
@@ -289,7 +289,7 @@ class BeamService
      */
     public static function hasSingleUse(?string $code): bool
     {
-        if (!$code) {
+        if (! $code) {
             return false;
         }
 
@@ -301,7 +301,7 @@ class BeamService
      */
     public static function isSingleUse(?string $code): bool
     {
-        if (!$code) {
+        if (! $code) {
             return false;
         }
 
@@ -333,7 +333,7 @@ class BeamService
      */
     public function removeTokens(string $code, array $tokens): bool
     {
-        $integers = collect($tokens)->filter(fn ($val) => false === $this->integerRange($val))->all();
+        $integers = collect($tokens)->filter(fn ($val) => $this->integerRange($val) === false)->all();
         if ($integers) {
             Cache::decrement(
                 self::key($code),
@@ -344,7 +344,7 @@ class BeamService
             );
         }
 
-        $ranges = collect($tokens)->filter(fn ($val) => false !== $this->integerRange($val))->all();
+        $ranges = collect($tokens)->filter(fn ($val) => $this->integerRange($val) !== false)->all();
         foreach ($ranges as $range) {
             [$from, $to] = $this->integerRange($range);
             Cache::decrement(
@@ -358,7 +358,7 @@ class BeamService
 
         if ($tokens) {
             $this->probability->removeTokens($code, $tokens);
-            TokensRemoved::dispatch(['code'=>$code, 'tokenIds' => $tokens]);
+            TokensRemoved::dispatch(['code' => $code, 'tokenIds' => $tokens]);
         }
 
         return true;
@@ -396,7 +396,7 @@ class BeamService
                 LazyCollection::make(function () use ($token, $ids) {
                     $handle = fopen($token['tokenIdDataUpload']->getPathname(), 'r');
                     while (($line = fgets($handle)) !== false) {
-                        if (!$this->tokenIdExists($ids->all(), $tokenId = trim($line))) {
+                        if (! $this->tokenIdExists($ids->all(), $tokenId = trim($line))) {
                             $ids->push($tokenId);
                             yield $tokenId;
                         }

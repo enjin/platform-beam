@@ -100,7 +100,7 @@ class CreateBeamMutation extends Mutation
                 'bail',
                 'filled',
                 function (string $attribute, mixed $value, Closure $fail) {
-                    if (!Collection::where('collection_chain_id', $value)->exists()) {
+                    if (! Collection::where('collection_chain_id', $value)->exists()) {
                         $fail('validation.exists')->translate();
                     }
                 },
@@ -119,7 +119,7 @@ class CreateBeamMutation extends Mutation
                     'min:1',
                     'max:10',
                     new DistinctAttributes(),
-                    Rule::prohibitedIf(BeamType::TRANSFER_TOKEN == BeamType::getEnumCase(Arr::get($args, str_replace('attributes', 'type', $attribute)))),
+                    Rule::prohibitedIf(BeamType::getEnumCase(Arr::get($args, str_replace('attributes', 'type', $attribute))) == BeamType::TRANSFER_TOKEN),
                 ];
             }),
             'tokens.*.attributes.*.key' => 'max:255',
@@ -130,7 +130,7 @@ class CreateBeamMutation extends Mutation
                     'required_without:tokens.*.tokenIdDataUpload',
                     'prohibits:tokens.*.tokenIdDataUpload',
                     'distinct',
-                    BeamType::TRANSFER_TOKEN == BeamType::getEnumCase(Arr::get($args, str_replace('tokenIds', 'type', $attribute)))
+                    BeamType::getEnumCase(Arr::get($args, str_replace('tokenIds', 'type', $attribute))) == BeamType::TRANSFER_TOKEN
                         ? new TokensExistInCollection($args['collectionId'])
                         : new TokensDoNotExistInCollection($args['collectionId']),
                     new TokensDoNotExistInBeam(),
@@ -141,7 +141,7 @@ class CreateBeamMutation extends Mutation
                     'bail',
                     'required_without:tokens.*.tokenIds',
                     'prohibits:tokens.*.tokenIds',
-                    BeamType::TRANSFER_TOKEN == BeamType::getEnumCase(Arr::get($args, str_replace('tokenIdDataUpload', 'type', $attribute)))
+                    BeamType::getEnumCase(Arr::get($args, str_replace('tokenIdDataUpload', 'type', $attribute))) == BeamType::TRANSFER_TOKEN
                         ? new TokenUploadExistInCollection($args['collectionId'])
                         : new TokenUploadNotExistInCollection($args['collectionId']),
                     new TokenUploadNotExistInBeam(),

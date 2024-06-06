@@ -62,7 +62,7 @@ class ClaimBeam implements ShouldQueue
                     Cache::put(BeamService::key(Arr::get($data, 'beam.code')), 0);
                     Log::info('ClaimBeamJob: No claim available, setting remaining count to 0', $data);
                 }
-            } catch(LockTimeoutException) {
+            } catch (LockTimeoutException) {
                 Log::info('ClaimBeamJob: Cannot obtain lock, retrying', $data);
                 $this->release(1);
             } catch (Throwable $e) {
@@ -86,7 +86,7 @@ class ClaimBeam implements ShouldQueue
             if ($this->claimQuery($data)->count() > 0) {
                 // Idempotency key prevents incrementing cache on same claim request even with manual retry on horizon
                 $key = Arr::get($data, 'idempotency_key');
-                if (!Cache::get(PlatformBeamCache::IDEMPOTENCY_KEY->key($key))) {
+                if (! Cache::get(PlatformBeamCache::IDEMPOTENCY_KEY->key($key))) {
                     Cache::forever($key, true);
                     Cache::increment(BeamService::key(Arr::get($data, 'beam.code')));
                     Log::info('ClaimBeamJob: Job failed, incrementing remaining count to 1', $data);

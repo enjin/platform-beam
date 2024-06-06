@@ -14,8 +14,6 @@ class PruneTest extends TestCaseGraphQL
 
     /**
      * Setup test case.
-     *
-     * @return void
      */
     protected function setUp(): void
     {
@@ -24,8 +22,6 @@ class PruneTest extends TestCaseGraphQL
 
     /**
      * Test pruning expired claims.
-     *
-     * @return void
      */
     public function test_it_can_prune_expired_claims(): void
     {
@@ -36,7 +32,7 @@ class PruneTest extends TestCaseGraphQL
             null,
             [
                 'end' => now()->subDays(config('enjin-platform-beam.prune_expired_claims')),
-                'flags_mask' => BeamService::getFlagsValue([['flag'=> 'PRUNABLE']]),
+                'flags_mask' => BeamService::getFlagsValue([['flag' => 'PRUNABLE']]),
             ]
         );
         $this->artisan('model:prune', ['--model' => BeamClaim::resolveClassFqn()]);
@@ -45,8 +41,6 @@ class PruneTest extends TestCaseGraphQL
 
     /**
      * Test pruning immediately.
-     *
-     * @return void
      */
     public function test_it_can_prune_immediately(): void
     {
@@ -58,7 +52,7 @@ class PruneTest extends TestCaseGraphQL
             null,
             [
                 'end' => now()->subMinute(1),
-                'flags_mask' => BeamService::getFlagsValue([['flag'=> 'PRUNABLE']]),
+                'flags_mask' => BeamService::getFlagsValue([['flag' => 'PRUNABLE']]),
             ]
         );
         $this->artisan('model:prune', ['--model' => BeamClaim::resolveClassFqn()]);
@@ -67,8 +61,6 @@ class PruneTest extends TestCaseGraphQL
 
     /**
      * Test pruning unexpired claims.
-     *
-     * @return void
      */
     public function test_it_cannot_prune_unexpired_claims(): void
     {
@@ -79,7 +71,7 @@ class PruneTest extends TestCaseGraphQL
             null,
             [
                 'end' => now()->addDays(config('enjin-platform-beam.prune_expired_claims')),
-                'flags_mask' => BeamService::getFlagsValue([['flag'=> 'PRUNABLE']]),
+                'flags_mask' => BeamService::getFlagsValue([['flag' => 'PRUNABLE']]),
             ]
         );
         $this->artisan('model:prune', ['--model' => BeamClaim::class]);
@@ -88,8 +80,6 @@ class PruneTest extends TestCaseGraphQL
 
     /**
      * Test pruning with no config.
-     *
-     * @return void
      */
     public function test_it_cannot_prune_with_empty_config(): void
     {
@@ -101,7 +91,7 @@ class PruneTest extends TestCaseGraphQL
             null,
             [
                 'end' => now()->subDays(365),
-                'flags_mask' => BeamService::getFlagsValue([['flag'=> 'PRUNABLE']]),
+                'flags_mask' => BeamService::getFlagsValue([['flag' => 'PRUNABLE']]),
             ]
         );
         $this->artisan('model:prune', ['--model' => BeamClaim::resolveClassFqn()]);

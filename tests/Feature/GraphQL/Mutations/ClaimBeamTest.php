@@ -27,8 +27,8 @@ use Illuminate\Support\Facades\Queue;
 
 class ClaimBeamTest extends TestCaseGraphQL
 {
-    use SeedBeamData;
     use CreateBeamData;
+    use SeedBeamData;
 
     /**
      * The graphql method.
@@ -138,14 +138,14 @@ class ClaimBeamTest extends TestCaseGraphQL
                 return CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'];
             },
             function ($attribute, $code, $singleUse, $data) {
-                return 'code' == $attribute;
+                return $attribute == 'code';
             },
         ]);
         $this->assertCount(2, PassesClaimConditions::getConditionalFunctions());
 
         PassesClaimConditions::removeConditionalFunctions(
             function ($attribute, $code, $singleUse, $data) {
-                return 'code' == $attribute;
+                return $attribute == 'code';
             }
         );
         $this->assertCount(1, PassesClaimConditions::getConditionalFunctions());
@@ -182,7 +182,7 @@ class ClaimBeamTest extends TestCaseGraphQL
                 return CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'];
             },
             function ($attribute, $code, $singleUse, $data) {
-                return 'code' == $attribute;
+                return $attribute == 'code';
             },
         ]);
         $this->assertNotEmpty(PassesClaimConditions::getConditionalFunctions());
@@ -238,7 +238,7 @@ class ClaimBeamTest extends TestCaseGraphQL
     {
         $functions = collect([
             function ($attribute, $code, $singleUse, $data) {
-                return 'code' == $data[$attribute];
+                return $data[$attribute] == 'code';
             },
             function ($attribute, $code, $singleUse, $data) {
                 return CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'] ? true : 'Signature is not SR25519.';
@@ -447,7 +447,7 @@ class ClaimBeamTest extends TestCaseGraphQL
      */
     public function signMessage(CryptoSignatureType $type, mixed $keypair, string $message, string $privateKey): string
     {
-        if (CryptoSignatureType::SR25519 == $type) {
+        if ($type == CryptoSignatureType::SR25519) {
             $signature = (new sr25519())->Sign($keypair, $message);
         } else {
             $message = HexConverter::stringToHex($message);
@@ -462,7 +462,7 @@ class ClaimBeamTest extends TestCaseGraphQL
      */
     protected function getKeyPair(CryptoSignatureType $type = CryptoSignatureType::SR25519): array
     {
-        if (CryptoSignatureType::SR25519 == $type) {
+        if ($type == CryptoSignatureType::SR25519) {
             $sr = new sr25519();
             $keypair = $sr->InitKeyPair(bin2hex(sodium_crypto_sign_publickey(sodium_crypto_sign_keypair())));
             $public = HexConverter::prefix($keypair->publicKey);

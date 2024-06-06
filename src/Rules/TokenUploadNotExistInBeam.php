@@ -13,8 +13,8 @@ use Illuminate\Support\LazyCollection;
 
 class TokenUploadNotExistInBeam implements DataAwareRule, ValidationRule
 {
-    use IntegerRange;
     use HasDataAwareRule;
+    use IntegerRange;
 
     public function __construct(protected ?Model $beam = null)
     {
@@ -23,11 +23,7 @@ class TokenUploadNotExistInBeam implements DataAwareRule, ValidationRule
     /**
      * Determine if the validation rule passes.
      *
-     * @param string $attribute
-     * @param mixed  $value
-     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
-     *
-     * @return void
+     * @param  Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
@@ -35,7 +31,7 @@ class TokenUploadNotExistInBeam implements DataAwareRule, ValidationRule
         $tokens = LazyCollection::make(function () use ($value, $ids) {
             $handle = fopen($value->getPathname(), 'r');
             while (($line = fgets($handle)) !== false) {
-                if (!$this->tokenIdExists($ids->all(), $tokenId = trim($line))) {
+                if (! $this->tokenIdExists($ids->all(), $tokenId = trim($line))) {
                     $ids->push($tokenId);
                     yield $tokenId;
                 }
@@ -45,7 +41,7 @@ class TokenUploadNotExistInBeam implements DataAwareRule, ValidationRule
 
         $prepare = TokensDoNotExistInBeam::prepareStatement($this->beam, Arr::get($this->data, 'collectionId'));
         foreach ($tokens->chunk(1000) as $tokenIds) {
-            $integers = collect($tokenIds)->filter(fn ($val) => false === $this->integerRange($val))->all();
+            $integers = collect($tokenIds)->filter(fn ($val) => $this->integerRange($val) === false)->all();
             if ($integers) {
                 if ($prepare->whereIn('beam_claims.token_chain_id', $integers)->exists()) {
                     $fail($this->message())->translate();
@@ -53,7 +49,7 @@ class TokenUploadNotExistInBeam implements DataAwareRule, ValidationRule
                     return;
                 }
             }
-            $ranges = collect($tokenIds)->filter(fn ($val) => false !== $this->integerRange($val))->all();
+            $ranges = collect($tokenIds)->filter(fn ($val) => $this->integerRange($val) !== false)->all();
             foreach ($ranges as $range) {
                 [$from, $to] = $this->integerRange($range);
                 if ($prepare->whereBetween('beam_claims.token_chain_id', [(int) $from, (int) $to])->exists()) {

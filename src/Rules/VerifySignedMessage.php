@@ -20,15 +20,11 @@ class VerifySignedMessage implements DataAwareRule, ValidationRule
     /**
      * Determine if the validation rule passes.
      *
-     * @param string $attribute
-     * @param mixed  $value
-     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
-     *
-     * @return void
+     * @param  Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!$publicKey = SS58Address::getPublicKey($this->data['account'])) {
+        if (! $publicKey = SS58Address::getPublicKey($this->data['account'])) {
             $fail('enjin-platform::validation.valid_substrate_account')
                 ->translate([
                     'attribute' => 'account',
@@ -41,7 +37,7 @@ class VerifySignedMessage implements DataAwareRule, ValidationRule
             $this->data['code'] = explode(':', decrypt($this->data['code']))[1];
         }
 
-        if (!$scan = BeamScan::hasCode($this->data['code'])->firstWhere(['wallet_public_key' => $publicKey])) {
+        if (! $scan = BeamScan::hasCode($this->data['code'])->firstWhere(['wallet_public_key' => $publicKey])) {
             $fail('enjin-platform-beam::validation.beam_scan_not_found')->translate();
 
             return;
@@ -60,7 +56,7 @@ class VerifySignedMessage implements DataAwareRule, ValidationRule
             $type
         );
 
-        if (!$passes) {
+        if (! $passes) {
             $fail('enjin-platform-beam::validation.verify_signed_message')->translate();
         }
     }

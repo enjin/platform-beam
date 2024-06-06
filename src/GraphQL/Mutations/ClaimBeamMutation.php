@@ -25,8 +25,8 @@ use Rebing\GraphQL\Support\Facades\GraphQL;
 
 class ClaimBeamMutation extends Mutation implements PlatformPublicGraphQlOperation
 {
-    use HasBeamCommonFields;
     use HasBeamClaimConditions;
+    use HasBeamCommonFields;
     use HasIdempotencyField;
 
     /**

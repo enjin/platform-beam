@@ -23,8 +23,6 @@ trait SeedBeamData
 
     /**
      * The beam claims.
-     *
-     * @var Collection
      */
     protected Collection $claims;
 
@@ -40,7 +38,7 @@ trait SeedBeamData
     {
         $states = [
             'collection_id' => $this->collection->id,
-            ...(!$isClaimed ? ['wallet_public_key' => null, 'claimed_at' => null, 'state' => null] : ['state' => ClaimStatus::PENDING->name]),
+            ...(! $isClaimed ? ['wallet_public_key' => null, 'claimed_at' => null, 'state' => null] : ['state' => ClaimStatus::PENDING->name]),
             ...($type ? ['type' => $type->name] : []),
         ];
 

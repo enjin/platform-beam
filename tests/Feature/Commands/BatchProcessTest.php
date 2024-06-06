@@ -84,15 +84,18 @@ class BatchProcessTest extends TestCaseGraphQL
         $this->batch->refresh()->load('transaction');
 
         $this->assertEquals([
-            'method' => BeamType::MINT_ON_DEMAND == BeamType::getEnumCase($this->batch->beam_type) ? 'BatchMint' : 'BatchTransfer',
+            'method' => BeamType::getEnumCase($this->batch->beam_type) == BeamType::MINT_ON_DEMAND ? 'BatchMint' : 'BatchTransfer',
             'state' => TransactionState::PENDING->name,
         ], Arr::only($this->batch->transaction->toArray(), ['method', 'state']));
 
         resolve(UpdateClaimStatus::class)->handle(
-            new TransactionUpdated($this->batch->transaction->fill([
-                'state' => $txnState->name,
-                'result' => $txnState == TransactionState::FINALIZED ? SystemEventType::EXTRINSIC_SUCCESS->name : SystemEventType::EXTRINSIC_FAILED->name,
-            ]))
+            new TransactionUpdated(
+                event: [],
+                transaction: $this->batch->transaction->fill([
+                    'state' => $txnState->name,
+                    'result' => $txnState == TransactionState::FINALIZED ? SystemEventType::EXTRINSIC_SUCCESS->name : SystemEventType::EXTRINSIC_FAILED->name,
+                ])
+            )
         );
 
         $this->batch->refresh()->load('claims');
