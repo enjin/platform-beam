@@ -246,7 +246,6 @@ class UpdateBeamTest extends TestCaseGraphQL
             $response['error']
         );
 
-
         $updates = array_merge(
             $updates,
             ['tokens' => [['tokenIds' => [$token->token_chain_id . '..' . $token->token_chain_id], 'type' => BeamType::MINT_ON_DEMAND->name]]]
@@ -392,7 +391,7 @@ class UpdateBeamTest extends TestCaseGraphQL
      */
     public function test_it_can_update_beam_flags(): void
     {
-        $this->assertTrue(!$this->beam->hasFlag(BeamFlag::PAUSED));
+        $this->assertTrue(! $this->beam->hasFlag(BeamFlag::PAUSED));
 
         $response = $this->graphql(
             $this->method,
@@ -411,7 +410,7 @@ class UpdateBeamTest extends TestCaseGraphQL
      */
     public function test_it_can_update_beam_with_empty_flags(): void
     {
-        $this->assertTrue(!$this->beam->hasFlag(BeamFlag::PAUSED));
+        $this->assertTrue(! $this->beam->hasFlag(BeamFlag::PAUSED));
 
         $response = $this->graphql(
             $this->method,
@@ -429,7 +428,7 @@ class UpdateBeamTest extends TestCaseGraphQL
 
         $this->assertTrue($response);
         $this->beam->refresh();
-        $this->assertTrue(!$this->beam->hasFlag(BeamFlag::PAUSED));
+        $this->assertTrue(! $this->beam->hasFlag(BeamFlag::PAUSED));
     }
 
     /**

@@ -276,7 +276,6 @@ class CreateBeamTest extends TestCaseGraphQL
         );
         $this->assertArraySubset(['image' => ['The image field must be a valid URL.']], $response['error']);
 
-
         $now = Carbon::now();
         $response = $this->graphql(
             $this->method,

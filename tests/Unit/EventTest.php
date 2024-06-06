@@ -22,11 +22,11 @@ use Enjin\Platform\Events\Substrate\MultiTokens\CollectionThawed;
 use Enjin\Platform\Events\Substrate\MultiTokens\TokenDestroyed;
 use Enjin\Platform\Models\Laravel\Transaction;
 use Enjin\Platform\Services\Database\WalletService;
-use Illuminate\Support\Facades\Event;
 use Enjin\Platform\Services\Processor\Substrate\Codec\Polkadart\Events\MultiTokens\CollectionDestroyed as CollectionDestroyedPolkadart;
 use Enjin\Platform\Services\Processor\Substrate\Codec\Polkadart\Events\MultiTokens\Frozen as CollectionFrozenPolkadart;
 use Enjin\Platform\Services\Processor\Substrate\Codec\Polkadart\Events\MultiTokens\Thawed as CollectionThawedPolkadart;
 use Enjin\Platform\Services\Processor\Substrate\Codec\Polkadart\Events\MultiTokens\TokenDestroyed as TokenDestroyedPolkadart;
+use Illuminate\Support\Facades\Event;
 
 class EventTest extends TestCaseGraphQL
 {
