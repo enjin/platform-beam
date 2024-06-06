@@ -15,8 +15,8 @@ use Illuminate\Support\Arr;
 
 class TokensDoNotExistInBeam implements DataAwareRule, ValidationRule
 {
-    use IntegerRange;
     use HasDataAwareRule;
+    use IntegerRange;
 
     public function __construct(protected ?Model $beam = null)
     {
@@ -25,16 +25,12 @@ class TokensDoNotExistInBeam implements DataAwareRule, ValidationRule
     /**
      * Determine if the validation rule passes.
      *
-     * @param string $attribute
-     * @param mixed  $value
-     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
-     *
-     * @return void
+     * @param  Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $prepare = static::prepareStatement($this->beam, Arr::get($this->data, 'collectionId'));
-        $integers = collect($value)->filter(fn ($val) => false === $this->integerRange($val))->all();
+        $integers = collect($value)->filter(fn ($val) => $this->integerRange($val) === false)->all();
         if ($integers) {
             if ($prepare->whereIn('beam_claims.token_chain_id', $integers)->exists()) {
                 $fail($this->message())->translate();
@@ -42,7 +38,7 @@ class TokensDoNotExistInBeam implements DataAwareRule, ValidationRule
                 return;
             }
         }
-        $ranges = collect($value)->filter(fn ($val) => false !== $this->integerRange($val))->all();
+        $ranges = collect($value)->filter(fn ($val) => $this->integerRange($val) !== false)->all();
         foreach ($ranges as $range) {
             [$from, $to] = $this->integerRange($range);
             if ($prepare->whereBetween('beam_claims.token_chain_id', [(int) $from, (int) $to])->exists()) {

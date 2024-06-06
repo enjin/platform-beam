@@ -15,10 +15,10 @@ use Illuminate\Support\LazyCollection;
 class DispatchCreateBeamClaimsJobs implements ShouldQueue
 {
     use Dispatchable;
+    use IntegerRange;
     use InteractsWithQueue;
     use Queueable;
     use SerializesModels;
-    use IntegerRange;
 
     /**
      * Create a new job instance.
@@ -43,7 +43,7 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
                 $chunks->each(function ($token) use ($beam, $claims) {
                     collect($token['tokenIds'])->each(function ($tokenId) use ($beam, $claims, $token) {
                         $range = $this->integerRange($tokenId);
-                        if (false === $range) {
+                        if ($range === false) {
                             for ($i = 0; $i < $token['claimQuantity']; $i++) {
                                 $claims->push([
                                     'beam_id' => $beam->id,

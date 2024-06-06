@@ -26,7 +26,7 @@ class BatchService
      */
     public function __construct()
     {
-        if (!$this->threshold = config('enjin-platform-beam.batch_process.threshold')) {
+        if (! $this->threshold = config('enjin-platform-beam.batch_process.threshold')) {
             throw new BeamException(__('enjin-platform-beam::error.threshold_not_set'));
         }
     }
@@ -41,7 +41,7 @@ class BatchService
             'beam_type' => $type->name,
             'collection_chain_id' => $collectionid,
         ]);
-        if (!$batch->exists) {
+        if (! $batch->exists) {
             $batch->save();
         }
 

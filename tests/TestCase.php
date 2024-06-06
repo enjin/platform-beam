@@ -29,8 +29,7 @@ abstract class TestCase extends BaseTestCase
     /**
      * Define environment.
      *
-     * @param mixed $app
-     *
+     * @param  mixed  $app
      * @return void
      */
     protected function defineEnvironment($app)

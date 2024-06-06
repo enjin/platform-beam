@@ -11,22 +11,18 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 class TokensExistInBeam implements DataAwareRule, ValidationRule
 {
-    use IntegerRange;
     use HasDataAwareRule;
+    use IntegerRange;
 
     /**
      * Determine if the validation rule passes.
      *
-     * @param string $attribute
-     * @param mixed  $value
-     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
-     *
-     * @return void
+     * @param  Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         if ($code = $this->data['code']) {
-            $integers = collect($value)->filter(fn ($val) => false === $this->integerRange($val))->all();
+            $integers = collect($value)->filter(fn ($val) => $this->integerRange($val) === false)->all();
             if ($integers) {
                 $count = BeamClaim::whereIn('token_chain_id', $integers)
                     ->whereNull('claimed_at')
@@ -39,7 +35,7 @@ class TokensExistInBeam implements DataAwareRule, ValidationRule
                     return;
                 }
             }
-            $ranges = collect($value)->filter(fn ($val) => false !== $this->integerRange($val))->all();
+            $ranges = collect($value)->filter(fn ($val) => $this->integerRange($val) !== false)->all();
             foreach ($ranges as $range) {
                 [$from, $to] = $this->integerRange($range);
                 $count = BeamClaim::whereBetween('token_chain_id', [(int) $from, (int) $to])

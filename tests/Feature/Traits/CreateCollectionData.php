@@ -29,10 +29,6 @@ trait CreateCollectionData
 
     /**
      * Create collection data.
-     *
-     * @param string $publicKey
-     *
-     * @return void
      */
     public function prepareCollectionData(?string $publicKey = null): void
     {

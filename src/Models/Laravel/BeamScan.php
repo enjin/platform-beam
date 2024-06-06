@@ -11,12 +11,12 @@ use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
 
 class BeamScan extends BaseModel
 {
+    use HasEagerLimit;
     use HasFactory;
     use SoftDeletes;
-    use Traits\HasCodeScope;
-    use Traits\HasClaimable;
     use Traits\EagerLoadSelectFields;
-    use HasEagerLimit;
+    use Traits\HasClaimable;
+    use Traits\HasCodeScope;
 
     /**
      * The attributes that aren't mass assignable.
@@ -51,8 +51,6 @@ class BeamScan extends BaseModel
 
     /**
      * The beam's relationship.
-     *
-     * @return BelongsTo
      */
     public function beam(): BelongsTo
     {

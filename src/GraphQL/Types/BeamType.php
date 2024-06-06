@@ -67,7 +67,7 @@ class BeamType extends Type
                 'resolve' => fn ($beam) => Carbon::now()->between(
                     Carbon::parse($beam->start),
                     Carbon::parse($beam->end)
-                ) && !$beam->hasFlag(BeamFlag::PAUSED)
+                ) && ! $beam->hasFlag(BeamFlag::PAUSED)
                 && ((int) Cache::get(BeamService::key($beam->code), BeamService::claimsCountResolver($beam->code))) > 0,
                 'selectable' => false,
                 'is_relation' => false,
@@ -113,7 +113,7 @@ class BeamType extends Type
                             $beam?->claims,
                             $args['first'],
                             Arr::get($args, 'after') ? Cursor::fromEncoded($args['after']) : null,
-                            ['parameters'=>['id']]
+                            ['parameters' => ['id']]
                         ),
                         'total' => (int) $beam?->claims_count,
                     ];

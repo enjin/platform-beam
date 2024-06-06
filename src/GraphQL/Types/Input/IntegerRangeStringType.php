@@ -13,8 +13,8 @@ use Rebing\GraphQL\Support\Contracts\TypeConvertible;
 
 class IntegerRangeStringType extends ScalarType implements PlatformGraphQlType, TypeConvertible
 {
-    use InGlobalSchema;
     use HasIntegerRanges;
+    use InGlobalSchema;
 
     public function __construct(array $config = [])
     {
@@ -40,7 +40,7 @@ class IntegerRangeStringType extends ScalarType implements PlatformGraphQlType, 
      */
     public function parseValue($value): string
     {
-        if (!is_string($value) || !$this->isValid($value)) {
+        if (! is_string($value) || ! $this->isValid($value)) {
             throw new Error(__('enjin-platform::error.cannot_represent_integer_range', ['value' => Utils::printSafeJson($value)]));
         }
 
@@ -52,7 +52,7 @@ class IntegerRangeStringType extends ScalarType implements PlatformGraphQlType, 
      */
     public function parseLiteral($valueNode, ?array $variables = null): string
     {
-        if (!in_array($valueNode->kind, ['StringValue']) || !$this->isValid($valueNode->value)) {
+        if (! in_array($valueNode->kind, ['StringValue']) || ! $this->isValid($valueNode->value)) {
             throw new Error(__('enjin-platform::error.not_valid_integer_range'), [$valueNode]);
         }
 
@@ -64,7 +64,7 @@ class IntegerRangeStringType extends ScalarType implements PlatformGraphQlType, 
      */
     public function isValid($value): bool
     {
-        return !$this->validateValue($value);
+        return ! $this->validateValue($value);
     }
 
     /**

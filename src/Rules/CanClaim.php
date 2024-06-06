@@ -24,15 +24,11 @@ class CanClaim implements DataAwareRule, ValidationRule
     /**
      * Determine if the validation rule passes.
      *
-     * @param string $attribute
-     * @param mixed  $value
-     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
-     *
-     * @return void
+     * @param  Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!Arr::get($this->data, 'account')) {
+        if (! Arr::get($this->data, 'account')) {
             return;
         }
 
@@ -46,7 +42,7 @@ class CanClaim implements DataAwareRule, ValidationRule
 
         $passes = ((int) Cache::get(BeamService::key($value), BeamService::claimsCountResolver($value))) > 0;
 
-        if (!$passes) {
+        if (! $passes) {
             $fail('enjin-platform-beam::validation.can_claim')->translate();
         }
     }

@@ -43,7 +43,7 @@ class GetBeamTest extends TestCaseGraphQL
             1,
             false,
             BeamType::MINT_ON_DEMAND,
-            ['flags_mask' => BeamService::getFlagsValue([['flag'=> 'SINGLE_USE']])]
+            ['flags_mask' => BeamService::getFlagsValue([['flag' => 'SINGLE_USE']])]
         );
         $claim = $this->claims->first();
         $singleUseCode = encrypt(implode(':', [$claim->code, $this->beam->code, $claim->nonce]));
@@ -54,7 +54,7 @@ class GetBeamTest extends TestCaseGraphQL
             1,
             true,
             BeamType::MINT_ON_DEMAND,
-            ['flags_mask' => BeamService::getFlagsValue([['flag'=> 'SINGLE_USE']])]
+            ['flags_mask' => BeamService::getFlagsValue([['flag' => 'SINGLE_USE']])]
         );
         $claim = $this->claims->first();
         $singleUseCode = encrypt(implode(':', [$claim->code, $this->beam->code, $claim->nonce]));

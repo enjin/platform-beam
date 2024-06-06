@@ -9,8 +9,8 @@ use Rebing\GraphQL\Support\Facades\GraphQL;
 
 class BeamClaimType extends Type
 {
-    use HasSelectFields;
     use HasAuthorizableFields;
+    use HasSelectFields;
 
     /**
      * Get the type's attributes.

@@ -16,15 +16,11 @@ class NotExpired implements ValidationRule
     /**
      * Determine if the validation rule passes.
      *
-     * @param string $attribute
-     * @param mixed  $value
-     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
-     *
-     * @return void
+     * @param  Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!$beam = Beam::where('code', $this->code ?: $value)->first()) {
+        if (! $beam = Beam::where('code', $this->code ?: $value)->first()) {
             $fail('validation.exists')->translate();
 
             return;
