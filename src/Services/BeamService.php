@@ -368,7 +368,7 @@ class BeamService
 
         if ($tokens) {
             $this->probability->removeTokens($code, $tokens);
-            TokensRemoved::dispatch(['code' => $code, 'tokenIds' => $tokens]);
+            TokensRemoved::safeBroadcast(event: ['code' => $code, 'tokenIds' => $tokens]);
         }
 
         return true;
