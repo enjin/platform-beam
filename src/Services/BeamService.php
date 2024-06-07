@@ -114,7 +114,7 @@ class BeamService
                     self::key($beam->code),
                     $this->createClaims($tokens, $beam)
                 );
-                TokensAdded::dispatch(['beamCode' => $beam->code, 'code' => $code, 'tokenIds' => collect($tokens)->pluck('tokenIds')->all()]);
+                TokensAdded::safeBroadcast(event: ['beamCode' => $beam->code, 'code' => $code, 'tokenIds' => collect($tokens)->pluck('tokenIds')->all()]);
             }
             event(new BeamUpdated($beam));
 
@@ -134,7 +134,7 @@ class BeamService
             self::key($beam->code),
             $this->createClaims($tokens, $beam)
         );
-        TokensAdded::dispatch(['beamCode' => $beam->code, 'code' => $code, 'tokenIds' => collect($tokens)->pluck('tokenIds')->all()]);
+        TokensAdded::safeBroadcast(event: ['beamCode' => $beam->code, 'code' => $code, 'tokenIds' => collect($tokens)->pluck('tokenIds')->all()]);
 
         return true;
     }

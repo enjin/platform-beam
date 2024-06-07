@@ -39,7 +39,7 @@ class CreateBeamClaims implements ShouldQueue
                 ->pluck('beam_id', 'beam_id')
                 ->each(function ($beamId) {
                     if ($beam = Beam::select('id', 'code')->find($beamId)) {
-                        event(new CreateBeamClaimsCompleted($beam->toArray()));
+                        CreateBeamClaimsCompleted::safeBroadcast(event: $beam->toArray());
                     }
                 });
 
