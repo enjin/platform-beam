@@ -13,7 +13,7 @@ class TokensAdded extends PlatformBroadcastEvent
     /**
      * Create a new event instance.
      */
-    public function __construct(mixed $event, ?Model $transaction, ?array $extra, array $data)
+    public function __construct(mixed $event, ?Model $transaction, ?array $extra)
     {
         parent::__construct();
 

@@ -48,7 +48,6 @@ class AddTokensTest extends TestCaseGraphQL
 
     public function test_it_can_add_token_with_attributes(): void
     {
-        Event::fake();
         $response = $this->graphql(
             $this->method,
             [
@@ -65,6 +64,7 @@ class AddTokensTest extends TestCaseGraphQL
                 ],
             ],
         );
+
         $this->assertTrue($response);
         Event::assertDispatched(TokensAdded::class);
     }
