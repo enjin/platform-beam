@@ -305,12 +305,22 @@ class BeamService
             return false;
         }
 
+        return static::hasSingleUse(static::getSingleUseCodeData($code)?->beamCode);
+    }
+
+    public static function getSingleUseCodeData(string $code): ?object
+    {
         try {
-            return static::hasSingleUse(explode(':', decrypt($code), 3)[1] ?? null);
+            [$claimCode, $beamCode, $nonce] = explode(':', decrypt($code), 3);
         } catch (Throwable) {
+            return null;
         }
 
-        return false;
+        return json_decode(json_encode([
+            'claimCode' => $claimCode,
+            'beamCode' => $beamCode,
+            'nonce' => $nonce,
+        ]));
     }
 
     /**

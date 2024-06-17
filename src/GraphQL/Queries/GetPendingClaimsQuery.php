@@ -4,6 +4,8 @@ namespace Enjin\Platform\Beam\GraphQL\Queries;
 
 use Closure;
 use Enjin\Platform\Beam\Models\BeamClaim;
+use Enjin\Platform\Beam\Rules\BeamExists;
+use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\GraphQL\Types\Pagination\ConnectionInput;
 use Enjin\Platform\Interfaces\PlatformPublicGraphQlOperation;
 use Enjin\Platform\Rules\ValidSubstrateAccount;
@@ -61,6 +63,10 @@ class GetPendingClaimsQuery extends Query implements PlatformPublicGraphQlOperat
         ResolveInfo $resolveInfo,
         Closure $getSelectFields
     ) {
+        if ($beamData = BeamService::getSingleUseCodeData($args['code'])) {
+            $args['code'] = $beamData->beamCode;
+        }
+
         return BeamClaim::loadSelectFields($resolveInfo, $this->name)
             ->hasCode(Arr::get($args, 'code'))
             ->where('wallet_public_key', SS58Address::getPublicKey(Arr::get($args, 'account')))
@@ -73,8 +79,15 @@ class GetPendingClaimsQuery extends Query implements PlatformPublicGraphQlOperat
     protected function rules(array $args = []): array
     {
         return [
-            'code' => ['filled', 'max:1024', 'exists:beams,code,deleted_at,NULL'],
-            'account' => ['filled', new ValidSubstrateAccount()],
+            'code' => [
+                'filled',
+                'max:1024',
+                new BeamExists(),
+            ],
+            'account' => [
+                'filled',
+                new ValidSubstrateAccount(),
+            ],
         ];
     }
 }

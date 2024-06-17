@@ -144,9 +144,9 @@ class BeamClaim extends BaseModel
      */
     public function scopeWithSingleUseCode(Builder $query, string $code): Builder
     {
-        $parsed = explode(':', decrypt($code), 3);
+        $parsed = BeamService::getSingleUseCodeData($code);
 
-        return $query->where(['code' => $parsed[0], 'nonce' => $parsed[2]]);
+        return $query->where(['code' => $parsed->claimCode, 'nonce' => $parsed->nonce]);
     }
 
     /**
