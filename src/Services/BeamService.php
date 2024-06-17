@@ -312,15 +312,15 @@ class BeamService
     {
         try {
             [$claimCode, $beamCode, $nonce] = explode(':', decrypt($code), 3);
+
+            return (object) [
+                'claimCode' => $claimCode,
+                'beamCode' => $beamCode,
+                'nonce' => $nonce,
+            ];
         } catch (Throwable) {
             return null;
         }
-
-        return json_decode(json_encode([
-            'claimCode' => $claimCode,
-            'beamCode' => $beamCode,
-            'nonce' => $nonce,
-        ]));
     }
 
     /**
