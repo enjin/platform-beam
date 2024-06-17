@@ -105,7 +105,7 @@ class ClaimBeamMutation extends Mutation implements PlatformPublicGraphQlOperati
     {
         $beamCode = null;
         if ($singleUse = BeamService::isSingleUse($args['code'])) {
-            $beamCode = explode(':', decrypt($args['code']), 3)[1] ?? null;
+            $beamCode = BeamService::getSingleUseCodeData($args['code'])?->beamCode;
         }
 
         return [
