@@ -43,6 +43,24 @@ class GetPendingClaimsTest extends TestCaseGraphQL
     }
 
     /**
+     * Test get claims from single use code.
+     */
+    public function test_it_can_get_pending_claims_using_single_use_code(): void
+    {
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->claims[0]->single_use_code,
+            'account' => $this->claims->first()->wallet_public_key,
+        ]);
+        $this->assertNotEmpty($response['totalCount']);
+
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->claims[0]->single_use_code,
+            'account' => resolve(SubstrateProvider::class)->public_key(),
+        ]);
+        $this->assertEmpty($response['edges']);
+    }
+
+    /**
      * Test get claims with id and code.
      */
     public function test_will_fail_with_invalid_parameters(): void

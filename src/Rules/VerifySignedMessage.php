@@ -34,7 +34,7 @@ class VerifySignedMessage implements DataAwareRule, ValidationRule
         }
 
         if (BeamService::isSingleUse($this->data['code'])) {
-            $this->data['code'] = explode(':', decrypt($this->data['code']))[1];
+            $this->data['code'] = BeamService::getSingleUseCodeData($this->data['code'])?->beamCode;
         }
 
         if (! $scan = BeamScan::hasCode($this->data['code'])->firstWhere(['wallet_public_key' => $publicKey])) {

@@ -2,6 +2,7 @@
 
 namespace Enjin\Platform\Beam\Models\Laravel\Traits;
 
+use Enjin\Platform\Beam\Services\BeamService;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 
@@ -15,10 +16,10 @@ trait HasSingleUseCodeScope
         try {
             if (is_array($code)) {
                 $singleUseCode = array_map(function ($item) {
-                    return explode(':', decrypt($item))[0];
+                    return BeamService::getSingleUseCodeData($item)?->claimCode;
                 }, $code);
             } else {
-                $singleUseCode = explode(':', decrypt($code))[0];
+                $singleUseCode = BeamService::getSingleUseCodeData($code)?->claimCode;
             }
 
             return $query->whereIn('code', Arr::wrap($singleUseCode));
