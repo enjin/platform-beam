@@ -22,11 +22,9 @@ use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
-use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
 
 class BeamClaim extends BaseModel
 {
-    use HasEagerLimit;
     use HasFactory;
     use HasSingleUseCodeScope;
     use MassPrunable;
