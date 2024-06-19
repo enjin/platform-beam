@@ -187,7 +187,7 @@ trait EagerLoadSelectFields
             case 'claims':
                 $relations = static::loadClaims(
                     $selections,
-                    $attribute . '.fields.edges.fields.node.fields',
+                    $attribute.'.fields.edges.fields.node.fields',
                     $args,
                     $key
                 );
@@ -197,7 +197,7 @@ trait EagerLoadSelectFields
             case 'beam':
                 $relations = static::loadBeams(
                     $selections,
-                    $attribute . '.fields',
+                    $attribute.'.fields',
                     $args,
                     $key
                 );

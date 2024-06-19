@@ -8,9 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 
 class UpdateClaimCollectionIds implements ShouldQueue
 {
-    public function __construct(private readonly BeamClaimService $beamClaimService)
-    {
-    }
+    public function __construct(private readonly BeamClaimService $beamClaimService) {}
 
     /**
      * Handle the event.

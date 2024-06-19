@@ -70,12 +70,12 @@ class BeamServiceProvider extends PackageServiceProvider
     {
         parent::boot();
 
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
-        $this->loadRoutesFrom(__DIR__ . '/../routes/enjin-platform-beam.php');
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->loadRoutesFrom(__DIR__.'/../routes/enjin-platform-beam.php');
     }
 
     public function packageRegistered()
     {
-        $this->loadTranslationsFrom(__DIR__ . '/../lang', 'enjin-platform-beam');
+        $this->loadTranslationsFrom(__DIR__.'/../lang', 'enjin-platform-beam');
     }
 }

@@ -30,7 +30,7 @@ class BeamClaimPending extends PlatformBroadcastEvent
         );
 
         $this->broadcastChannels = [
-            new Channel('collection;' . $claim['beam']['collection_chain_id']),
+            new Channel('collection;'.$claim['beam']['collection_chain_id']),
             new PlatformAppChannel(),
             new PlatformBeamChannel(),
         ];

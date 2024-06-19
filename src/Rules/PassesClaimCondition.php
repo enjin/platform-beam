@@ -17,8 +17,7 @@ class PassesClaimCondition implements DataAwareRule, ValidationRule
     public function __construct(
         protected Closure $function,
         protected bool $singleUse
-    ) {
-    }
+    ) {}
 
     /**
      * Determine if the validation rule passes.

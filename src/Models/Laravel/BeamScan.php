@@ -14,6 +14,8 @@ class BeamScan extends BaseModel
     use HasFactory;
     use SoftDeletes;
     use Traits\EagerLoadSelectFields;
+    use Traits\HasClaimable;
+    use Traits\HasCodeScope;
 
     /**
      * The attributes that aren't mass assignable.

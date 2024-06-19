@@ -33,9 +33,7 @@ class ClaimBeam implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(protected ?array $data)
-    {
-    }
+    public function __construct(protected ?array $data) {}
 
     /**
      * Execute the job.
@@ -68,7 +66,7 @@ class ClaimBeam implements ShouldQueue
             } catch (Throwable $e) {
                 DB::rollBack();
 
-                Log::error('ClaimBeamJob: Claim error, message:' . $e->getMessage(), $data);
+                Log::error('ClaimBeamJob: Claim error, message:'.$e->getMessage(), $data);
 
                 throw $e;
             } finally {

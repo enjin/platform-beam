@@ -21,7 +21,7 @@ enum PlatformBeamCache: string implements PlatformCacheable
      */
     public function key(?string $suffix = null): string
     {
-        return 'enjin-platform:beam:' . $this->value . ($suffix ? ":{$suffix}" : '');
+        return 'enjin-platform:beam:'.$this->value.($suffix ? ":{$suffix}" : '');
     }
 
     /**

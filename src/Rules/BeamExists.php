@@ -9,9 +9,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 class BeamExists implements ValidationRule
 {
-    public function __construct(protected string $column = 'code')
-    {
-    }
+    public function __construct(protected string $column = 'code') {}
 
     /**
      * Run the validation rule.
@@ -24,7 +22,7 @@ class BeamExists implements ValidationRule
             $value = $beamData->beamCode;
         }
 
-        if (!Beam::where($this->column, $value)->exists()) {
+        if (! Beam::where($this->column, $value)->exists()) {
             $fail('validation.exists')->translate();
         }
     }

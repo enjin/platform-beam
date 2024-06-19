@@ -238,7 +238,7 @@ class UpdateBeamTest extends TestCaseGraphQL
 
         $updates = array_merge(
             $updates,
-            ['tokens' => [['tokenIds' => [$token->token_chain_id . '..' . $token->token_chain_id]]]]
+            ['tokens' => [['tokenIds' => [$token->token_chain_id.'..'.$token->token_chain_id]]]]
         );
         $response = $this->graphql($this->method, $updates, true);
         $this->assertArraySubset(
@@ -248,7 +248,7 @@ class UpdateBeamTest extends TestCaseGraphQL
 
         $updates = array_merge(
             $updates,
-            ['tokens' => [['tokenIds' => [$token->token_chain_id . '..' . $token->token_chain_id], 'type' => BeamType::MINT_ON_DEMAND->name]]]
+            ['tokens' => [['tokenIds' => [$token->token_chain_id.'..'.$token->token_chain_id], 'type' => BeamType::MINT_ON_DEMAND->name]]]
         );
         $response = $this->graphql($this->method, $updates, true);
         $this->assertArraySubset(
@@ -307,7 +307,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             'code' => $text,
             'name' => $text,
             'description' => $text,
-            'image' => fake()->url() . '/' . urlencode($text),
+            'image' => fake()->url().'/'.urlencode($text),
         ], true);
 
         $this->assertArraySubset([
@@ -489,7 +489,7 @@ class UpdateBeamTest extends TestCaseGraphQL
                 'type' => $type->name,
                 'tokenIds' => $type == BeamType::TRANSFER_TOKEN
                     ? [(string) $this->token->token_chain_id]
-                    : [(string) fake()->unique()->numberBetween(100, 10000), fake()->unique()->numberBetween(0, 10) . '..' . fake()->unique()->numberBetween(11, 20)],
+                    : [(string) fake()->unique()->numberBetween(100, 10000), fake()->unique()->numberBetween(0, 10).'..'.fake()->unique()->numberBetween(11, 20)],
                 'tokenQuantityPerClaim' => random_int(1, $count),
                 'claimQuantity' => $count,
                 'attributes' => $attributes ?: null,

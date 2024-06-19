@@ -214,7 +214,7 @@ class BeamService
             ClaimBeam::dispatch($claim = $this->buildClaimBeamData($wallet, $beam, $singleUseCode, $idempotencyKey));
             event(new BeamClaimPending($claim));
             Cache::decrement($key);
-            Log::info("Claim beam: {$code}, Remaining: " . Cache::get($key), $claim);
+            Log::info("Claim beam: {$code}, Remaining: ".Cache::get($key), $claim);
         } catch (LockTimeoutException $e) {
             throw new BeamException(__('enjin-platform-beam::error.unable_to_process'));
         } finally {
@@ -250,7 +250,7 @@ class BeamService
      */
     public static function generateSigningRequestMessage(): string
     {
-        return self::SIGNING_REQUEST_PREFIX . Blake2::hash(HexConverter::stringToHex(Str::random(20)));
+        return self::SIGNING_REQUEST_PREFIX.Blake2::hash(HexConverter::stringToHex(Str::random(20)));
     }
 
     /**

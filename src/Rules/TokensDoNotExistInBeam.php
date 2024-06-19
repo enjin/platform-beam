@@ -18,9 +18,7 @@ class TokensDoNotExistInBeam implements DataAwareRule, ValidationRule
     use HasDataAwareRule;
     use IntegerRange;
 
-    public function __construct(protected ?Model $beam = null)
-    {
-    }
+    public function __construct(protected ?Model $beam = null) {}
 
     /**
      * Determine if the validation rule passes.
@@ -69,8 +67,8 @@ class TokensDoNotExistInBeam implements DataAwareRule, ValidationRule
                 AND (
                     collections.max_token_supply = '1'
                     OR (collections.force_single_mint is true AND tokens.supply = '1')
-                    OR (tokens.cap='" . TokenMintCapType::SUPPLY->name . "' AND tokens.cap_supply = '1')
-                    OR (tokens.cap='" . TokenMintCapType::SINGLE_MINT->name . "' AND tokens.supply = '1')
+                    OR (tokens.cap='".TokenMintCapType::SUPPLY->name."' AND tokens.cap_supply = '1')
+                    OR (tokens.cap='".TokenMintCapType::SINGLE_MINT->name."' AND tokens.supply = '1')
                 )
             ")->when($beam, fn ($query) => $query->where('beam_claims.beam_id', $beam->id));
     }
