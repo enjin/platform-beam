@@ -14,9 +14,9 @@ use Illuminate\Support\Str;
 
 class AddTokensTest extends TestCaseGraphQL
 {
-    use SeedBeamData;
     use HasIntegerRanges;
     use IntegerRange;
+    use SeedBeamData;
 
     /**
      * The graphql method.
@@ -39,7 +39,7 @@ class AddTokensTest extends TestCaseGraphQL
             $this->method,
             [
                 'code' => $this->beam->code,
-                'tokens'  => [['tokenIds' => ['1..5'], 'type' => BeamType::MINT_ON_DEMAND->name]],
+                'tokens' => [['tokenIds' => ['1..5'], 'type' => BeamType::MINT_ON_DEMAND->name]],
             ]
         );
         $this->assertTrue($response);
@@ -53,7 +53,7 @@ class AddTokensTest extends TestCaseGraphQL
             $this->method,
             [
                 'code' => $this->beam->code,
-                'tokens'  => [
+                'tokens' => [
                     [
                         'tokenIds' => ['1..5'],
                         'type' => BeamType::MINT_ON_DEMAND->name,
@@ -104,7 +104,7 @@ class AddTokensTest extends TestCaseGraphQL
             $this->method,
             [
                 'code' => $this->beam->code,
-                'tokens'  => [['tokenIds' => [$claim->token_chain_id], 'type' => BeamType::TRANSFER_TOKEN->name]],
+                'tokens' => [['tokenIds' => [$claim->token_chain_id], 'type' => BeamType::TRANSFER_TOKEN->name]],
             ],
             true
         );
@@ -225,7 +225,7 @@ class AddTokensTest extends TestCaseGraphQL
 
         $response = $this->graphql($this->method, [
             'code' => Str::random(1500),
-            'tokens'  => [['tokenIds' => ['1..5'], 'type' => BeamType::MINT_ON_DEMAND->name]],
+            'tokens' => [['tokenIds' => ['1..5'], 'type' => BeamType::MINT_ON_DEMAND->name]],
         ], true);
         $this->assertArraySubset(
             ['code' => ['The code field must not be greater than 1024 characters.']],

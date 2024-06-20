@@ -22,7 +22,7 @@ trait CreateBeamData
             'flags' => $singleUse,
             'tokens' => [[
                 'type' => $type->name,
-                'tokenIds' => BeamType::TRANSFER_TOKEN == $type
+                'tokenIds' => $type == BeamType::TRANSFER_TOKEN
                     ? [(string) $this->token->token_chain_id]
                     : [(string) fake()->unique()->numberBetween(100, 10000), fake()->unique()->numberBetween(0, 10) . '..' . fake()->unique()->numberBetween(11, 20)],
                 'tokenQuantityPerClaim' => random_int(1, $count),

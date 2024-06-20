@@ -27,6 +27,7 @@ class BatchProcess extends Command
      * The signing account resolver.
      */
     public static $signingAccountResolver;
+
     /**
      * The name and signature of the console command.
      *
@@ -134,14 +135,14 @@ class BatchProcess extends Command
     protected function processBatch(BeamType $type): int
     {
         $batches = $this->batch->getBatchesForProcessing($type)->groupBy('beam_batch_id');
-        if (!$batches->isEmpty()) {
+        if (! $batches->isEmpty()) {
             $batches->each(function ($claims, $batchId) use ($type) {
                 $params = [];
                 $createdTokens = [];
                 $reassignedClaims = [];
                 $claims->each(function ($claim) use (&$params, $type, &$createdTokens, &$reassignedClaims) {
                     $collectionId = Arr::get($claim, 'beam.collection_chain_id');
-                    if (!isset($params[$collectionId])) {
+                    if (! isset($params[$collectionId])) {
                         $params[$collectionId] = [
                             'collectionId' => $collectionId,
                             'recipients' => [],
@@ -150,7 +151,7 @@ class BatchProcess extends Command
 
                     $params[$collectionId]['beamId'] = $claim->beam_id;
 
-                    if (BeamType::TRANSFER_TOKEN == $type) {
+                    if ($type == BeamType::TRANSFER_TOKEN) {
                         $params[$collectionId]['recipients'][] = [
                             'accountId' => $claim->wallet_public_key,
                             'params' => $this->substrate->getTransferParams([
@@ -173,7 +174,7 @@ class BatchProcess extends Command
                             return;
                         }
 
-                        if (!isset($this->tokenCreatedCache[$key])) {
+                        if (! isset($this->tokenCreatedCache[$key])) {
                             $this->tokenCreatedCache[$key] = Token::where(['token_chain_id' => $claim->token_chain_id, 'collection_id' => $claim->collection_id])->exists();
                         }
 
@@ -194,14 +195,14 @@ class BatchProcess extends Command
                             ])->toEncodable(),
                         ];
 
-                        if (!$this->tokenCreatedCache[$key]) {
+                        if (! $this->tokenCreatedCache[$key]) {
                             $this->tokenCreatedCache[$key] = true;
                             $createdTokens[$key] = true;
                         }
                     }
                 });
 
-                $method = BeamType::MINT_ON_DEMAND == $type ? 'BatchMint' : 'BatchTransfer';
+                $method = $type == BeamType::MINT_ON_DEMAND ? 'BatchMint' : 'BatchTransfer';
                 foreach ($params as $param) {
                     $transaction = $this->transaction->store([
                         'method' => $method,
@@ -212,7 +213,13 @@ class BatchProcess extends Command
                         'idempotency_key' => Str::uuid()->toString(),
                     ]);
                     BeamBatch::where('id', $batchId)->update(['transaction_id' => $transaction->id]);
-                    BeamBatchTransactionCreated::safeBroadcast($param['beamId'], $param['collectionId'], $transaction->id);
+                    BeamBatchTransactionCreated::safeBroadcast(
+                        event: [
+                            'beam_id' => $param['beamId'],
+                            'collection_id' => $param['collectionId'],
+                        ],
+                        transaction: $transaction
+                    );
                 }
 
                 $this->updateStatus($claims, $reassignedClaims);

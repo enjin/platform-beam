@@ -20,7 +20,12 @@ use Enjin\Platform\Events\Substrate\MultiTokens\CollectionDestroyed;
 use Enjin\Platform\Events\Substrate\MultiTokens\CollectionFrozen;
 use Enjin\Platform\Events\Substrate\MultiTokens\CollectionThawed;
 use Enjin\Platform\Events\Substrate\MultiTokens\TokenDestroyed;
+use Enjin\Platform\Models\Laravel\Transaction;
 use Enjin\Platform\Services\Database\WalletService;
+use Enjin\Platform\Services\Processor\Substrate\Codec\Polkadart\Events\MultiTokens\CollectionDestroyed as CollectionDestroyedPolkadart;
+use Enjin\Platform\Services\Processor\Substrate\Codec\Polkadart\Events\MultiTokens\Frozen as CollectionFrozenPolkadart;
+use Enjin\Platform\Services\Processor\Substrate\Codec\Polkadart\Events\MultiTokens\Thawed as CollectionThawedPolkadart;
+use Enjin\Platform\Services\Processor\Substrate\Codec\Polkadart\Events\MultiTokens\TokenDestroyed as TokenDestroyedPolkadart;
 use Illuminate\Support\Facades\Event;
 
 class EventTest extends TestCaseGraphQL
@@ -40,27 +45,49 @@ class EventTest extends TestCaseGraphQL
     {
         Event::fake();
 
-        event($event = new CollectionDestroyed($this->collection));
+        $collectionCreated = CollectionDestroyedPolkadart::fromChain($this->mockPolkadartEvent('MultiTokens', 'CollectionDestroyed', [
+            'collection_id' => $this->collection->id,
+            'caller' => 'd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d',
+        ]));
+
+        event($event = new CollectionDestroyed($collectionCreated));
         Event::assertListening(CollectionDestroyed::class, ExpireBeam::class);
         resolve(ExpireBeam::class)->handle($event);
 
-        event($event = new CollectionFrozen($this->collection));
+        $collectionFrozen = CollectionFrozenPolkadart::fromChain($this->mockPolkadartEvent('MultiTokens', 'Frozen', [
+            'collection_id' => $this->collection->collection_chain_id,
+            'freeze_type' => 'Collection',
+        ]));
+
+        event($event = new CollectionFrozen($collectionFrozen));
         Event::assertListening(CollectionFrozen::class, PauseBeam::class);
         resolve(PauseBeam::class)->handle($event);
 
-        event($event = new CollectionThawed($this->collection));
+        $collectionThawed = CollectionThawedPolkadart::fromChain($this->mockPolkadartEvent('MultiTokens', 'Thawed', [
+            'collection_id' => $this->collection->collection_chain_id,
+            'freeze_type' => 'Collection',
+        ]));
+
+        event($event = new CollectionThawed($collectionThawed));
         Event::assertListening(CollectionThawed::class, UnpauseBeam::class);
         resolve(UnpauseBeam::class)->handle($event);
 
-        event($event = new PlatformSynced($this->collection));
+        event($event = new PlatformSynced());
         Event::assertListening(PlatformSynced::class, UpdateClaimCollectionIds::class);
         resolve(UpdateClaimCollectionIds::class)->handle($event);
 
-        event($event = new TransactionUpdated($this->collection));
+        $transaction = Transaction::factory()->create();
+        event($event = new TransactionUpdated(event: [], transaction: $transaction));
         Event::assertListening(TransactionUpdated::class, UpdateClaimStatus::class);
         resolve(UpdateClaimStatus::class)->handle($event);
 
-        event($event = new TokenDestroyed($this->token, $this->wallet));
+        $tokenDestroyed = TokenDestroyedPolkadart::fromChain($this->mockPolkadartEvent('MultiTokens', 'TokenDestroyed', [
+            'collection_id' => $this->collection->collection_chain_id,
+            'token_id' => $this->token->token_chain_id,
+            'caller' => $this->wallet->public_key,
+        ]));
+
+        event($event = new TokenDestroyed($tokenDestroyed));
         $this->collection->update([
             'max_token_supply' => 100,
             'force_single_mint' => false,
@@ -84,5 +111,19 @@ class EventTest extends TestCaseGraphQL
         ]);
         $job->handle(resolve(BatchService::class), resolve(WalletService::class));
         $this->assertLessThan($this->claims->count(), BeamClaim::where('beam_id', $this->beam->id)->claimable()->count());
+    }
+
+    protected function mockPolkadartEvent(string $module, string $name, array $data): array
+    {
+        return [
+            'phase' => [
+                'ApplyExtrinsic' => 1,
+            ],
+            'event' => [
+                $module => [
+                    $name => $data,
+                ],
+            ],
+        ];
     }
 }

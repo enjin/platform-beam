@@ -14,6 +14,7 @@ class ClaimProbabilityTest extends TestCaseGraphQL
     use CreateCollectionData;
 
     protected Model $beam;
+
     protected ClaimProbabilities $probabilities;
 
     protected function setUp(): void

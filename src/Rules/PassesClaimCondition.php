@@ -23,17 +23,13 @@ class PassesClaimCondition implements DataAwareRule, ValidationRule
     /**
      * Determine if the validation rule passes.
      *
-     * @param string $attribute
-     * @param mixed  $value
-     * @param Closure(string): \Illuminate\Translation\PotentiallyTranslatedString $fail
-     *
-     * @return void
+     * @param  Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $result = ($this->function)($attribute, $value, $this->singleUse, $this->data);
 
-        if (true !== $result) {
+        if ($result !== true) {
             $fail(is_string($result) ? $result : __('enjin-platform-beam::validation.passes_condition'));
         }
     }

@@ -105,7 +105,7 @@ class AddTokensMutation extends Mutation
                     'min:1',
                     'max:10',
                     new DistinctAttributes(),
-                    Rule::prohibitedIf(BeamType::TRANSFER_TOKEN == BeamType::getEnumCase(Arr::get($args, str_replace('attributes', 'type', $attribute)))),
+                    Rule::prohibitedIf(BeamType::getEnumCase(Arr::get($args, str_replace('attributes', 'type', $attribute))) == BeamType::TRANSFER_TOKEN),
                 ];
             }),
             'tokens.*.attributes.*.key' => 'max:255',
@@ -116,7 +116,7 @@ class AddTokensMutation extends Mutation
                     'required_without:tokens.*.tokenIdDataUpload',
                     'prohibits:tokens.*.tokenIdDataUpload',
                     'distinct',
-                    BeamType::TRANSFER_TOKEN == BeamType::getEnumCase(Arr::get($args, str_replace('tokenIds', 'type', $attribute)))
+                    BeamType::getEnumCase(Arr::get($args, str_replace('tokenIds', 'type', $attribute))) == BeamType::TRANSFER_TOKEN
                         ? new TokensExistInCollection($beam?->collection_chain_id)
                         : new TokensDoNotExistInCollection($beam?->collection_chain_id),
                     new TokensDoNotExistInBeam($beam),
@@ -127,7 +127,7 @@ class AddTokensMutation extends Mutation
                     'bail',
                     'required_without:tokens.*.tokenIds',
                     'prohibits:tokens.*.tokenIds',
-                    BeamType::TRANSFER_TOKEN == BeamType::getEnumCase(Arr::get($args, str_replace('tokenIdDataUpload', 'type', $attribute)))
+                    BeamType::getEnumCase(Arr::get($args, str_replace('tokenIdDataUpload', 'type', $attribute))) == BeamType::TRANSFER_TOKEN
                         ? new TokenUploadExistInCollection($beam?->collection_chain_id)
                         : new TokenUploadNotExistInCollection($beam?->collection_chain_id),
                     new TokenUploadNotExistInBeam($beam),

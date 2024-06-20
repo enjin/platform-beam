@@ -10,8 +10,8 @@ use Illuminate\Support\Arr;
 
 class ExpireSingleUseCodesTest extends TestCaseGraphQL
 {
-    use SeedBeamData;
     use CreateBeamData;
+    use SeedBeamData;
 
     /**
      * The graphql method.

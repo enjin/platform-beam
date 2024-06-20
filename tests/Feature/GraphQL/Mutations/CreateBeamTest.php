@@ -19,8 +19,8 @@ use Illuminate\Support\Str;
 class CreateBeamTest extends TestCaseGraphQL
 {
     use CreateBeamData;
-    use SeedBeamData;
     use HasIntegerRanges;
+    use SeedBeamData;
 
     /**
      * The graphql method.
@@ -87,7 +87,7 @@ class CreateBeamTest extends TestCaseGraphQL
         $this->genericTestCreateBeam(
             BeamType::MINT_ON_DEMAND,
             random_int(1, 20),
-            [['key' => 'key1', 'value'=> 'value1'], ['key' => 'key2', 'value'=> 'value2']]
+            [['key' => 'key1', 'value' => 'value1'], ['key' => 'key2', 'value' => 'value2']]
         );
     }
 
@@ -200,7 +200,7 @@ class CreateBeamTest extends TestCaseGraphQL
             $this->generateBeamData(
                 BeamType::MINT_ON_DEMAND,
                 random_int(1, 20),
-                [['key' => Str::random(256), 'value'=> Str::random(1001)]]
+                [['key' => Str::random(256), 'value' => Str::random(1001)]]
             ),
             true
         );
@@ -275,7 +275,6 @@ class CreateBeamTest extends TestCaseGraphQL
             true
         );
         $this->assertArraySubset(['image' => ['The image field must be a valid URL.']], $response['error']);
-
 
         $now = Carbon::now();
         $response = $this->graphql(

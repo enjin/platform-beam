@@ -46,7 +46,7 @@
     "scripts": {
         "build-sr25519": "cd vendor/gmajor/sr25519-bindings/go && go build -buildmode=c-shared -o sr25519.so . && mv sr25519.so ../src/Crypto/sr25519.so",
         "analyse": "vendor/bin/phpstan analyse",
-        "fix": "vendor/bin/php-cs-fixer fix",
+        "fix": "vendor/bin/pint",
         "test": "vendor/bin/phpunit",
         "test-coverage": "vendor/bin/phpunit --coverage-html ../../temp/coverage",
         "post-autoload-dump": [
@@ -69,10 +69,10 @@
         }
     },
     "minimum-stability": "dev",
-    "prefer-stable": true,
+    "prefer-stable": false,
     "require-dev": {
         "dms/phpunit-arraysubset-asserts": "dev-master",
-        "friendsofphp/php-cs-fixer": "^3.0",
+        "laravel/pint": "^1.16",
         "nunomaduro/collision": "^7.0",
         "nunomaduro/larastan": "^2.0",
         "orchestra/testbench": "^8.0",

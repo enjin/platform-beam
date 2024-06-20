@@ -6,21 +6,21 @@ use Enjin\Platform\Beam\Channels\PlatformBeamChannel;
 use Enjin\Platform\Channels\PlatformAppChannel;
 use Enjin\Platform\Events\PlatformBroadcastEvent;
 use Illuminate\Broadcasting\Channel;
-use Illuminate\Support\Arr;
+use Illuminate\Database\Eloquent\Model;
 
 class CreateBeamClaimsCompleted extends PlatformBroadcastEvent
 {
     /**
      * Creates a new event instance.
      */
-    public function __construct(array $data)
+    public function __construct(mixed $event, ?Model $transaction = null, ?array $extra = null)
     {
         parent::__construct();
 
-        $this->broadcastData = $data;
+        $this->broadcastData = $event;
 
         $this->broadcastChannels = [
-            new Channel('beam;' . Arr::get($data, 'code')),
+            new Channel("beam;{$event['code']}"),
             new PlatformAppChannel(),
             new PlatformBeamChannel(),
         ];

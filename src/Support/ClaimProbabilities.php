@@ -121,7 +121,7 @@ class ClaimProbabilities
     public function computeProbabilities(string $code, array $fts, array $nfts): void
     {
         $total = collect($fts)->sum() + ($totalNft = collect($nfts)->sum());
-        if (!$total) {
+        if (! $total) {
             return;
         }
 

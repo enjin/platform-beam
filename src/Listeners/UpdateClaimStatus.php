@@ -34,7 +34,7 @@ class UpdateClaimStatus implements ShouldQueue
                 ->with('beam')
                 ->get();
 
-            if (!$claims->isEmpty()) {
+            if (! $claims->isEmpty()) {
                 $state = TransactionState::FINALIZED->name == $event->broadcastData['state']
                         && $event->broadcastData['result'] == SystemEventType::EXTRINSIC_SUCCESS->name
                                 ? ClaimStatus::COMPLETED->name

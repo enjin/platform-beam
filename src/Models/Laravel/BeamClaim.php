@@ -176,7 +176,7 @@ class BeamClaim extends BaseModel
      */
     public function prunable()
     {
-        if (!is_null($days = config('enjin-platform-beam.prune_expired_claims'))) {
+        if (! is_null($days = config('enjin-platform-beam.prune_expired_claims'))) {
             $query = static::whereHas(
                 'beam',
                 fn ($query) => $query->where('end', '<', now()->addDays($days))
