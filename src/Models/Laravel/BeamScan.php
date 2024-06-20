@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class BeamScan extends BaseModel
 {
-    use HasEagerLimit;
     use HasFactory;
     use SoftDeletes;
     use Traits\EagerLoadSelectFields;
