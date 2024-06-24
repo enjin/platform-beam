@@ -123,10 +123,10 @@ class BatchProcess extends Command
         $this->info("Total batch completed: {$total}");
 
         $transferedCount = $this->processBatch(BeamType::TRANSFER_TOKEN);
-        $this->info('Total transfers completed: '.$transferedCount);
+        $this->info('Total transfers completed: ' . $transferedCount);
 
         $mintedCount = $this->processBatch(BeamType::MINT_ON_DEMAND);
-        $this->info('Total mints completed: '.$mintedCount);
+        $this->info('Total mints completed: ' . $mintedCount);
     }
 
     /**
@@ -164,7 +164,7 @@ class BatchProcess extends Command
                             ])->toEncodable(),
                         ];
                     } else {
-                        $key = $claim->token_chain_id.'|'.$claim->collection_id;
+                        $key = $claim->token_chain_id . '|' . $claim->collection_id;
                         if (isset($createdTokens[$key])) {
                             // Succeeding claims should be minted. Reassigning claims to the next batch
                             $claim->update(['beam_batch_id' => $batchId = $this->batch->getNextBatchId($type, $collectionId)]);

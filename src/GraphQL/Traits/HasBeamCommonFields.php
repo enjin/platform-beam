@@ -14,23 +14,23 @@ trait HasBeamCommonFields
         $required = $updating ? '' : '!';
         $fields = [
             'name' => [
-                'type' => GraphQL::type('String'.$required),
+                'type' => GraphQL::type('String' . $required),
                 'description' => __('enjin-platform-beam::mutation.common.args.name'),
             ],
             'description' => [
-                'type' => GraphQL::type('String'.$required),
+                'type' => GraphQL::type('String' . $required),
                 'description' => __('enjin-platform-beam::mutation.common.args.description'),
             ],
             'image' => [
-                'type' => GraphQL::type('String'.$required),
+                'type' => GraphQL::type('String' . $required),
                 'description' => __('enjin-platform-beam::mutation.common.args.image'),
             ],
             'start' => [
-                'type' => GraphQL::type('DateTime'.$required),
+                'type' => GraphQL::type('DateTime' . $required),
                 'description' => __('enjin-platform-beam::mutation.common.args.start'),
             ],
             'end' => [
-                'type' => GraphQL::type('DateTime'.$required),
+                'type' => GraphQL::type('DateTime' . $required),
                 'description' => __('enjin-platform-beam::mutation.common.args.end'),
             ],
         ];

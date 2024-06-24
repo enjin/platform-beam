@@ -239,7 +239,7 @@ class CreateBeamTest extends TestCaseGraphQL
             [
                 'name' => $text,
                 'description' => $text,
-                'image' => fake()->url().'/'.urlencode($text),
+                'image' => fake()->url() . '/' . urlencode($text),
             ]
         ), true);
 

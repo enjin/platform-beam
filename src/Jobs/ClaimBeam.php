@@ -66,7 +66,7 @@ class ClaimBeam implements ShouldQueue
             } catch (Throwable $e) {
                 DB::rollBack();
 
-                Log::error('ClaimBeamJob: Claim error, message:'.$e->getMessage(), $data);
+                Log::error('ClaimBeamJob: Claim error, message:' . $e->getMessage(), $data);
 
                 throw $e;
             } finally {

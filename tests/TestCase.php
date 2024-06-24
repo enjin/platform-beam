@@ -35,8 +35,8 @@ abstract class TestCase extends BaseTestCase
     protected function defineEnvironment($app)
     {
         // Make sure, our .env file is loaded for local tests
-        $app->useEnvironmentPath(__DIR__.'/..');
-        $app->useDatabasePath(__DIR__.'/../database');
+        $app->useEnvironmentPath(__DIR__ . '/..');
+        $app->useDatabasePath(__DIR__ . '/../database');
         $app->bootstrapWith([LoadEnvironmentVariables::class]);
 
         $app['config']->set('database.default', env('DB_DRIVER', 'mysql'));

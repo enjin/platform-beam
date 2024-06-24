@@ -178,7 +178,7 @@ class BeamClaim extends BaseModel
             $query = static::whereHas(
                 'beam',
                 fn ($query) => $query->where('end', '<', now()->addDays($days))
-                    ->whereRaw('flags_mask & (1 << '.BeamFlag::PRUNABLE->value.') != 0')
+                    ->whereRaw('flags_mask & (1 << ' . BeamFlag::PRUNABLE->value . ') != 0')
             )->claimable();
 
             // We'll decrement the cache for each beam that has expired claims.

@@ -64,7 +64,7 @@ class TestCaseGraphQL extends BaseTestCase
             $appendErrors = '';
 
             if (isset($data['errors'][0]['trace'])) {
-                $appendErrors = "\n\n".$this->formatSafeTrace($data['errors'][0]['trace']);
+                $appendErrors = "\n\n" . $this->formatSafeTrace($data['errors'][0]['trace']);
             }
 
             $validationMessages = collect($result->errors)->map(function ($error) {
@@ -74,9 +74,9 @@ class TestCaseGraphQL extends BaseTestCase
             })->all();
 
             $assertMessage = "Probably unexpected error in GraphQL response:\n"
-                .var_export($data, true)
-                .$appendErrors."\n\n"
-                ."Validation messages:\n".json_encode($validationMessages);
+                . var_export($data, true)
+                . $appendErrors . "\n\n"
+                . "Validation messages:\n" . json_encode($validationMessages);
         }
         unset($data['errors'][0]['trace']);
 
@@ -115,7 +115,7 @@ class TestCaseGraphQL extends BaseTestCase
 
         $response = $this->json(
             'POST',
-            '/graphql'.($schemaName ? "/{$schemaName}" : ''),
+            '/graphql' . ($schemaName ? "/{$schemaName}" : ''),
             $payload,
             $headers
         );
@@ -123,19 +123,19 @@ class TestCaseGraphQL extends BaseTestCase
 
         $httpStatusCode = $response->getStatusCode();
         if ($expectedHttpStatusCode !== $httpStatusCode) {
-            self::assertSame($expectedHttpStatusCode, $httpStatusCode, var_export($result, true)."\n");
+            self::assertSame($expectedHttpStatusCode, $httpStatusCode, var_export($result, true) . "\n");
         }
 
         $assertMessage = null;
         if (! $expectErrors && isset($result['errors'])) {
             $appendErrors = '';
             if (isset($result['errors'][0]['trace'])) {
-                $appendErrors = "\n\n".$this->formatSafeTrace($result['errors'][0]['trace']);
+                $appendErrors = "\n\n" . $this->formatSafeTrace($result['errors'][0]['trace']);
             }
 
             $assertMessage = "Probably unexpected error in GraphQL response:\n"
-                .var_export($result, true)
-                .$appendErrors;
+                . var_export($result, true)
+                . $appendErrors;
         }
         unset($result['errors'][0]['trace']);
 
@@ -151,11 +151,11 @@ class TestCaseGraphQL extends BaseTestCase
      */
     protected function loadQueries(): void
     {
-        $files = scandir(__DIR__.'/Resources');
+        $files = scandir(__DIR__ . '/Resources');
         collect($files)
             ->filter(fn ($file) => str_ends_with($file, '.gql') || str_ends_with($file, '.graphql'))
             ->each(
-                fn ($file) => self::$queries[str_replace(['.gql', '.graphql'], '', $file)] = file_get_contents(__DIR__.'/Resources/'.$file)
+                fn ($file) => self::$queries[str_replace(['.gql', '.graphql'], '', $file)] = file_get_contents(__DIR__ . '/Resources/' . $file)
             );
     }
 
@@ -189,8 +189,8 @@ class TestCaseGraphQL extends BaseTestCase
      */
     protected function defineEnvironment($app): void
     {
-        $app->useEnvironmentPath(__DIR__.'/..');
-        $app->useDatabasePath(__DIR__.'/../../../database');
+        $app->useEnvironmentPath(__DIR__ . '/..');
+        $app->useDatabasePath(__DIR__ . '/../../../database');
         $app->bootstrapWith([LoadEnvironmentVariables::class]);
 
         $app['config']->set('database.default', env('DB_DRIVER', 'mysql'));
@@ -228,11 +228,11 @@ class TestCaseGraphQL extends BaseTestCase
                 }
 
                 if (isset($row['call'])) {
-                    $line .= ' '.$row['call'];
+                    $line .= ' ' . $row['call'];
                 }
 
                 if (isset($row['function'])) {
-                    $line .= ' '.$row['function'];
+                    $line .= ' ' . $row['function'];
                 }
 
                 return $line;
