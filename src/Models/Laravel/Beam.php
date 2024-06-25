@@ -16,15 +16,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
-use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
 
 class Beam extends BaseModel
 {
-    use Traits\HasBeamQr;
-    use Traits\EagerLoadSelectFields;
     use HasFactory;
     use SoftDeletes;
-    use HasEagerLimit;
 
     /**
      * The attributes that aren't mass assignable.

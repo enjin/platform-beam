@@ -21,9 +21,7 @@ class CreateClaim implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(protected ?array $claim)
-    {
-    }
+    public function __construct(protected ?array $claim) {}
 
     /**
      * Execute the job.

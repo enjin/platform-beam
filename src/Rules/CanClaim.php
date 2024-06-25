@@ -17,9 +17,7 @@ class CanClaim implements DataAwareRule, ValidationRule
     /**
      * Create new rule instance.
      */
-    public function __construct(protected bool $singleUse = false)
-    {
-    }
+    public function __construct(protected bool $singleUse = false) {}
 
     /**
      * Determine if the validation rule passes.

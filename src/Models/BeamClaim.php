@@ -4,6 +4,4 @@ namespace Enjin\Platform\Beam\Models;
 
 use Enjin\Platform\Models\ModelResolver;
 
-class BeamClaim extends ModelResolver
-{
-}
+class BeamClaim extends ModelResolver {}

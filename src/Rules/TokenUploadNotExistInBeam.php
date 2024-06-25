@@ -16,9 +16,7 @@ class TokenUploadNotExistInBeam implements DataAwareRule, ValidationRule
     use IntegerRange;
     use HasDataAwareRule;
 
-    public function __construct(protected ?Model $beam = null)
-    {
-    }
+    public function __construct(protected ?Model $beam = null) {}
 
     /**
      * Determine if the validation rule passes.

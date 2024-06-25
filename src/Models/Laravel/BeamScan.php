@@ -7,7 +7,6 @@ use Enjin\Platform\Models\BaseModel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Staudenmeir\EloquentEagerLimit\HasEagerLimit;
 
 class BeamScan extends BaseModel
 {

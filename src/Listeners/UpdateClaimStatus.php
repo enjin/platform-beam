@@ -18,9 +18,7 @@ class UpdateClaimStatus implements ShouldQueue
     /**
      * Create new event listener instance.
      */
-    public function __construct()
-    {
-    }
+    public function __construct() {}
 
     /**
      * Handle the event.

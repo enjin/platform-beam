@@ -2,6 +2,4 @@
 
 namespace Enjin\Platform\Beam\Events;
 
-class BeamUpdated extends BeamCreated
-{
-}
+class BeamUpdated extends BeamCreated {}
