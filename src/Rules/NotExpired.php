@@ -9,9 +9,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 
 class NotExpired implements ValidationRule
 {
-    public function __construct(protected ?string $code = null)
-    {
-    }
+    public function __construct(protected ?string $code = null) {}
 
     /**
      * Determine if the validation rule passes.

@@ -18,9 +18,7 @@ class TokensDoNotExistInBeam implements DataAwareRule, ValidationRule
     use HasDataAwareRule;
     use IntegerRange;
 
-    public function __construct(protected ?Model $beam = null)
-    {
-    }
+    public function __construct(protected ?Model $beam = null) {}
 
     /**
      * Determine if the validation rule passes.

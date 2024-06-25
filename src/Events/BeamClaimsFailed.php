@@ -2,6 +2,4 @@
 
 namespace Enjin\Platform\Beam\Events;
 
-class BeamClaimsFailed extends BeamClaimPending
-{
-}
+class BeamClaimsFailed extends BeamClaimPending {}
