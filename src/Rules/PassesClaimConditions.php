@@ -21,7 +21,8 @@ class PassesClaimConditions implements DataAwareRule, ValidationRule
      */
     public function __construct(
         protected bool $singleUse
-    ) {}
+    ) {
+    }
 
     public static function addConditionalFunctions(Closure|array|Collection $functions): void
     {

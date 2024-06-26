@@ -11,7 +11,9 @@ class TokensExistInCollection implements ValidationRule
 {
     use IntegerRange;
 
-    public function __construct(protected ?string $collectionId) {}
+    public function __construct(protected ?string $collectionId)
+    {
+    }
 
     /**
      * Determine if the validation rule passes.

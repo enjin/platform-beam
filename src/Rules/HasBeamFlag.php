@@ -12,7 +12,9 @@ class HasBeamFlag implements ValidationRule
     /**
      * Create new rule instance.
      */
-    public function __construct(protected BeamFlag $flag) {}
+    public function __construct(protected BeamFlag $flag)
+    {
+    }
 
     /**
      * Determine if the validation rule passes.

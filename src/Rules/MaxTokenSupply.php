@@ -36,7 +36,9 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
     /**
      * Create instance of rule.
      */
-    public function __construct(protected ?string $collectionId) {}
+    public function __construct(protected ?string $collectionId)
+    {
+    }
 
     /**
      * Determine if the validation rule passes.

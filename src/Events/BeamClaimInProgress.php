@@ -2,4 +2,6 @@
 
 namespace Enjin\Platform\Beam\Events;
 
-class BeamClaimInProgress extends BeamClaimPending {}
+class BeamClaimInProgress extends BeamClaimPending
+{
+}

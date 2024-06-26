@@ -26,7 +26,8 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
     public function __construct(
         protected Model $beam,
         protected ?array $tokens
-    ) {}
+    ) {
+    }
 
     /**
      * Execute the job.

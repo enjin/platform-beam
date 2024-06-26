@@ -2,4 +2,6 @@
 
 namespace Enjin\Platform\Beam\Events;
 
-class TokensRemoved extends TokensAdded {}
+class TokensRemoved extends TokensAdded
+{
+}

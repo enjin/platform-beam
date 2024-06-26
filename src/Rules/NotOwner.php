@@ -15,7 +15,9 @@ class NotOwner implements DataAwareRule, ValidationRule
 {
     use HasDataAwareRule;
 
-    public function __construct(protected bool $isSingleUse = false) {}
+    public function __construct(protected bool $isSingleUse = false)
+    {
+    }
 
     /**
      * Determine if the validation rule passes.
