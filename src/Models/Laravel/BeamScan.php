@@ -15,7 +15,6 @@ class BeamScan extends BaseModel
     use Traits\HasCodeScope;
     use Traits\HasClaimable;
     use Traits\EagerLoadSelectFields;
-    use HasEagerLimit;
 
     /**
      * The attributes that aren't mass assignable.
