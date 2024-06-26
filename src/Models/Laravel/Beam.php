@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Cache;
 
 class Beam extends BaseModel
 {
+    use Traits\HasBeamQr;
+    use Traits\EagerLoadSelectFields;
     use HasFactory;
     use SoftDeletes;
 
