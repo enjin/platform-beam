@@ -23,7 +23,7 @@
         "ext-bcmath": "*",
         "ext-json": "*",
         "ext-openssl": "*",
-        "enjin/platform-core": "dev-release_1.9",
+        "enjin/platform-core": "*",
         "phrity/websocket": "^1.0",
         "rebing/graphql-laravel": "^9.2",
         "spatie/laravel-package-tools": "^1.0",
