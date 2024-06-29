@@ -17,6 +17,7 @@ use Enjin\Platform\Events\Substrate\MultiTokens\CollectionThawed;
 use Enjin\Platform\Events\Substrate\MultiTokens\TokenBurned;
 use Enjin\Platform\Events\Substrate\MultiTokens\TokenDestroyed;
 use Enjin\Platform\Events\Substrate\MultiTokens\TokenTransferred;
+use Enjin\Platform\Beam\Package as BeamPackage;
 use Illuminate\Support\Facades\Event;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -49,6 +50,10 @@ class BeamServiceProvider extends PackageServiceProvider
      */
     public function register()
     {
+        if (app()->runningUnitTests()) {
+            BeamPackage::setPath(__DIR__ . '/..');
+        }
+
         parent::register();
 
         Event::listen(TransactionUpdated::class, UpdateClaimStatus::class);
