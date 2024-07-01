@@ -81,11 +81,11 @@ class Beam extends BaseModel
     }
 
     /**
-     * The beam pack tokens relationship.
+     * The beam pack' relationship.
      */
-    public function packTokens(): HasMany
+    public function packs(): HasMany
     {
-        return $this->hasMany(BeamPackToken::class, 'beam_id');
+        return $this->hasMany(BeamPack::class, 'beam_id');
     }
 
     /**

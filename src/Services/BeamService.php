@@ -19,7 +19,6 @@ use Enjin\Platform\Beam\Jobs\CreateClaim;
 use Enjin\Platform\Beam\Jobs\DispatchCreateBeamClaimsJobs;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
-use Enjin\Platform\Beam\Models\BeamPack;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Beam\Support\ClaimProbabilities;
 use Enjin\Platform\Support\BitMask;
@@ -114,7 +113,7 @@ class BeamService
             $quantity = Arr::get($args, 'quantity', 1);
             $this->createClaimsPack(
                 Arr::get($args, 'tokens', []),
-                BeamPack::createMany(Collection::times($quantity, ['beam_id' => $beam->id])),
+                $beam->packs()->createMany(Collection::times($quantity, fn () => ['beam_id' => $beam->id])),
                 $beam
             );
             Cache::forever(
