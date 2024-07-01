@@ -37,7 +37,10 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
     /**
      * Create instance of rule.
      */
-    public function __construct(protected ?string $collectionId) {}
+    public function __construct(
+        protected ?string $collectionId,
+        protected int $packQuantity = 1
+    ) {}
 
     /**
      * Determine if the validation rule passes.
@@ -46,16 +49,15 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
+        $value *= $this->packQuantity;
+
         if ($this->collectionId
             && ($collection = Collection::firstWhere(['collection_chain_id' => $this->collectionId]))
             && ! is_null($this->limit = $collection->max_token_supply)
         ) {
             if (Arr::get($this->data, str_replace('tokenQuantityPerClaim', 'type', $attribute)) == BeamType::MINT_ON_DEMAND->name) {
                 if (! $collection->max_token_supply >= $value) {
-                    $fail($this->maxTokenSupplyMessage)
-                        ->translate([
-                            'limit' => $this->limit,
-                        ]);
+                    $fail($this->maxTokenSupplyMessage)->translate(['limit' => $this->limit]);
 
                     return;
                 }
