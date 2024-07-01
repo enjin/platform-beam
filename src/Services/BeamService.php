@@ -19,6 +19,7 @@ use Enjin\Platform\Beam\Jobs\CreateClaim;
 use Enjin\Platform\Beam\Jobs\DispatchCreateBeamClaimsJobs;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
+use Enjin\Platform\Beam\Models\BeamPack;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Beam\Support\ClaimProbabilities;
 use Enjin\Platform\Support\BitMask;
@@ -28,6 +29,7 @@ use Facades\Enjin\Platform\Beam\Services\BeamService as BeamServiceFacade;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\LazyCollection;
@@ -88,6 +90,36 @@ class BeamService
             Cache::forever(
                 self::key($beam->code),
                 $this->createClaims(Arr::get($args, 'tokens', []), $beam)
+            );
+            event(new BeamCreated($beam));
+
+            return $beam;
+        }
+
+        return throw new BeamException(__('enjin-platform-beam::error.unable_to_save'));
+    }
+
+    /**
+     * Create a beam pack.
+     */
+    public function createPack(array $args): Model
+    {
+        $beam = Beam::create([
+            ...Arr::except($args, ['tokens', 'flags', 'quantity']),
+            'flags_mask' => static::getFlagsValue(Arr::get($args, 'flags')),
+            'code' => bin2hex(openssl_random_pseudo_bytes(16)),
+            'is_pack' => true,
+        ]);
+        if ($beam) {
+            $quantity = Arr::get($args, 'quantity', 1);
+            $this->createClaimsPack(
+                Arr::get($args, 'tokens', []),
+                BeamPack::createMany(Collection::times($quantity, ['beam_id' => $beam->id])),
+                $beam
+            );
+            Cache::forever(
+                self::key($beam->code),
+                $quantity
             );
             event(new BeamCreated($beam));
 
@@ -372,6 +404,43 @@ class BeamService
         }
 
         return true;
+    }
+
+    /**
+     * Create beam claims pack.
+     */
+    protected function createClaimsPack(array $tokens, Collection $packs, Model $beam): void
+    {
+        $tokens = collect($tokens);
+        $tokenIds = $tokens->whereNotNull('tokenIds');
+
+        foreach ($packs as $pack) {
+            if ($tokenIds->count()) {
+                DispatchCreateBeamClaimsJobs::dispatch($beam, $tokenIds->all(), $pack->id)->afterCommit();
+            }
+
+            $tokenUploads = $tokens->whereNotNull('tokenIdDataUpload');
+            if ($tokenUploads->count()) {
+                $ids = $tokenIds->pluck('tokenIds');
+                $tokenUploads->each(function ($token) use ($beam, $ids) {
+                    LazyCollection::make(function () use ($token, $ids) {
+                        $handle = fopen($token['tokenIdDataUpload']->getPathname(), 'r');
+                        while (($line = fgets($handle)) !== false) {
+                            if (! $this->tokenIdExists($ids->all(), $tokenId = trim($line))) {
+                                $ids->push($tokenId);
+                                yield $tokenId;
+                            }
+                        }
+                        fclose($handle);
+                    })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token) {
+                        $token['tokenIds'] = $tokenIds->all();
+                        unset($token['tokenIdDataUpload']);
+                        DispatchCreateBeamClaimsJobs::dispatch($beam, [$token])->afterCommit();
+                        unset($tokenIds, $token);
+                    });
+                });
+            }
+        }
     }
 
     /**

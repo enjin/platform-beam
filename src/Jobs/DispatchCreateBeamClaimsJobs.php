@@ -25,7 +25,8 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
      */
     public function __construct(
         protected Model $beam,
-        protected ?array $tokens
+        protected ?array $tokens,
+        protected ?int $packId = null
     ) {}
 
     /**
@@ -53,6 +54,7 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
                                     'nonce' => 1,
                                     'attributes' => json_encode($token['attributes']) ?: null,
                                     'quantity' => $token['quantity'],
+                                    'beam_pack_id' => $this->packId,
                                 ]);
                             }
                         } else {
@@ -76,6 +78,7 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
                                             'nonce' => 1,
                                             'attributes' => json_encode($token['attributes']) ?: null,
                                             'quantity' => $token['quantity'],
+                                            'beam_pack_id' => $this->packId,
                                         ]);
                                     }
                                 });

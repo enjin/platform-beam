@@ -61,6 +61,7 @@ class BeamClaim extends BaseModel
         'code',
         'nonce',
         'idempotency_key',
+        'beam_pack_id',
     ];
 
     /**
@@ -119,6 +120,14 @@ class BeamClaim extends BaseModel
     {
         return $this->belongsTo(Token::class, 'token_chain_id', 'token_chain_id')
             ->where('tokens.collection_id', '=', 'beam_claims.collection_id');
+    }
+
+    /**
+     * The beam pack's relationship.
+     */
+    public function beamPack(): BelongsTo
+    {
+        return $this->belongsTo(BeamPack::class, 'beam_pack_id');
     }
 
     /**
