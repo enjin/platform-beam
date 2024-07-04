@@ -4,7 +4,9 @@ namespace Enjin\Platform\Beam\Jobs;
 
 use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Enums\PlatformBeamCache;
+use Enjin\Platform\Beam\Exceptions\BeamException;
 use Enjin\Platform\Beam\Models\BeamClaim;
+use Enjin\Platform\Beam\Models\BeamPack;
 use Enjin\Platform\Beam\Models\BeamScan;
 use Enjin\Platform\Beam\Services\BatchService;
 use Enjin\Platform\Beam\Services\BeamService;
@@ -13,6 +15,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -45,21 +48,21 @@ class ClaimBeam implements ShouldQueue
 
             try {
                 $lock->block(5);
-                if ($claim = $this->claimQuery($data)->first()) {
-                    DB::beginTransaction();
+                DB::beginTransaction();
+                $claims = $this->claims($data);
+                if (count($claims)) {
                     $wallet->firstOrStore(['public_key' => $data['wallet_public_key']]);
-                    $claim->forceFill($this->buildBeamClaimAttributes($batch, $claim))->save();
-
+                    foreach ($this->claims($data) as $claim) {
+                        $claim->forceFill($this->buildBeamClaimAttributes($batch, $claim))->save();
+                        Log::info('ClaimBeamJob: Claim assigned.', $claim->toArray());
+                    }
                     // Delete scan after claim is set up so the signed data can't be used to claim again.
                     BeamScan::firstWhere(['wallet_public_key' => $data['wallet_public_key'], 'beam_id' => $data['beam']['id']])?->delete();
-
-                    DB::commit();
-
-                    Log::info('ClaimBeamJob: Claim assigned.', $claim->toArray());
                 } else {
                     Cache::put(BeamService::key(Arr::get($data, 'beam.code')), 0);
                     Log::info('ClaimBeamJob: No claim available, setting remaining count to 0', $data);
                 }
+                DB::commit();
             } catch (LockTimeoutException) {
                 Log::info('ClaimBeamJob: Cannot obtain lock, retrying', $data);
                 $this->release(1);
@@ -81,7 +84,7 @@ class ClaimBeam implements ShouldQueue
     public function failed(Throwable $exception): void
     {
         if ($data = $this->data) {
-            if ($this->claimQuery($data)->count() > 0) {
+            if (count($this->claims($data)) > 0) {
                 // Idempotency key prevents incrementing cache on same claim request even with manual retry on horizon
                 $key = Arr::get($data, 'idempotency_key');
                 if (! Cache::get(PlatformBeamCache::IDEMPOTENCY_KEY->key($key))) {
@@ -99,12 +102,25 @@ class ClaimBeam implements ShouldQueue
     /**
      * Get the claim query.
      */
-    protected function claimQuery(array $data): Builder
+    protected function claims(array $data): Collection
     {
         return BeamClaim::where('beam_id', $data['beam']['id'])
+            ->with('beam:id,collection_chain_id')
             ->claimable()
             ->when($data['code'], fn ($query) => $query->withSingleUseCode($data['code']))
-            ->unless($data['code'], fn ($query) => $query->inRandomOrder());
+            ->when($isPack = Arr::get($data, 'is_pack'), function (Builder $query) use ($data) {
+                $pack = BeamPack::where('is_claimed', false)
+                    ->where('beam_id', $data['beam_id'])
+                    ->inRandomOrder()
+                    ->first();
+                if (!$pack) {
+                    throw new BeamException('No available packs to claim.');
+                }
+                $query->where('beam_pack_id', $pack->id);
+                $pack->fill(['is_claimed' => true])->save();
+            })
+            ->when(!$isPack, fn ($query) => $query->inRandomOrder())
+            ->get(['id', 'beam_id', 'type']);
     }
 
     /**

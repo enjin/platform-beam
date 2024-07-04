@@ -533,6 +533,7 @@ class BeamService
             'state' => ClaimStatus::PENDING->name,
             'beam' => $beam->toArray(),
             'beam_id' => $beam->id,
+            'is_pack' => $beam->is_pack,
             'ip_address' => request()->getClientIp(),
             'code' => $singleUseCode,
             'idempotency_key' => $idempotencyKey ?: Str::uuid()->toString(),
