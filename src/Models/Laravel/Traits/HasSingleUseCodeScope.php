@@ -5,8 +5,6 @@ namespace Enjin\Platform\Beam\Models\Laravel\Traits;
 use Enjin\Platform\Beam\Services\BeamService;
 use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Enjin\Platform\Beam\Enums\BeamRoute;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 
 trait HasSingleUseCodeScope
