@@ -113,7 +113,11 @@ class BeamService
             $quantity = Arr::get($args, 'quantity', 1);
             $this->createClaimsPack(
                 Arr::get($args, 'tokens', []),
-                $beam->packs()->createMany(Collection::times($quantity, fn () => ['beam_id' => $beam->id])),
+                $beam->packs()->createMany(Collection::times($quantity, fn () => [
+                    'beam_id' => $beam->id,
+                    'code' => bin2hex(openssl_random_pseudo_bytes(16)),
+                    'nonce' => 1,
+                ])),
                 $beam
             );
             Cache::forever(
@@ -342,12 +346,13 @@ class BeamService
     public static function getSingleUseCodeData(string $code): ?object
     {
         try {
-            [$claimCode, $beamCode, $nonce] = explode(':', decrypt($code), 3);
+            [$claimCode, $beamCode, $nonce, $isPack] = explode(':', decrypt($code), 4);
 
             return (object) [
                 'claimCode' => $claimCode,
                 'beamCode' => $beamCode,
                 'nonce' => $nonce,
+                'isPack' => $isPack,
             ];
         } catch (Throwable) {
             return null;

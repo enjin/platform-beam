@@ -12,6 +12,8 @@ return new class () extends Migration {
     {
         Schema::table('beam_claims', function (Blueprint $table) {
             $table->foreignId('beam_pack_id')->index()->nullable()->constrained()->cascadeOnDelete();
+            $table->dropUnique(['idempotency_key']);
+            $table->index(['idempotency_key']);
         });
     }
 
@@ -22,6 +24,7 @@ return new class () extends Migration {
     {
         Schema::table('beam_claims', function (Blueprint $table) {
             $table->dropColumn('beam_pack_id');
+            $table->unique(['idempotency_key']);
         });
     }
 };

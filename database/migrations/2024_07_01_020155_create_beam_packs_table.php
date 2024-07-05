@@ -13,6 +13,8 @@ return new class () extends Migration {
         Schema::create('beam_packs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('beam_id')->constrained()->cascadeOnDelete();
+            $table->string('code')->index()->nullable();
+            $table->unsignedInteger('nonce')->nullable();
             $table->boolean('is_claimed')->default(false);
             $table->timestamps();
         });
