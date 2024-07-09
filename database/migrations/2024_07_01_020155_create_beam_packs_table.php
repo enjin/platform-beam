@@ -15,7 +15,7 @@ return new class () extends Migration {
             $table->foreignId('beam_id')->constrained()->cascadeOnDelete();
             $table->string('code')->index()->nullable();
             $table->unsignedInteger('nonce')->nullable();
-            $table->boolean('is_claimed')->default(false);
+            $table->boolean('is_claimed')->default(false)->index();
             $table->timestamps();
         });
     }

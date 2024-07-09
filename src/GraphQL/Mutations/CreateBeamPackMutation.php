@@ -100,7 +100,7 @@ class CreateBeamPackMutation extends Mutation
             'image' => ['filled', 'url', 'max:1024'],
             'start' => ['filled', 'date', 'before:end'],
             'end' => ['filled', 'date', 'after:start'],
-            'quantity' => ['integer', 'min:1', 'max:1000'],
+            'quantity' => ['integer', 'min:1', 'max:100'],
             'collectionId' => [
                 'bail',
                 'filled',
