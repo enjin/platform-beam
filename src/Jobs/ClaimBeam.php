@@ -113,16 +113,17 @@ class ClaimBeam implements ShouldQueue
         return BeamClaim::where('beam_id', $data['beam']['id'])
             ->with(['beam:id,collection_chain_id', 'beamPack:id,beam_id'])
             ->claimable()
-            ->when($data['code'], fn ($query) => $query->withSingleUseCode($data['code']))
             ->when($isPack = Arr::get($data, 'is_pack'), function (Builder $query) use ($data) {
                 if (!($pack = BeamPack::where('is_claimed', false)
                     ->where('beam_id', $data['beam']['id'])
+                    ->when($data['code'], fn ($subquery) => $subquery->where('code', $data['code']))
                     ->inRandomOrder()
                     ->first())) {
                     throw new BeamException('No available packs to claim.');
                 }
                 $query->where('beam_pack_id', $pack->id);
             })
+            ->when(!$isPack && $data['code'], fn ($query) => $query->withSingleUseCode($data['code']))
             ->when(!$isPack, fn ($query) => $query->inRandomOrder())
             ->get(['id', 'beam_id', 'type', 'beam_pack_id']);
     }

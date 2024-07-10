@@ -4,6 +4,7 @@ namespace Enjin\Platform\Beam\Models\Laravel;
 
 use Enjin\Platform\Beam\Database\Factories\BeamPackFactory;
 use Enjin\Platform\Models\BaseModel;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -60,6 +61,11 @@ class BeamPack extends BaseModel
     public function claims(): HasMany
     {
         return $this->hasMany(BeamClaim::class, 'beam_pack_id');
+    }
+
+    public function scopeClaimable(Builder $query): Builder
+    {
+        return $query->where('is_claimed', false);
     }
 
     /**

@@ -19,6 +19,7 @@ use Enjin\Platform\Beam\Jobs\CreateClaim;
 use Enjin\Platform\Beam\Jobs\DispatchCreateBeamClaimsJobs;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
+use Enjin\Platform\Beam\Models\Laravel\BeamPack;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Beam\Support\ClaimProbabilities;
 use Enjin\Platform\Support\BitMask;
@@ -219,21 +220,20 @@ class BeamService
     public function claim(string $code, string $wallet, ?string $idempotencyKey = null): bool
     {
         $singleUseCode = null;
-        $singleUse = static::isSingleUse($code);
-
-        if ($singleUse) {
-            $singleUseCode = $code;
-            $beam = BeamClaim::withSingleUseCode($singleUseCode)
-                ->with('beam')
-                ->first()
-                ->beam;
-            $code = $beam?->code;
-        } else {
-            $beam = $this->findByCode($code);
-        }
-
+        $singleUse = static::getSingleUseCodeData($code);
+        $beam = $this->findByCode($singleUse ? $singleUse->beamCode : $code);
         if (! $beam) {
             throw new BeamException(__('enjin-platform-beam::error.beam_not_found', ['code' => $code]));
+        }
+
+        if ($singleUse) {
+            if (!($beam->is_pack ? new BeamPack() : new BeamClaim())
+                ->withSingleUseCode($code)
+                ->first()) {
+                throw new BeamException(__('enjin-platform-beam::error.beam_not_found', ['code' => $code]));
+            }
+            $singleUseCode = $singleUse->claimCode;
+            $code = $singleUse->beamCode;
         }
 
         $lock = Cache::lock(self::key($code, 'claim-lock'), 5);
@@ -346,13 +346,12 @@ class BeamService
     public static function getSingleUseCodeData(string $code): ?object
     {
         try {
-            [$claimCode, $beamCode, $nonce, $isPack] = explode(':', decrypt($code), 4);
+            [$claimCode, $beamCode, $nonce] = explode(':', decrypt($code), 4);
 
             return (object) [
                 'claimCode' => $claimCode,
                 'beamCode' => $beamCode,
                 'nonce' => $nonce,
-                'isPack' => $isPack,
             ];
         } catch (Throwable) {
             return null;
