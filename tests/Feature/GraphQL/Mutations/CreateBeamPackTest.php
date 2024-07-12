@@ -284,6 +284,20 @@ class CreateBeamPackTest extends TestCaseGraphQL
 
         $response = $this->graphql(
             $this->method,
+            array_merge($data, ['quantity' => 0]),
+            true
+        );
+        $this->assertArraySubset(['quantity' => ['The quantity field must be at least 1.']], $response['error']);
+
+        $response = $this->graphql(
+            $this->method,
+            array_merge($data, ['quantity' => 101]),
+            true
+        );
+        $this->assertArraySubset(['quantity' => ['The quantity field must not be greater than 100.']], $response['error']);
+
+        $response = $this->graphql(
+            $this->method,
             array_merge($data, ['tokens' => [['tokenIds' => '1']]]),
             true
         );
