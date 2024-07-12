@@ -1,0 +1,21 @@
+query GetBeamPackSingleUseCodes($code: String!) {
+  GetBeamPackSingleUseCodes(code: $code) {
+    edges {
+      cursor
+      node {
+        code
+        qr {
+          url
+          payload
+        }
+      }
+    }
+    totalCount
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+  }
+}
