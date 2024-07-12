@@ -126,6 +126,12 @@ class BeamType extends Type
                 'selectable' => false,
                 'is_relation' => false,
             ],
+            'packs' => [
+                'type' => GraphQL::type('[BeamPack!]'),
+                'description' => __('enjin-platform-beam::type.beam_pack.description'),
+                'selectable' => false,
+                'is_relation' => true,
+            ],
         ];
     }
 }

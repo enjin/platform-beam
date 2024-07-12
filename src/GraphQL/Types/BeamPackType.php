@@ -40,6 +40,11 @@ class BeamPackType extends Type
                 'resolve' => fn ($claim) => $claim->code ? $claim->singleUseCode : '',
                 'excludeFrom' => ['GetBeam', 'GetBeams', 'GetPendingClaims'],
             ],
+            'beam' => [
+                'type' => GraphQL::type('Beam'),
+                'description' => __('enjin-platform-beam::type.beam_claim.field.beam'),
+                'is_relation' => true,
+            ],
             'qr' => [
                 'type' => GraphQL::type('BeamQr'),
                 'description' => __('enjin-platform-beam::type.beam.field.qr'),
@@ -52,6 +57,12 @@ class BeamPackType extends Type
                 'selectable' => false,
                 'is_relation' => false,
                 'excludeFrom' => ['GetBeam', 'GetBeams', 'GetPendingClaims'],
+            ],
+            'claims' => [
+                'type' => GraphQL::type('[BeamClaim!]'),
+                'description' => __('enjin-platform-beam::type.beam_claim.description'),
+                'selectable' => false,
+                'is_relation' => true,
             ],
         ];
     }
