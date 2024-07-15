@@ -8,13 +8,12 @@ use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\GraphQL\Middleware\ResolvePage;
 use Enjin\Platform\GraphQL\Types\Pagination\ConnectionInput;
-use Enjin\Platform\Interfaces\PlatformPublicGraphQlOperation;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Illuminate\Support\Arr;
 use Rebing\GraphQL\Support\Facades\GraphQL;
 
-class GetBeamsQuery extends Query implements PlatformPublicGraphQlOperation
+class GetBeamsQuery extends Query
 {
     use HasBeamCommonFields;
 
