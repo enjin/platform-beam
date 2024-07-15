@@ -30,4 +30,5 @@ return [
     'add_tokens.description' => 'Add tokens to a beam.',
     'create_beam_pack.description' => 'Create a beam pack.',
     'create_beam_pack.args.quantity' => 'The quantity of beam packs to create.',
+    'expire_beam_pack_single_use_codes.description' => 'Expire beam pack single use codes.',
 ];

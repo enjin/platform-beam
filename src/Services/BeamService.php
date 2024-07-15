@@ -320,6 +320,29 @@ class BeamService
     }
 
     /**
+     * Expire beam pack single use codes.
+     */
+    public function expireBeamPackSingleUseCodes(array $codes): int
+    {
+        $beams = [];
+        collect($codes)->each(function ($code) use (&$beams) {
+            if ($claim = BeamPack::claimable()->withSingleUseCode($code)->first()) {
+                if (! isset($beams[$claim->beam_id])) {
+                    $beams[$claim->beam_id] = 0;
+                }
+                $beams[$claim->beam_id] += $claim->increment('nonce');
+            }
+        });
+
+        if ($beams) {
+            Beam::findMany(array_keys($beams), ['id', 'code'])
+                ->each(fn ($beam) => Cache::decrement($this->key($beam->code, $beams[$beam->id])));
+        }
+
+        return array_sum($beams);
+    }
+
+    /**
      * Check if beam code is single use.
      */
     public static function hasSingleUse(?string $code): bool
