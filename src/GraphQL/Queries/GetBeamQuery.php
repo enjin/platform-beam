@@ -8,13 +8,12 @@ use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Rules\ScanLimit;
 use Enjin\Platform\Beam\Rules\SingleUseCodeExist;
 use Enjin\Platform\Beam\Services\BeamService;
-use Enjin\Platform\Interfaces\PlatformPublicGraphQlOperation;
 use Enjin\Platform\Rules\ValidSubstrateAccount;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Rebing\GraphQL\Support\Facades\GraphQL;
 
-class GetBeamQuery extends Query implements PlatformPublicGraphQlOperation
+class GetBeamQuery extends Query
 {
     use HasBeamCommonFields;
 
