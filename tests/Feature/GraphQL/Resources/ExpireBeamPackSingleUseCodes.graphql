@@ -1,0 +1,3 @@
+mutation ExpireBeamPackSingleUseCodes($codes: [String!]!) {
+  ExpireBeamPackSingleUseCodes(codes: $codes)
+}
