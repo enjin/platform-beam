@@ -7,6 +7,7 @@ use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Services\BeamService;
+use Enjin\Platform\GraphQL\Schemas\Traits\HasAuthorizableFields;
 use Enjin\Platform\GraphQL\Types\Pagination\ConnectionInput;
 use Enjin\Platform\Traits\HasSelectFields;
 use Illuminate\Pagination\Cursor;
@@ -17,6 +18,7 @@ use Rebing\GraphQL\Support\Facades\GraphQL;
 
 class BeamType extends Type
 {
+    use HasAuthorizableFields;
     use HasBeamCommonFields;
     use HasSelectFields;
 
@@ -45,6 +47,7 @@ class BeamType extends Type
             'code' => [
                 'type' => GraphQL::type('String!'),
                 'description' => __('enjin-platform-beam::mutation.claim_beam.args.code'),
+                'excludeFrom' => ['GetBeam', 'GetBeams'],
             ],
             ...$this->getCommonFields(),
             'collection' => [
@@ -89,6 +92,7 @@ class BeamType extends Type
                 },
                 'selectable' => false,
                 'is_relation' => false,
+                'excludeFrom' => ['GetBeam', 'GetBeams'],
             ],
             'probabilities' => [
                 'type' => GraphQL::type('Object'),
