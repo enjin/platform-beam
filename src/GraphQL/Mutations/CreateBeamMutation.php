@@ -8,11 +8,9 @@ use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
 use Enjin\Platform\Beam\Rules\MaxTokenCount;
 use Enjin\Platform\Beam\Rules\MaxTokenSupply;
 use Enjin\Platform\Beam\Rules\TokensDoNotExistInBeam;
-use Enjin\Platform\Beam\Rules\TokensDoNotExistInCollection;
 use Enjin\Platform\Beam\Rules\TokensExistInCollection;
 use Enjin\Platform\Beam\Rules\TokenUploadExistInCollection;
 use Enjin\Platform\Beam\Rules\TokenUploadNotExistInBeam;
-use Enjin\Platform\Beam\Rules\TokenUploadNotExistInCollection;
 use Enjin\Platform\Beam\Rules\UniqueTokenIds;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Models\Collection;
@@ -132,7 +130,7 @@ class CreateBeamMutation extends Mutation
                     'distinct',
                     BeamType::TRANSFER_TOKEN == BeamType::getEnumCase(Arr::get($args, str_replace('tokenIds', 'type', $attribute)))
                         ? new TokensExistInCollection($args['collectionId'])
-                        : new TokensDoNotExistInCollection($args['collectionId']),
+                        : '',
                     new TokensDoNotExistInBeam(),
                 ];
             }),
@@ -143,7 +141,7 @@ class CreateBeamMutation extends Mutation
                     'prohibits:tokens.*.tokenIds',
                     BeamType::TRANSFER_TOKEN == BeamType::getEnumCase(Arr::get($args, str_replace('tokenIdDataUpload', 'type', $attribute)))
                         ? new TokenUploadExistInCollection($args['collectionId'])
-                        : new TokenUploadNotExistInCollection($args['collectionId']),
+                        : '',
                     new TokenUploadNotExistInBeam(),
                 ];
             }),

@@ -96,26 +96,6 @@ class CreateBeamTest extends TestCaseGraphQL
      */
     public function test_it_will_fail_to_create_beam_with_invalid_file_upload(): void
     {
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', $this->token->token_chain_id);
-        $response = $this->graphql($this->method, array_merge(
-            $this->generateBeamData(),
-            ['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]]]
-        ), true);
-        $this->assertArraySubset([
-            'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload exists in the specified collection.'],
-        ], $response['error']);
-        Event::assertNotDispatched(BeamCreated::class);
-
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', "{$this->token->token_chain_id}..{$this->token->token_chain_id}");
-        $response = $this->graphql($this->method, array_merge(
-            $this->generateBeamData(),
-            ['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]]]
-        ), true);
-        $this->assertArraySubset([
-            'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload exists in the specified collection.'],
-        ], $response['error']);
-        Event::assertNotDispatched(BeamCreated::class);
-
         $file = UploadedFile::fake()->createWithContent('tokens.txt', '1');
         $response = $this->graphql($this->method, array_merge(
             $this->generateBeamData(),
@@ -135,24 +115,6 @@ class CreateBeamTest extends TestCaseGraphQL
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
         ], $response['error']);
         Event::assertNotDispatched(BeamCreated::class);
-    }
-
-    /**
-     * Test creating beam token exist in collection.
-     */
-    public function test_it_will_fail_with_token_exist(): void
-    {
-        $response = $this->graphql(
-            $this->method,
-            array_merge(
-                $this->generateBeamData(BeamType::MINT_ON_DEMAND),
-                ['tokens' => [['tokenIds' => [$this->token->token_chain_id], 'type' => BeamType::MINT_ON_DEMAND->name]]]
-            ),
-            true
-        );
-        $this->assertArraySubset([
-            'tokens.0.tokenIds' => ['The tokens.0.tokenIds exists in the specified collection.'],
-        ], $response['error']);
     }
 
     /**
