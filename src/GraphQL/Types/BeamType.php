@@ -47,7 +47,6 @@ class BeamType extends Type
             'code' => [
                 'type' => GraphQL::type('String!'),
                 'description' => __('enjin-platform-beam::mutation.claim_beam.args.code'),
-                'excludeFrom' => ['GetBeam', 'GetBeams'],
             ],
             ...$this->getCommonFields(),
             'collection' => [
@@ -92,7 +91,6 @@ class BeamType extends Type
                 },
                 'selectable' => false,
                 'is_relation' => false,
-                'excludeFrom' => ['GetBeam', 'GetBeams'],
             ],
             'probabilities' => [
                 'type' => GraphQL::type('Object'),
