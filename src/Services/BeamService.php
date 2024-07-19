@@ -82,45 +82,26 @@ class BeamService
     public function create(array $args): Model
     {
         $beam = Beam::create([
-            ...Arr::except($args, ['tokens', 'flags']),
-            'flags_mask' => static::getFlagsValue(Arr::get($args, 'flags')),
-            'code' => bin2hex(openssl_random_pseudo_bytes(16)),
-        ]);
-        if ($beam) {
-            Cache::forever(
-                self::key($beam->code),
-                $this->createClaims(Arr::get($args, 'tokens', []), $beam)
-            );
-            event(new BeamCreated($beam));
-
-            return $beam;
-        }
-
-        return throw new BeamException(__('enjin-platform-beam::error.unable_to_save'));
-    }
-
-    /**
-     * Create a beam pack.
-     */
-    public function createPack(array $args): Model
-    {
-        $beam = Beam::create([
             ...Arr::except($args, ['tokens', 'flags', 'quantity']),
             'flags_mask' => static::getFlagsValue(Arr::get($args, 'flags')),
             'code' => bin2hex(openssl_random_pseudo_bytes(16)),
-            'is_pack' => true,
         ]);
         if ($beam) {
-            $quantity = Arr::get($args, 'quantity', 1);
-            $this->createClaimsPack(
-                Arr::get($args, 'tokens', []),
-                $beam->packs()->createMany(Collection::times($quantity, fn () => [
-                    'beam_id' => $beam->id,
-                    'code' => bin2hex(openssl_random_pseudo_bytes(16)),
-                    'nonce' => 1,
-                ])),
-                $beam
-            );
+            if ($beam->is_pack) {
+                $quantity = Arr::get($args, 'quantity', 1);
+                $this->createClaimsPack(
+                    Arr::get($args, 'tokens', []),
+                    $beam->packs()->createMany(Collection::times($quantity, fn () => [
+                        'beam_id' => $beam->id,
+                        'code' => bin2hex(openssl_random_pseudo_bytes(16)),
+                        'nonce' => 1,
+                    ])),
+                    $beam
+                );
+            } else {
+                $quantity = $this->createClaims(Arr::get($args, 'tokens', []), $beam);
+            }
+
             Cache::forever(
                 self::key($beam->code),
                 $quantity
@@ -301,45 +282,25 @@ class BeamService
      */
     public function expireSingleUseCodes(array $codes): int
     {
-        $beams = [];
-        collect($codes)->each(function ($code) use (&$beams) {
-            if ($claim = BeamClaim::claimable()->withSingleUseCode($code)->first()) {
-                if (! isset($beams[$claim->beam_id])) {
-                    $beams[$claim->beam_id] = 0;
+        $beamCodes = collect($codes)
+            ->keyBy(fn ($code) => static::getSingleUseCodeData($code)->beamCode)
+            ->all();
+
+        Beam::whereIn('code', array_keys($beamCodes))
+            ->get(['id', 'code', 'is_pack'])
+            ->each(function ($beam) use ($beamCodes) {
+                if ($claim = ($beam->is_pack ? new BeamPack() : new BeamClaim())
+                    ->claimable()
+                    ->where('beam_id', $beam->id)
+                    ->withSingleUseCode($beamCodes[$beam->code])
+                    ->first()
+                ) {
+                    $claim->increment('nonce');
+                    Cache::decrement($this->key($beam->code));
                 }
-                $beams[$claim->beam_id] += $claim->increment('nonce');
-            }
-        });
+            });
 
-        if ($beams) {
-            Beam::findMany(array_keys($beams), ['id', 'code'])
-                ->each(fn ($beam) => Cache::decrement($this->key($beam->code, $beams[$beam->id])));
-        }
-
-        return array_sum($beams);
-    }
-
-    /**
-     * Expire beam pack single use codes.
-     */
-    public function expireBeamPackSingleUseCodes(array $codes): int
-    {
-        $beams = [];
-        collect($codes)->each(function ($code) use (&$beams) {
-            if ($claim = BeamPack::claimable()->withSingleUseCode($code)->first()) {
-                if (! isset($beams[$claim->beam_id])) {
-                    $beams[$claim->beam_id] = 0;
-                }
-                $beams[$claim->beam_id] += $claim->increment('nonce');
-            }
-        });
-
-        if ($beams) {
-            Beam::findMany(array_keys($beams), ['id', 'code'])
-                ->each(fn ($beam) => Cache::decrement($this->key($beam->code, $beams[$beam->id])));
-        }
-
-        return array_sum($beams);
+        return count($codes);
     }
 
     /**

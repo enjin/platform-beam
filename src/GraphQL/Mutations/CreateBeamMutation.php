@@ -55,6 +55,12 @@ class CreateBeamMutation extends Mutation
     {
         return [
             ...$this->getCommonFields(),
+            'isPack' => [
+                'type' => GraphQL::type('Boolean'),
+                'alias' => 'is_pack',
+                'description' => __('enjin-platform-beam::mutation.create_beam.args.isPack'),
+                'defaultValue' => false,
+            ],
             'flags' => [
                 'type' => GraphQL::type('[BeamFlagInputType!]'),
                 'description' => __('enjin-platform-beam::mutation.update_beam.args.flags'),
@@ -67,6 +73,11 @@ class CreateBeamMutation extends Mutation
             'tokens' => [
                 'type' => GraphQL::type('[ClaimToken!]!'),
                 'description' => __('enjin-platform-beam::input_type.claim_token.description'),
+            ],
+            'quantity' => [
+                'type' => GraphQL::type('Int'),
+                'description' => __('enjin-platform-beam::mutation.create_beam.args.quantity'),
+                'defaultValue' => 1,
             ],
         ];
     }
@@ -90,7 +101,7 @@ class CreateBeamMutation extends Mutation
      */
     protected function rules(array $args = []): array
     {
-        return [
+        $rules = [
             'name' => ['filled', 'max:255'],
             'description' => ['filled', 'max:1024'],
             'image' => ['filled', 'url', 'max:1024'],
@@ -154,14 +165,21 @@ class CreateBeamMutation extends Mutation
                 'min:1',
                 new MaxTokenSupply($args['collectionId']),
             ],
-            'tokens.*.claimQuantity' => [
+            'flags.*.flag' => ['required', 'distinct'],
+        ];
+
+        if ($args['isPack']) {
+            $rules['quantity'] = ['filled', 'integer', 'min:1', 'max:100'];
+        } else {
+            $rulest['tokens.*.claimQuantity'] = [
                 'bail',
                 'filled',
                 'integer',
                 'min:1',
                 new MaxTokenCount($args['collectionId']),
-            ],
-            'flags.*.flag' => ['required', 'distinct'],
-        ];
+            ];
+        }
+
+        return $rules;
     }
 }

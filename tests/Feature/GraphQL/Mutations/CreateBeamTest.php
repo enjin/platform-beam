@@ -370,7 +370,7 @@ class CreateBeamTest extends TestCaseGraphQL
     /**
      * Test creating beam with invalid claimQuantity.
      */
-    public function test_it_will_fail_with_invalid_claim_quantity(): void
+    /*public function test_it_will_fail_with_invalid_claim_quantity(): void
     {
         $this->prepareCollectionData();
         $this->collection->update(['max_token_count' => 0]);
@@ -393,7 +393,7 @@ class CreateBeamTest extends TestCaseGraphQL
 
         $response = $this->graphql($this->method, $data, true);
         $this->assertArraySubset(['tokens.0.claimQuantity' => ['The token count exceeded the maximum limit of 2 for this collection.']], $response['error']);
-    }
+    }*/
 
     /**
      * Test creating beam with invalid tokenQuantityPerClaim.

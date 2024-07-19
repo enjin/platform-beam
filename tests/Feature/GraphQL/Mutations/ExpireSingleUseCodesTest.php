@@ -50,4 +50,37 @@ class ExpireSingleUseCodesTest extends TestCaseGraphQL
         $response = $this->graphql($this->method, ['codes' => [fake()->text(10)]], true);
         $this->assertArraySubset(['codes' => ['The codes is invalid.']], $response['error']);
     }
+
+    /**
+     * Test expire single use code.
+     */
+    public function test_it_can_expire_single_use_codes_beam_pack(): void
+    {
+        $this->truncateBeamTables();
+
+        $code = $this->graphql('CreateBeam', $this->generateBeamPackData(
+            BeamType::MINT_ON_DEMAND,
+            1,
+            [],
+            [['flag' => 'SINGLE_USE']],
+        ));
+        $this->assertNotEmpty($code);
+
+        $singleUseCodes = $this->graphql('GetSingleUseCodes', ['code' => $code]);
+        $this->assertNotEmpty($singleUseCodes['totalCount']);
+
+        $response = $this->graphql($this->method, [
+            'codes' => [Arr::get($singleUseCodes, 'edges.0.node.code')],
+        ]);
+        $this->assertTrue($response);
+    }
+
+    /**
+     * Test get single use beam with invalid claims.
+     */
+    public function test_it_will_fail_with_invalid_code_beam_pack(): void
+    {
+        $response = $this->graphql($this->method, ['codes' => [fake()->text(10)]], true);
+        $this->assertArraySubset(['codes' => ['The codes is invalid.']], $response['error']);
+    }
 }

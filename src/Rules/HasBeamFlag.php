@@ -22,7 +22,6 @@ class HasBeamFlag implements ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         $beam = Beam::whereCode($value)->first();
-
         if (! $beam || ! $beam->hasFlag($this->flag)) {
             $fail('enjin-platform-beam::validation.has_beam_flag')->translate();
         }

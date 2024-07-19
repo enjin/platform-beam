@@ -18,6 +18,8 @@ return [
     'create_beam.args.collectionId' => 'The collection ID.',
     'create_beam.args.tokenIds' => 'The token chain IDs to claim.',
     'create_beam.description' => 'Mutation for creating a beam.',
+    'create_beam.args.quantity' => 'The number of beam packs to create. This is ignored when creating a single beam.',
+    'create_beam.args.isPack' => 'The flag for creating a beam pack.',
     'update_beam.args.flags' => 'The beam flags that should be enabled disabled.',
     'update_beam.description' => 'Mutation for updating a beam.',
     'claim_beam.field.claimedAt' => 'The claim timestamp.',
@@ -28,7 +30,4 @@ return [
     'remove_tokens.description' => 'Removes tokens from a beam.',
     'remove_tokens.args.tokenIds' => 'The token IDs to remove.',
     'add_tokens.description' => 'Add tokens to a beam.',
-    'create_beam_pack.description' => 'Create a beam pack.',
-    'create_beam_pack.args.quantity' => 'The quantity of beam packs to create.',
-    'expire_beam_pack_single_use_codes.description' => 'Expire beam pack single use codes.',
 ];
