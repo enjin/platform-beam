@@ -206,7 +206,7 @@ class BatchProcess extends Command
                 foreach ($params as $param) {
                     $transaction = $this->transaction->store([
                         'method' => $method,
-                        'encoded_data' => $this->serialize->encode($method, [
+                        'encoded_data' => $this->serialize->encode(isRunningLatest() ? $method . 'V1010' : $method, [
                             'collectionId' => $param['collectionId'],
                             'recipients' => $param['recipients'],
                         ]),
