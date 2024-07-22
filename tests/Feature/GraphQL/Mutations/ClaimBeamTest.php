@@ -107,9 +107,6 @@ class ClaimBeamTest extends TestCaseGraphQL
         $this->genericClaimTest(CryptoSignatureType::ED25519);
     }
 
-    /**
-     * Test claiming beam with ed25519.
-     */
     public function test_it_can_claim_beam_pack_with_ed25519(): void
     {
         $code = $this->graphql('CreateBeam', $this->generateBeamData(
@@ -122,6 +119,19 @@ class ClaimBeamTest extends TestCaseGraphQL
         $oldBeam = $this->beam;
         $this->beam = Beam::where('code', $code)->first();
         $this->genericClaimTest(CryptoSignatureType::ED25519);
+
+
+        $code = $this->graphql('CreateBeam', $this->generateBeamData(
+            BeamType::MINT_ON_DEMAND,
+            2,
+            [],
+            [['flag' => 'SINGLE_USE']],
+            true
+        ));
+        $response = $this->graphql('GetSingleUseCodes', ['code' => $code]);
+        $this->assertNotEmpty($response['totalCount']);
+        $this->genericClaimTest(CryptoSignatureType::ED25519, Arr::get($response, 'edges.0.node.code'));
+
         $this->beam = $oldBeam;
     }
 

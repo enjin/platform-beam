@@ -58,7 +58,7 @@ class ExpireSingleUseCodesTest extends TestCaseGraphQL
     {
         $this->truncateBeamTables();
 
-        $code = $this->graphql('CreateBeam', $this->generateBeamPackData(
+        $code = $this->graphql('CreateBeam', $this->generateBeamData(
             BeamType::MINT_ON_DEMAND,
             1,
             [],
