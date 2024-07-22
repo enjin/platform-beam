@@ -9,6 +9,7 @@ use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Events\BeamClaimPending;
 use Enjin\Platform\Beam\Jobs\ClaimBeam;
+use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Rules\PassesClaimConditions;
 use Enjin\Platform\Beam\Services\BatchService;
@@ -96,18 +97,6 @@ class ClaimBeamTest extends TestCaseGraphQL
         $this->assertNotEmpty($response['totalCount']);
 
         $this->genericClaimTest(CryptoSignatureType::SR25519, Arr::get($response, 'edges.0.node.code'));
-
-        $code = $this->graphql('CreateBeam', $this->generateBeamData(
-            BeamType::MINT_ON_DEMAND,
-            1,
-            [],
-            [['flag' => 'SINGLE_USE']],
-            true
-        ));
-        $response = $this->graphql('GetSingleUseCodes', ['code' => $code]);
-        $this->assertNotEmpty($response['totalCount']);
-
-        $this->genericClaimTest(CryptoSignatureType::SR25519, Arr::get($response, 'edges.0.node.code'));
     }
 
     /**
@@ -116,6 +105,24 @@ class ClaimBeamTest extends TestCaseGraphQL
     public function test_it_can_claim_beam_with_ed25519(): void
     {
         $this->genericClaimTest(CryptoSignatureType::ED25519);
+    }
+
+    /**
+     * Test claiming beam with ed25519.
+     */
+    public function test_it_can_claim_beam_pack_with_ed25519(): void
+    {
+        $code = $this->graphql('CreateBeam', $this->generateBeamData(
+            BeamType::MINT_ON_DEMAND,
+            2,
+            [],
+            [],
+            true
+        ));
+        $oldBeam = $this->beam;
+        $this->beam = Beam::where('code', $code)->first();
+        $this->genericClaimTest(CryptoSignatureType::ED25519);
+        $this->beam = $oldBeam;
     }
 
     public function test_it_can_claim_beam_job_with_idempotency_key(): void
