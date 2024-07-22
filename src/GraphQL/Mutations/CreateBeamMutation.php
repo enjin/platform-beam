@@ -171,7 +171,7 @@ class CreateBeamMutation extends Mutation
         if ($args['isPack']) {
             $rules['quantity'] = ['filled', 'integer', 'min:1', 'max:100'];
         } else {
-            $rulest['tokens.*.claimQuantity'] = [
+            $rules['tokens.*.claimQuantity'] = [
                 'bail',
                 'filled',
                 'integer',

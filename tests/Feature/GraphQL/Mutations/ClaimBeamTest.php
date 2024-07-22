@@ -96,6 +96,18 @@ class ClaimBeamTest extends TestCaseGraphQL
         $this->assertNotEmpty($response['totalCount']);
 
         $this->genericClaimTest(CryptoSignatureType::SR25519, Arr::get($response, 'edges.0.node.code'));
+
+        $code = $this->graphql('CreateBeam', $this->generateBeamData(
+            BeamType::MINT_ON_DEMAND,
+            1,
+            [],
+            [['flag' => 'SINGLE_USE']],
+            true
+        ));
+        $response = $this->graphql('GetSingleUseCodes', ['code' => $code]);
+        $this->assertNotEmpty($response['totalCount']);
+
+        $this->genericClaimTest(CryptoSignatureType::SR25519, Arr::get($response, 'edges.0.node.code'));
     }
 
     /**

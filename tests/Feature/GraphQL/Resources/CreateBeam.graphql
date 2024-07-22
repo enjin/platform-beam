@@ -7,6 +7,8 @@ mutation CreateBeam(
   $collectionId: BigInt!
   $tokens: [ClaimToken!]!
   $flags: [BeamFlagInputType!]
+  $isPack: Boolean
+  $quantity: Int
 ) {
   CreateBeam(
     name: $name
@@ -17,5 +19,7 @@ mutation CreateBeam(
     collectionId: $collectionId
     tokens: $tokens
     flags: $flags
+    isPack: $isPack
+    quantity: $quantity
   )
 }
