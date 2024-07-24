@@ -28,4 +28,5 @@ return [
     'remove_tokens.description' => 'Removes tokens from a beam.',
     'remove_tokens.args.tokenIds' => 'The token IDs to remove.',
     'add_tokens.description' => 'Add tokens to a beam.',
+    'create_beam_pack.description' => 'Create a beam pack.',
 ];

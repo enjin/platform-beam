@@ -19,6 +19,7 @@ use Enjin\Platform\Beam\Jobs\CreateClaim;
 use Enjin\Platform\Beam\Jobs\DispatchCreateBeamClaimsJobs;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
+use Enjin\Platform\Beam\Models\BeamPack;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Beam\Support\ClaimProbabilities;
 use Enjin\Platform\Support\BitMask;
@@ -89,6 +90,28 @@ class BeamService
                 self::key($beam->code),
                 $this->createClaims(Arr::get($args, 'tokens', []), $beam)
             );
+            event(new BeamCreated($beam));
+
+            return $beam;
+        }
+
+        return throw new BeamException(__('enjin-platform-beam::error.unable_to_save'));
+    }
+
+    /**
+     * Create a beam pack.
+     */
+    public function createPack(array $args): Model
+    {
+        $beam = Beam::create([
+            ...Arr::except($args, ['packs', 'flags']),
+            'flags_mask' => static::getFlagsValue(Arr::get($args, 'flags')),
+            'code' => bin2hex(openssl_random_pseudo_bytes(16)),
+            'is_pack' => true,
+        ]);
+        if ($beam) {
+            $this->createPackClaims($packs = Arr::get($args, 'packs', []), $beam);
+            Cache::forever(self::key($beam->code), count($packs));
             event(new BeamCreated($beam));
 
             return $beam;
@@ -184,21 +207,20 @@ class BeamService
     public function claim(string $code, string $wallet, ?string $idempotencyKey = null): bool
     {
         $singleUseCode = null;
-        $singleUse = static::isSingleUse($code);
-
-        if ($singleUse) {
-            $singleUseCode = $code;
-            $beam = BeamClaim::withSingleUseCode($singleUseCode)
-                ->with('beam')
-                ->first()
-                ->beam;
-            $code = $beam?->code;
-        } else {
-            $beam = $this->findByCode($code);
-        }
-
+        $singleUse = static::getSingleUseCodeData($code);
+        $beam = $this->findByCode($singleUse ? $singleUse->beamCode : $code);
         if (! $beam) {
             throw new BeamException(__('enjin-platform-beam::error.beam_not_found', ['code' => $code]));
+        }
+
+        if ($singleUse) {
+            if (!($beam->is_pack ? new BeamPack() : new BeamClaim())
+                ->withSingleUseCode($code)
+                ->first()) {
+                throw new BeamException(__('enjin-platform-beam::error.beam_not_found', ['code' => $code]));
+            }
+            $singleUseCode = $singleUse->claimCode;
+            $code = $singleUse->beamCode;
         }
 
         $lock = Cache::lock(self::key($code, 'claim-lock'), 5);
@@ -266,22 +288,25 @@ class BeamService
      */
     public function expireSingleUseCodes(array $codes): int
     {
-        $beams = [];
-        collect($codes)->each(function ($code) use (&$beams) {
-            if ($claim = BeamClaim::claimable()->withSingleUseCode($code)->first()) {
-                if (! isset($beams[$claim->beam_id])) {
-                    $beams[$claim->beam_id] = 0;
+        $beamCodes = collect($codes)
+            ->keyBy(fn ($code) => static::getSingleUseCodeData($code)->beamCode)
+            ->all();
+
+        Beam::whereIn('code', array_keys($beamCodes))
+            ->get(['id', 'code', 'is_pack'])
+            ->each(function ($beam) use ($beamCodes) {
+                if ($claim = ($beam->is_pack ? new BeamPack() : new BeamClaim())
+                    ->claimable()
+                    ->where('beam_id', $beam->id)
+                    ->withSingleUseCode($beamCodes[$beam->code])
+                    ->first()
+                ) {
+                    $claim->increment('nonce');
+                    Cache::decrement($this->key($beam->code));
                 }
-                $beams[$claim->beam_id] += $claim->increment('nonce');
-            }
-        });
+            });
 
-        if ($beams) {
-            Beam::findMany(array_keys($beams), ['id', 'code'])
-                ->each(fn ($beam) => Cache::decrement($this->key($beam->code, $beams[$beam->id])));
-        }
-
-        return array_sum($beams);
+        return count($codes);
     }
 
     /**
@@ -375,6 +400,50 @@ class BeamService
     }
 
     /**
+     * Create beam pack claims.
+     */
+    protected function createPackClaims(array $packs, Model $beam): void
+    {
+        foreach ($packs as $pack) {
+            $model = BeamPack::create([
+                'beam_id' => $beam->id,
+                'code' => bin2hex(openssl_random_pseudo_bytes(16)),
+                'nonce' => 1,
+            ]);
+
+            $tokens = collect($pack['tokens']);
+            $tokenIds = $tokens->whereNotNull('tokenIds');
+
+            if ($tokenIds->count()) {
+                DispatchCreateBeamClaimsJobs::dispatch($beam, $tokenIds->all(), $model->id)->afterCommit();
+            }
+
+            $tokenUploads = $tokens->whereNotNull('tokenIdDataUpload');
+            if ($tokenUploads->count()) {
+                $ids = $tokenIds->pluck('tokenIds');
+                $tokenUploads->each(function ($token) use ($beam, $ids, $model) {
+                    LazyCollection::make(function () use ($token, $ids) {
+                        $handle = fopen($token['tokenIdDataUpload']->getPathname(), 'r');
+                        while (($line = fgets($handle)) !== false) {
+                            if (! $this->tokenIdExists($ids->all(), $tokenId = trim($line))) {
+                                $ids->push($tokenId);
+                                yield $tokenId;
+                            }
+                        }
+                        fclose($handle);
+                    })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token, $model) {
+                        $token['tokenIds'] = $tokenIds->all();
+                        unset($token['tokenIdDataUpload']);
+                        DispatchCreateBeamClaimsJobs::dispatch($beam, [$token], $model->id)->afterCommit();
+                        unset($tokenIds, $token);
+                    });
+                });
+            }
+
+        }
+    }
+
+    /**
      * Create beam claims.
      */
     protected function createClaims(array $tokens, Model $beam): int
@@ -465,6 +534,7 @@ class BeamService
             'state' => ClaimStatus::PENDING->name,
             'beam' => $beam->toArray(),
             'beam_id' => $beam->id,
+            'is_pack' => $beam->is_pack,
             'ip_address' => request()->getClientIp(),
             'code' => $singleUseCode,
             'idempotency_key' => $idempotencyKey ?: Str::uuid()->toString(),

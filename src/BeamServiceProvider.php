@@ -39,6 +39,9 @@ class BeamServiceProvider extends PackageServiceProvider
             ->hasMigration('update_beams_table')
             ->hasMigration('add_collection_chain_id_to_beam_batches_table')
             ->hasMigration('add_idempotency_key_to_beam_claims_table')
+            ->hasMigration('add_is_pack_column_to_beams_table')
+            ->hasMigration('create_beam_packs_table')
+            ->hasMigration('add_beam_pack_id_to_beam_claims_table')
             ->hasRoute('enjin-platform-beam')
             ->hasTranslations();
     }

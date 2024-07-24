@@ -4,7 +4,6 @@ namespace Enjin\Platform\Beam\Models\Laravel;
 
 use Enjin\Platform\Beam\Database\Factories\BeamClaimFactory;
 use Enjin\Platform\Beam\Enums\BeamFlag;
-use Enjin\Platform\Beam\Enums\BeamRoute;
 use Enjin\Platform\Beam\Models\Laravel\Traits\HasSingleUseCodeScope;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Models\BaseModel;
@@ -12,8 +11,6 @@ use Enjin\Platform\Models\Laravel\Collection;
 use Enjin\Platform\Models\Laravel\Token;
 use Enjin\Platform\Models\Laravel\Transaction;
 use Enjin\Platform\Models\Laravel\Wallet;
-use Illuminate\Contracts\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Prunable;
@@ -21,7 +18,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 
 class BeamClaim extends BaseModel
 {
@@ -61,6 +57,7 @@ class BeamClaim extends BaseModel
         'code',
         'nonce',
         'idempotency_key',
+        'beam_pack_id',
     ];
 
     /**
@@ -122,49 +119,19 @@ class BeamClaim extends BaseModel
     }
 
     /**
+     * The beam pack's relationship.
+     */
+    public function beamPack(): BelongsTo
+    {
+        return $this->belongsTo(BeamPack::class, 'beam_pack_id');
+    }
+
+    /**
      * The collection's relationship.
      */
     public function collection(): BelongsTo
     {
         return $this->belongsTo(Collection::class);
-    }
-
-    /**
-     * Local scope for single use.
-     */
-    public function scopeSingleUse(Builder $query): Builder
-    {
-        return $query->whereNotNull('code');
-    }
-
-    /**
-     * Local scope for single use code.
-     */
-    public function scopeWithSingleUseCode(Builder $query, string $code): Builder
-    {
-        $parsed = BeamService::getSingleUseCodeData($code);
-
-        return $query->where(['code' => $parsed->claimCode, 'nonce' => $parsed->nonce]);
-    }
-
-    /**
-     * The claimable code, encoded with the open platform host url.
-     */
-    public function singleUseCode(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => encrypt(implode(':', [$this->code, $this->beam?->code, $this->nonce]))
-        );
-    }
-
-    /**
-     * The claimable code, encoded with the Platform host url.
-     */
-    public function claimableCode(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => secure_url(Str::replace('{code}', $this->singleUseCode, BeamRoute::CLAIM->value))
-        );
     }
 
     /**
