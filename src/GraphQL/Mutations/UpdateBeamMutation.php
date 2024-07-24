@@ -7,6 +7,7 @@ use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Rules\BeamExists;
+use Enjin\Platform\Beam\Rules\CanUseOnBeam;
 use Enjin\Platform\Beam\Rules\IsEndDateValid;
 use Enjin\Platform\Beam\Rules\IsStartDateValid;
 use Enjin\Platform\Beam\Rules\MaxTokenCount;
@@ -104,6 +105,7 @@ class UpdateBeamMutation extends Mutation
                 'filled',
                 'max:1024',
                 new BeamExists(),
+                new CanUseOnBeam($beam),
             ],
             'name' => ['filled', 'max:255'],
             'description' => ['filled', 'max:1024'],

@@ -7,6 +7,7 @@ use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Rules\BeamExists;
+use Enjin\Platform\Beam\Rules\CanUseOnBeam;
 use Enjin\Platform\Beam\Rules\MaxTokenCount;
 use Enjin\Platform\Beam\Rules\MaxTokenSupply;
 use Enjin\Platform\Beam\Rules\TokensDoNotExistInBeam;
@@ -91,6 +92,7 @@ class AddTokensMutation extends Mutation
                 'filled',
                 'max:1024',
                 new BeamExists(),
+                new CanUseOnBeam($beam),
             ],
             'tokens' => ['bail', 'array', 'min:1', new UniqueTokenIds()],
             'tokens.*.attributes' => Rule::forEach(function ($value, $attribute) use ($args) {

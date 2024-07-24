@@ -3,25 +3,30 @@
 namespace Enjin\Platform\Beam\GraphQL\Mutations;
 
 use Closure;
+use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
+use Enjin\Platform\Beam\GraphQL\Traits\HasBeamPackCommonRules;
+use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Rules\BeamExists;
-use Enjin\Platform\Beam\Rules\CanUseOnBeam;
-use Enjin\Platform\Beam\Rules\TokensExistInBeam;
+use Enjin\Platform\Beam\Rules\CanUseOnBeamPack;
 use Enjin\Platform\Beam\Services\BeamService;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Illuminate\Support\Facades\DB;
 use Rebing\GraphQL\Support\Facades\GraphQL;
 
-class RemoveTokensMutation extends Mutation
+class AddTokensPackMutation extends Mutation
 {
+    use HasBeamCommonFields;
+    use HasBeamPackCommonRules;
+
     /**
      * Get the mutation's attributes.
      */
     public function attributes(): array
     {
         return [
-            'name' => 'RemoveTokens',
-            'description' => __('enjin-platform-beam::mutation.remove_tokens.description'),
+            'name' => 'AddTokensPack',
+            'description' => __('enjin-platform-beam::mutation.add_tokens_pack.description'),
         ];
     }
 
@@ -43,9 +48,9 @@ class RemoveTokensMutation extends Mutation
                 'type' => GraphQL::type('String!'),
                 'description' => __('enjin-platform-beam::mutation.claim_beam.args.code'),
             ],
-            'tokenIds' => [
-                'type' => GraphQL::type('[IntegerRangeString!]!'),
-                'description' => __('enjin-platform-beam::mutation.remove_tokens.args.tokenIds'),
+            'packs' => [
+                'type' => GraphQL::type('[BeamPack!]!'),
+                'description' => __('enjin-platform-beam::input_type.beam_pack.description'),
             ],
         ];
     }
@@ -61,7 +66,7 @@ class RemoveTokensMutation extends Mutation
         Closure $getSelectFields,
         BeamService $beam
     ) {
-        return DB::transaction(fn () => $beam->removeTokens($args['code'], $args['tokenIds']));
+        return DB::transaction(fn () => $beam->addPackClaims($args['code'], $args['packs']));
     }
 
     /**
@@ -69,24 +74,16 @@ class RemoveTokensMutation extends Mutation
      */
     protected function rules(array $args = []): array
     {
+        $beam = Beam::whereCode($args['code'])->first();
+
         return [
             'code' => [
                 'filled',
                 'max:1024',
                 new BeamExists(),
-                new CanUseOnBeam(),
+                new CanUseOnBeamPack($beam),
             ],
-            'tokenIds' => [
-                'array',
-                'min:1',
-                'max:1000',
-            ],
-            'tokenIds.*' => [
-                'bail',
-                'filled',
-                'distinct',
-                new TokensExistInBeam(),
-            ],
+            ...$this->beamPackRules($args, $beam->collection_chain_id),
         ];
     }
 }

@@ -24,4 +24,7 @@ return [
     'tokens_doesnt_exist_in_beam' => 'The :attribute already exist in beam.',
     'tokens_exist_in_beam' => 'The :attribute doesn\'t exist in beam.',
     'not_owner' => 'The :attribute should not be the owner of the collection.',
+    'can_use_on_beam_pack' => 'This mutation is not applicable to non-beam packs.',
+    'can_use_on_beam' => 'This mutation is not applicable to beam packs.',
+    'beam_pack_exist_in_beam' => 'The :attribute doesn\'t exist in beam.',
 ];

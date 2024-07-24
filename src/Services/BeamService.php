@@ -400,6 +400,56 @@ class BeamService
     }
 
     /**
+     * Add beam pack claims.
+     */
+    public function addPackClaims(string $code, array $packs): true
+    {
+        $beam = Beam::whereCode($code)->firstOrFail();
+        foreach ($packs as $pack) {
+
+            $model = ($id = Arr::get($pack, 'id'))
+                ? BeamPack::find($id)
+                : BeamPack::create([
+                    'beam_id' => $beam->id,
+                    'code' => bin2hex(openssl_random_pseudo_bytes(16)),
+                    'nonce' => 1,
+                ]);
+
+            $tokens = collect($pack['tokens']);
+            $tokenIds = $tokens->whereNotNull('tokenIds');
+
+            if ($tokenIds->count()) {
+                DispatchCreateBeamClaimsJobs::dispatch($beam, $tokenIds->all(), $model->id)->afterCommit();
+            }
+
+            $tokenUploads = $tokens->whereNotNull('tokenIdDataUpload');
+            if ($tokenUploads->count()) {
+                $ids = $tokenIds->pluck('tokenIds');
+                $tokenUploads->each(function ($token) use ($beam, $ids, $model) {
+                    LazyCollection::make(function () use ($token, $ids) {
+                        $handle = fopen($token['tokenIdDataUpload']->getPathname(), 'r');
+                        while (($line = fgets($handle)) !== false) {
+                            if (! $this->tokenIdExists($ids->all(), $tokenId = trim($line))) {
+                                $ids->push($tokenId);
+                                yield $tokenId;
+                            }
+                        }
+                        fclose($handle);
+                    })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token, $model) {
+                        $token['tokenIds'] = $tokenIds->all();
+                        unset($token['tokenIdDataUpload']);
+                        DispatchCreateBeamClaimsJobs::dispatch($beam, [$token], $model->id)->afterCommit();
+                        unset($tokenIds, $token);
+                    });
+                });
+            }
+
+        }
+
+        return true;
+    }
+
+    /**
      * Create beam pack claims.
      */
     protected function createPackClaims(array $packs, Model $beam): void
