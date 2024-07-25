@@ -11,4 +11,5 @@ return [
     'claim_token.field.tokenQuantityPerClaim' => 'The quantity of token that can be received per claim.',
     'beam_pack.description' => 'The beam pack.',
     'beam_pack.field.id' => 'The beam pack database ID, which can be null when creating a new beam pack.',
+    'remove_beam_pack.description' => 'The beam pack input type for removing tokens.',
 ];
