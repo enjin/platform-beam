@@ -16,7 +16,7 @@ use Illuminate\Validation\Rule;
 
 trait HasBeamPackCommonRules
 {
-    public function beamPackRules(array $args, int $collectionId): array
+    public function beamPackRules(array $args, ?int $collectionId): array
     {
         return [
             'packs' => ['bail', 'array', 'min:1', 'max:100'],

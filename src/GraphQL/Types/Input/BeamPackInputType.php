@@ -12,7 +12,7 @@ class BeamPackInputType extends InputType
     public function attributes(): array
     {
         return [
-            'name' => 'BeamPack',
+            'name' => 'BeamPackInput',
             'description' => __('enjin-platform-beam::input_type.beam_pack.description'),
         ];
     }

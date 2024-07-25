@@ -5,15 +5,19 @@ namespace Enjin\Platform\Beam\GraphQL\Mutations;
 use Closure;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamPackCommonRules;
+use Enjin\Platform\Beam\Models\Beam;
+use Enjin\Platform\Beam\Rules\BeamExists;
+use Enjin\Platform\Beam\Rules\CanUseOnBeamPack;
+use Enjin\Platform\Beam\Rules\IsEndDateValid;
+use Enjin\Platform\Beam\Rules\IsStartDateValid;
 use Enjin\Platform\Beam\Services\BeamService;
-use Enjin\Platform\Models\Collection;
-use Enjin\Platform\Rules\IsCollectionOwnerOrApproved;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Rebing\GraphQL\Support\Facades\GraphQL;
 
-class CreateBeamPackMutation extends Mutation
+class UpdateBeamPackMutation extends Mutation
 {
     use HasBeamCommonFields;
     use HasBeamPackCommonRules;
@@ -24,8 +28,8 @@ class CreateBeamPackMutation extends Mutation
     public function attributes(): array
     {
         return [
-            'name' => 'CreateBeamPack',
-            'description' => __('enjin-platform-beam::mutation.create_beam_pack.description'),
+            'name' => 'UpdateBeamPack',
+            'description' => __('enjin-platform-beam::mutation.update_beam_pack.description'),
         ];
     }
 
@@ -34,7 +38,7 @@ class CreateBeamPackMutation extends Mutation
      */
     public function type(): Type
     {
-        return GraphQL::type('String!');
+        return GraphQL::type('Boolean!');
     }
 
     /**
@@ -43,15 +47,14 @@ class CreateBeamPackMutation extends Mutation
     public function args(): array
     {
         return [
-            ...$this->getCommonFields(),
+            'code' => [
+                'type' => GraphQL::type('String!'),
+                'description' => __('enjin-platform-beam::mutation.claim_beam.args.code'),
+            ],
+            ...$this->getCommonFields([], true),
             'flags' => [
                 'type' => GraphQL::type('[BeamFlagInputType!]'),
                 'description' => __('enjin-platform-beam::mutation.update_beam.args.flags'),
-            ],
-            'collectionId' => [
-                'alias' => 'collection_chain_id',
-                'type' => GraphQL::type('BigInt!'),
-                'description' => __('enjin-platform-beam::mutation.create_beam.args.collectionId'),
             ],
             'packs' => [
                 'type' => GraphQL::type('[BeamPackInput!]!'),
@@ -71,7 +74,13 @@ class CreateBeamPackMutation extends Mutation
         Closure $getSelectFields,
         BeamService $beam
     ) {
-        return DB::transaction(fn () => $beam->createPack($args)->code, 3);
+        return DB::transaction(
+            fn () => (bool) $beam->updatePackByCode(
+                Arr::get($args, 'code'),
+                Arr::except($args, 'code')
+            ),
+            3
+        );
     }
 
     /**
@@ -79,24 +88,22 @@ class CreateBeamPackMutation extends Mutation
      */
     protected function rules(array $args = []): array
     {
+        $beam = Beam::whereCode($args['code'])->first();
+
         return [
+            'code' => [
+                'filled',
+                'max:1024',
+                new BeamExists(),
+                new CanUseOnBeamPack($beam),
+            ],
             'name' => ['filled', 'max:255'],
             'description' => ['filled', 'max:1024'],
             'image' => ['filled', 'url', 'max:1024'],
-            'start' => ['filled', 'date', 'before:end'],
-            'end' => ['filled', 'date', 'after:start'],
-            'collectionId' => [
-                'bail',
-                'filled',
-                function (string $attribute, mixed $value, Closure $fail) {
-                    if (! Collection::where('collection_chain_id', $value)->exists()) {
-                        $fail('validation.exists')->translate();
-                    }
-                },
-                new IsCollectionOwnerOrApproved(),
-            ],
             'flags.*.flag' => ['required', 'distinct'],
-            ...$this->beamPackRules($args, $args['collectionId']),
+            'start' => ['filled', 'date', new IsStartDateValid()],
+            'end' => ['filled', 'date', new IsEndDateValid()],
+            ...$this->beamPackRules($args, $beam?->collection_chain_id),
         ];
     }
 }

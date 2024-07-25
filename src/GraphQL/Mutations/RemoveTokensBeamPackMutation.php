@@ -4,7 +4,6 @@ namespace Enjin\Platform\Beam\GraphQL\Mutations;
 
 use Closure;
 use Enjin\Platform\Beam\Rules\BeamExists;
-use Enjin\Platform\Beam\Rules\CanUseOnBeam;
 use Enjin\Platform\Beam\Rules\CanUseOnBeamPack;
 use Enjin\Platform\Beam\Rules\TokensExistInBeam;
 use Enjin\Platform\Beam\Services\BeamService;

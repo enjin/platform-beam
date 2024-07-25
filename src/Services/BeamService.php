@@ -110,8 +110,7 @@ class BeamService
             'is_pack' => true,
         ]);
         if ($beam) {
-            $this->createPackClaims($packs = Arr::get($args, 'packs', []), $beam);
-            Cache::forever(self::key($beam->code), count($packs));
+            $this->createPackClaims($beam, Arr::get($args, 'packs', []), true);
             event(new BeamCreated($beam));
 
             return $beam;
@@ -443,62 +442,51 @@ class BeamService
     }
 
     /**
-     * Add beam pack claims.
+     * Update beam pack by code.
      */
-    public function addPackClaims(string $code, array $packs): true
+    public function updatePackByCode(string $code, array $values): Model
     {
         $beam = Beam::whereCode($code)->firstOrFail();
-        foreach ($packs as $pack) {
 
-            $model = ($id = Arr::get($pack, 'id'))
-                ? BeamPack::find($id)
-                : BeamPack::create([
-                    'beam_id' => $beam->id,
-                    'code' => bin2hex(openssl_random_pseudo_bytes(16)),
-                    'nonce' => 1,
-                ]);
-
-            $tokens = collect($pack['tokens']);
-            $tokenIds = $tokens->whereNotNull('tokenIds');
-
-            if ($tokenIds->count()) {
-                DispatchCreateBeamClaimsJobs::dispatch($beam, $tokenIds->all(), $model->id)->afterCommit();
-            }
-
-            $tokenUploads = $tokens->whereNotNull('tokenIdDataUpload');
-            if ($tokenUploads->count()) {
-                $ids = $tokenIds->pluck('tokenIds');
-                $tokenUploads->each(function ($token) use ($beam, $ids, $model) {
-                    LazyCollection::make(function () use ($token, $ids) {
-                        $handle = fopen($token['tokenIdDataUpload']->getPathname(), 'r');
-                        while (($line = fgets($handle)) !== false) {
-                            if (! $this->tokenIdExists($ids->all(), $tokenId = trim($line))) {
-                                $ids->push($tokenId);
-                                yield $tokenId;
-                            }
-                        }
-                        fclose($handle);
-                    })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token, $model) {
-                        $token['tokenIds'] = $tokenIds->all();
-                        unset($token['tokenIdDataUpload']);
-                        DispatchCreateBeamClaimsJobs::dispatch($beam, [$token], $model->id)->afterCommit();
-                        unset($tokenIds, $token);
-                    });
-                });
-            }
-
+        if (isset($values['flags']) && count($values['flags'])) {
+            $values['flags_mask'] = static::getFlagsValue($values['flags'], $beam->flags_mask ?? 0);
         }
 
-        return true;
+        if ($beam->fill($values)->save()) {
+            if ($packs = Arr::get($values, 'packs', [])) {
+                $this->createPackClaims($beam, $packs);
+                TokensAdded::safeBroadcast(
+                    event: [
+                        'beamCode' => $beam->code,
+                        'code' => $code,
+                        'tokenIds' => collect($packs)->pluck('tokenIds')->all(),
+                    ]
+                );
+            }
+            event(new BeamUpdated($beam));
+
+            return $beam;
+        }
+
+        return throw new BeamException(__('enjin-platform-beam::error.unable_to_save'));
     }
 
     /**
      * Create beam pack claims.
      */
-    protected function createPackClaims(array $packs, Model $beam): void
+    public function createPackClaims(Model $beam, array $packs, bool $isNew = false): bool
     {
+        if (empty($packs)) {
+            return false;
+        }
+
+        $quantity = 0;
         foreach ($packs as $pack) {
-            $model = BeamPack::create([
+            if (!($id = Arr::get($pack, 'id'))) {
+                $quantity++;
+            }
+
+            $model = BeamPack::firstOrcreate(['id' => $id], [
                 'beam_id' => $beam->id,
                 'code' => bin2hex(openssl_random_pseudo_bytes(16)),
                 'nonce' => 1,
@@ -534,6 +522,12 @@ class BeamService
             }
 
         }
+
+        if ($isNew) {
+            return Cache::forever(self::key($beam->code), count($packs));
+        }
+
+        return Cache::increment(self::key($beam->code), $quantity);
     }
 
     /**

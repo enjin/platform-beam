@@ -31,4 +31,5 @@ return [
     'create_beam_pack.description' => 'Create a beam pack.',
     'add_tokens_beam_pack.description' => 'Add tokens to a beam pack.',
     'remove_tokens_beam_pack.description' => 'Remove tokens to a beam pack.',
+    'update_beam_pack.description' => 'Mutation for updating a beam pack.',
 ];

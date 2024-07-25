@@ -49,7 +49,7 @@ class AddTokensBeamPackMutation extends Mutation
                 'description' => __('enjin-platform-beam::mutation.claim_beam.args.code'),
             ],
             'packs' => [
-                'type' => GraphQL::type('[BeamPack!]!'),
+                'type' => GraphQL::type('[BeamPackInput!]!'),
                 'description' => __('enjin-platform-beam::input_type.beam_pack.description'),
             ],
         ];
@@ -66,7 +66,12 @@ class AddTokensBeamPackMutation extends Mutation
         Closure $getSelectFields,
         BeamService $beam
     ) {
-        return DB::transaction(fn () => $beam->addPackClaims($args['code'], $args['packs']));
+        return DB::transaction(
+            fn () => $beam->createPackClaims(
+                Beam::where('code', $args['code'])->firstOrFail(),
+                $args['packs']
+            )
+        );
     }
 
     /**
