@@ -1,0 +1,21 @@
+mutation CreateBeamPack(
+  $name: String!
+  $description: String!
+  $image: String!
+  $start: DateTime!
+  $end: DateTime!
+  $collectionId: BigInt!
+  $packs: [BeamPackInput!]!
+  $flags: [BeamFlagInputType!]
+) {
+  CreateBeamPack(
+    name: $name
+    description: $description
+    image: $image
+    start: $start
+    end: $end
+    collectionId: $collectionId
+    packs: $packs
+    flags: $flags
+  )
+}

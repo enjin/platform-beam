@@ -10,7 +10,7 @@ trait CreateBeamData
     /**
      * Generate beam data.
      */
-    protected function generateBeamData(BeamType $type = BeamType::TRANSFER_TOKEN, int $count = 1, array $attributes = [], array $singleUse = []): array
+    protected function generateBeamData(BeamType $type = BeamType::TRANSFER_TOKEN, int $count = 1, array $attributes = [], array $flags = []): array
     {
         return [
             'name' => fake()->name(),
@@ -19,7 +19,7 @@ trait CreateBeamData
             'start' => Carbon::now()->toDateTimeString(),
             'end' => Carbon::now()->addDays(random_int(1, 1000))->toDateTimeString(),
             'collectionId' => $this->collection->collection_chain_id,
-            'flags' => $singleUse,
+            'flags' => $flags,
             'tokens' => [[
                 'type' => $type->name,
                 'tokenIds' => $type == BeamType::TRANSFER_TOKEN
