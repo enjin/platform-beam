@@ -455,13 +455,6 @@ class BeamService
         if ($beam->fill($values)->save()) {
             if ($packs = Arr::get($values, 'packs', [])) {
                 $this->createPackClaims($beam, $packs);
-                TokensAdded::safeBroadcast(
-                    event: [
-                        'beamCode' => $beam->code,
-                        'code' => $code,
-                        'tokenIds' => collect($packs)->pluck('tokenIds')->all(),
-                    ]
-                );
             }
             event(new BeamUpdated($beam));
 
@@ -526,6 +519,14 @@ class BeamService
         if ($isNew) {
             return Cache::forever(self::key($beam->code), count($packs));
         }
+
+        TokensAdded::safeBroadcast(
+            event: [
+                'beamCode' => $beam->code,
+                'code' => $beam->code,
+                'tokenIds' => collect($packs)->map(fn ($pack) => $pack['tokens'])->flatten()->pluck('tokenIds')->all(),
+            ]
+        );
 
         return Cache::increment(self::key($beam->code), $quantity);
     }

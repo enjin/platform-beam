@@ -1,0 +1,3 @@
+mutation AddTokensBeamPack($code: String!, $packs: [BeamPackInput!]!) {
+  AddTokensBeamPack(code: $code, packs: $packs)
+}

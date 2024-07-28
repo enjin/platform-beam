@@ -83,12 +83,13 @@ class AddTokensBeamPackMutation extends Mutation
 
         return [
             'code' => [
+                'bail',
                 'filled',
                 'max:1024',
                 new BeamExists(),
                 new CanUseOnBeamPack($beam),
             ],
-            ...$this->beamPackRules($args, $beam->collection_chain_id),
+            ...$this->beamPackRules($args, $beam?->collection_chain_id),
         ];
     }
 }
