@@ -19,7 +19,7 @@ trait HasBeamPackCommonRules
     public function beamPackRules(array $args, ?int $collectionId, bool $required = true): array
     {
         return [
-            'packs' => $required ? 'nullable' : [
+            'packs' => !$required ? 'nullable' : [
                 'bail',
                 'array',
                 'min:1',

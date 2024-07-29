@@ -71,6 +71,7 @@ class RemoveTokensMutation extends Mutation
     {
         return [
             'code' => [
+                'bail',
                 'filled',
                 'max:1024',
                 new BeamExists(),
