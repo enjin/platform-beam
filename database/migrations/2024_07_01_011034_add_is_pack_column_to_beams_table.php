@@ -11,7 +11,7 @@ return new class () extends Migration {
     public function up(): void
     {
         Schema::table('beams', function (Blueprint $table) {
-            $table->boolean('is_pack')->default(false);
+            $table->boolean('is_pack')->default(false)->index();
         });
     }
 

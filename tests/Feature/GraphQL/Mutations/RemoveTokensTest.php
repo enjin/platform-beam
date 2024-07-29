@@ -41,6 +41,20 @@ class RemoveTokensTest extends TestCaseGraphQL
         Event::assertDispatched(TokensRemoved::class);
     }
 
+    public function test_it_cannot_use_on_beam_pack(): void
+    {
+        $this->seedBeam(1);
+        $this->beam->fill(['is_pack' => true])->save();
+        $response = $this->graphql(
+            $this->method,
+            ['code' => $this->beam->code, 'tokenIds' => ['1..5']],
+            true
+        );
+        $this->assertArraySubset([
+            'code' => ['This mutation is not applicable to beam packs.'],
+        ], $response['error']);
+    }
+
     /**
      * Test invalid parameters.
      */

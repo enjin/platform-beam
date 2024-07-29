@@ -71,6 +71,16 @@ class UpdateBeamTest extends TestCaseGraphQL
         $this->assertEquals($totalClaims, Cache::get(BeamService::key($this->beam->code)));
     }
 
+    public function test_it_cannot_use_on_beam_pack(): void
+    {
+        $this->beam->fill(['is_pack' => true])->save();
+        $response = $this->graphql($this->method, $this->generateBeamData(BeamType::MINT_ON_DEMAND), true);
+        $this->assertArraySubset([
+            'code' => ['This mutation is not applicable to beam packs.'],
+        ], $response['error']);
+        $this->beam->fill(['is_pack' => false])->save();
+    }
+
     /**
      * Test updating beam with attributes.
      */

@@ -46,6 +46,23 @@ class AddTokensTest extends TestCaseGraphQL
         Event::assertDispatched(TokensAdded::class);
     }
 
+    public function test_it_cannot_use_on_beam_pack(): void
+    {
+        $this->beam->fill(['is_pack' => true])->save();
+        $response = $this->graphql(
+            $this->method,
+            [
+                'code' => $this->beam->code,
+                'tokens' => [['tokenIds' => ['1..5'], 'type' => BeamType::MINT_ON_DEMAND->name]],
+            ],
+            true
+        );
+        $this->assertArraySubset([
+            'code' => ['This mutation is not applicable to beam packs.'],
+        ], $response['error']);
+        $this->beam->fill(['is_pack' => false])->save();
+    }
+
     public function test_it_can_add_token_with_attributes(): void
     {
         Event::fake();
