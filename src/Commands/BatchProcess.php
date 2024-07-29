@@ -208,7 +208,7 @@ class BatchProcess extends Command
                     // TODO: With the v1010 upgrade we run into a bug with the php-scale-codec lib where it cannot
                     //  Encode the transaction with `0x` the solution here is to use Batch and within each call append the 0's
                     if ($method === 'BatchMint') {
-                        $encodedData = $this->serialize->encode( 'Batch', BatchMintMutation::getEncodableParams(
+                        $encodedData = $this->serialize->encode('Batch', BatchMintMutation::getEncodableParams(
                             collectionId: $param['collectionId'],
                             recipients: $param['recipients'],
                             continueOnFailure: true
