@@ -193,7 +193,7 @@ class BatchProcess extends Command
                                 'behaviour' => null,
                                 'unitPrice' => config('enjin-platform-beam.unit_price'),
                                 'attributes' => $claim->attributes ?: [],
-                            ])->toEncodable(),
+                            ]),
                         ];
 
                         if (! $this->tokenCreatedCache[$key]) {
