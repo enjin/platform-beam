@@ -57,7 +57,7 @@ class UpdateBeamPackMutation extends Mutation
                 'description' => __('enjin-platform-beam::mutation.update_beam.args.flags'),
             ],
             'packs' => [
-                'type' => GraphQL::type('[BeamPackInput!]!'),
+                'type' => GraphQL::type('[BeamPackInput!]'),
                 'description' => __('enjin-platform-beam::input_type.beam_pack.description'),
             ],
         ];
@@ -92,6 +92,7 @@ class UpdateBeamPackMutation extends Mutation
 
         return [
             'code' => [
+                'bail',
                 'filled',
                 'max:1024',
                 new BeamExists(),

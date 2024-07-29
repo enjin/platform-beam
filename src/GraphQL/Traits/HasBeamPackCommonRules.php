@@ -16,12 +16,23 @@ use Illuminate\Validation\Rule;
 
 trait HasBeamPackCommonRules
 {
-    public function beamPackRules(array $args, ?int $collectionId): array
+    public function beamPackRules(array $args, ?int $collectionId, bool $required = true): array
     {
         return [
-            'packs' => ['bail', 'array', 'min:1', 'max:100'],
+            'packs' => $required ? 'nullable' : [
+                'bail',
+                'array',
+                'min:1',
+                'max:100',
+            ],
             'packs.*.id' => [new BeamPackExistInBeam()],
-            'packs.*.tokens' => ['bail', 'array', 'min:1', 'max:1000', new UniqueTokenIds()],
+            'packs.*.tokens' => [
+                'bail',
+                'array',
+                'min:1',
+                'max:1000',
+                new UniqueTokenIds(),
+            ],
             'packs.*.tokens.*.attributes' => Rule::forEach(function ($value, $attribute) use ($args) {
                 if (empty($value)) {
                     return [];
