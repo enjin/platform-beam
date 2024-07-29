@@ -9,6 +9,7 @@ use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Events\BeamClaimPending;
 use Enjin\Platform\Beam\Jobs\ClaimBeam;
+use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Rules\PassesClaimConditions;
 use Enjin\Platform\Beam\Services\BatchService;
@@ -96,6 +97,33 @@ class ClaimBeamTest extends TestCaseGraphQL
         $this->assertNotEmpty($response['totalCount']);
 
         $this->genericClaimTest(CryptoSignatureType::SR25519, Arr::get($response, 'edges.0.node.code'));
+    }
+
+    public function test_it_can_claim_beam_pack_with_sr25519_single_use_codes(): void
+    {
+        $code = $this->graphql('CreateBeamPack', $this->generateBeamPackData(
+            BeamType::MINT_ON_DEMAND,
+            1,
+            [],
+            [['flag' => 'SINGLE_USE']],
+        ));
+
+        $this->assertNotEmpty($code);
+
+        $response = $this->graphql('GetSingleUseCodes', ['code' => $code]);
+        $this->assertNotEmpty($response['totalCount']);
+
+        $this->genericClaimTest(CryptoSignatureType::SR25519, Arr::get($response, 'edges.0.node.code'));
+    }
+
+    public function test_it_can_claim_beam_pack_with_ed25519(): void
+    {
+        $this->genericBeamPackTest(CryptoSignatureType::ED25519);
+    }
+
+    public function test_it_can_claim_beam_pack_with_sr25519(): void
+    {
+        $this->genericBeamPackTest(CryptoSignatureType::SR25519);
     }
 
     /**
@@ -454,6 +482,40 @@ class ClaimBeamTest extends TestCaseGraphQL
         }
 
         return $signature;
+    }
+
+    protected function genericBeamPackTest(CryptoSignatureType $type)
+    {
+        $code = $this->graphql('CreateBeamPack', $this->generateBeamPackData(
+            BeamType::MINT_ON_DEMAND,
+            1,
+        ));
+        $this->assertNotEmpty($code);
+
+        [$keypair, $publicKey, $privateKey] = $this->getKeyPair($type);
+
+        $response = $this->graphql('GetBeam', [
+            'code' => $code,
+            'account' => $publicKey,
+        ]);
+        $this->assertNotEmpty($response['message']);
+
+        $message = $response['message']['message'];
+        $signature = $this->signMessage($type, $keypair, $message, $privateKey);
+
+        Queue::fake();
+
+        $response = $this->graphql($this->method, [
+            'code' => $code,
+            'account' => $publicKey,
+            'signature' => $signature,
+            'cryptoSignatureType' => $type->name,
+        ]);
+
+        $this->assertTrue($response);
+
+        Queue::assertPushed(ClaimBeam::class);
+        Event::assertDispatched(BeamClaimPending::class);
     }
 
     /**
