@@ -176,9 +176,13 @@ class BeamService
     {
         $beamCode = static::getSingleUseCodeData($code)?->beamCode;
         $beam = Beam::whereCode($beamCode ?? $code)->firstOrFail();
-        ($beam->is_pack ? new BeamPack() : new BeamClaim())
-            ->withSingleUseCode($code)
-            ->firstOrFail();
+
+        if ($beamCode) {
+            ($beam->is_pack ? new BeamPack() : new BeamClaim())
+                ->withSingleUseCode($code)
+                ->firstOrFail();
+        }
+
 
         if ($wallet) {
             // Pushing this to the queue for performance
