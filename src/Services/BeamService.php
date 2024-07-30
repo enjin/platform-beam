@@ -174,14 +174,12 @@ class BeamService
      */
     public function scanByCode(string $code, ?string $wallet = null): ?Model
     {
-        $isSingleUse = static::isSingleUse($code);
+        $beamCode = static::getSingleUseCodeData($code)?->beamCode;
+        $beam = Beam::whereCode($beamCode ?? $code)->firstOrFail();
+        ($beam->is_pack ? new BeamPack() : new BeamClaim())
+            ->withSingleUseCode($code)
+            ->firstOrFail();
 
-        $beam = $isSingleUse
-                ? BeamClaim::withSingleUseCode($code)
-                    ->with('beam')
-                    ->first()
-                    ->beam
-                : $this->findByCode($code);
         if ($wallet) {
             // Pushing this to the queue for performance
             CreateClaim::dispatch($claim = [
@@ -193,7 +191,7 @@ class BeamService
             $beam->setRelation('scans', collect(json_decode(json_encode([$claim]))));
         }
 
-        if ($isSingleUse) {
+        if ($beamCode) {
             $beam['code'] = $code;
         }
 
