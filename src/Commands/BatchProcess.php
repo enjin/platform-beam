@@ -10,6 +10,7 @@ use Enjin\Platform\Beam\Models\BeamBatch;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Services\BatchService;
 use Enjin\Platform\Enums\Substrate\TokenMintCapType;
+use Enjin\Platform\GraphQL\Schemas\Primary\Substrate\Mutations\BatchMintMutation;
 use Enjin\Platform\Models\Token;
 use Enjin\Platform\Services\Blockchain\Implementations\Substrate;
 use Enjin\Platform\Services\Database\TransactionService;
@@ -191,7 +192,7 @@ class BatchProcess extends Command
                                 'behaviour' => null,
                                 'unitPrice' => config('enjin-platform-beam.unit_price'),
                                 'attributes' => $claim->attributes ?: [],
-                            ])->toEncodable(),
+                            ]),
                         ];
 
                         if (!$this->tokenCreatedCache[$key]) {
@@ -203,12 +204,24 @@ class BatchProcess extends Command
 
                 $method = BeamType::MINT_ON_DEMAND == $type ? 'BatchMint' : 'BatchTransfer';
                 foreach ($params as $param) {
-                    $transaction = $this->transaction->store([
-                        'method' => $method,
-                        'encoded_data' => $this->serialize->encode(isRunningLatest() ? $method . 'V1010' : $method, [
+                    // TODO: With the v1010 upgrade we run into a bug with the php-scale-codec lib where it cannot
+                    //  Encode the transaction with `0x` the solution here is to use Batch and within each call append the 0's
+                    if ($method === 'BatchMint') {
+                        $encodedData = $this->serialize->encode('Batch', BatchMintMutation::getEncodableParams(
+                            collectionId: $param['collectionId'],
+                            recipients: $param['recipients'],
+                            continueOnFailure: true
+                        ));
+                    } else {
+                        $encodedData = $this->serialize->encode(isRunningLatest() ? $method . 'V1010' : $method, [
                             'collectionId' => $param['collectionId'],
                             'recipients' => $param['recipients'],
-                        ]),
+                        ]);
+                    }
+
+                    $transaction = $this->transaction->store([
+                        'method' => $method,
+                        'encoded_data' => $encodedData,
                         'idempotency_key' => Str::uuid()->toString(),
                     ]);
                     BeamBatch::where('id', $batchId)->update(['transaction_id' => $transaction->id]);
