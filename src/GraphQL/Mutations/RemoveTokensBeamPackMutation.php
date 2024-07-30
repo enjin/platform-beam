@@ -45,7 +45,7 @@ class RemoveTokensBeamPackMutation extends Mutation
             ],
             'packs' => [
                 'type' => GraphQL::type('[RemoveBeamPack!]!'),
-                'description' => __('enjin-platform-beam::mutation.remove_beam_pack.description'),
+                'description' => __('enjin-platform-beam::input_type.remove_beam_pack.description'),
             ],
         ];
     }
@@ -71,6 +71,7 @@ class RemoveTokensBeamPackMutation extends Mutation
     {
         return [
             'code' => [
+                'bail',
                 'filled',
                 'max:1024',
                 new BeamExists(),
