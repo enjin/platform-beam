@@ -25,19 +25,9 @@ class BeamPackExistInBeam implements DataAwareRule, ValidationRule
             return;
         }
 
-        if (!Beam::whereHas('packs', fn ($query) => $query->where('id', $value))->exists()) {
-            $fail($this->message())->translate();
+        if (!Beam::where('code', $this->data['code'])->whereHas('packs', fn ($query) => $query->where('id', $value))->exists()) {
+            $fail('enjin-platform-beam::validation.beam_pack_exist_in_beam')->translate();
         }
 
-    }
-
-    /**
-     * Get the validation error message.
-     *
-     * @return string
-     */
-    public function message()
-    {
-        return 'enjin-platform-beam::validation.beam_pack_exist_in_beam';
     }
 }

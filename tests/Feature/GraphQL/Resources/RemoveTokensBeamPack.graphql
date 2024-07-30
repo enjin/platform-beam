@@ -1,0 +1,3 @@
+mutation RemoveTokensBeamPack($code: String!, $packs: [RemoveBeamPack!]!) {
+  RemoveTokensBeamPack(code: $code, packs: $packs)
+}

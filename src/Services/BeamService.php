@@ -368,30 +368,41 @@ class BeamService
     public function removeBeamPack(string $code, array $packs): bool
     {
         $packCollection = collect($packs)->keyBy('id');
-        $beamPacks = BeamPack::whereHas('beam', fn ($query) => $query->where('code', $code))
-            ->whereIn('id', $packCollection->pluck('id'))
-            ->get(['id']);
-
         $deletedTokens = 0;
         $forDeletion = [];
-        foreach ($beamPacks as $pack) {
+        foreach ($packCollection as $pack) {
             if (empty($pack['tokenIds'])) {
-                $forDeletion[] = $pack->id;
+                $forDeletion[] = $pack['id'];
 
                 continue;
             }
 
-            $ranges = $this->integerRange($pack['tokenIds']);
-            $deletedTokens += BeamClaim::where('beam_pack_id', $pack->id)
-                ->whereNull('claimed_at')
-                ->when($ranges === false, fn ($query) => $query->whereIn('token_chain_id', $pack['tokenIds']))
-                ->when($ranges !== false, fn ($query) => $query->whereBetween('token_chain_id', [(int) $ranges[0], (int) $ranges[1]]))
-                ->delete();
+            [$tokenIds, $tokenIdRanges] = collect($pack['tokenIds'])->partition(fn ($val) => $this->integerRange($val) === false);
+            if ($tokenIds) {
+                $deletedTokens += BeamClaim::where('beam_pack_id', $pack['id'])
+                    ->whereNull('claimed_at')
+                    ->whereIn('token_chain_id', $tokenIds)
+                    ->delete();
+            }
 
+            if ($tokenIdRanges) {
+                $deletedTokens += BeamClaim::where('beam_pack_id', $pack['id'])
+                    ->whereNull('claimed_at')
+                    ->where(function ($query) use ($tokenIdRanges) {
+                        $tokenIdRanges->each(function ($tokenString) use ($query) {
+                            $ranges = $this->integerRange($tokenString);
+                            $query->orWhereBetween('token_chain_id', [(int) $ranges[0], (int) $ranges[1]]);
+                        });
+                    })
+                    ->delete();
+            }
         }
 
-        $beamPacks->loadCount('claims');
-        $forDeletion = array_merge($forDeletion, $beamPacks->where('claims_count', 0)->all());
+        $beamPacks = BeamPack::whereHas('beam', fn ($query) => $query->where('code', $code))
+            ->whereIn('id', $packCollection->pluck('id'))
+            ->withCount('claims')
+            ->get(['id']);
+        $forDeletion = array_merge($forDeletion, $beamPacks->where('claims_count', 0)->pluck('id')->all());
         if (count($forDeletion)) {
             BeamPack::whereIn('id', $forDeletion)
                 ->whereDoesntHave('claims', fn ($query) => $query->whereNotNull('claimed_at'))
@@ -399,7 +410,7 @@ class BeamService
         }
 
         if ($deletedTokens) {
-            TokensRemoved::safeBroadcast(event: ['code' => $code, 'tokenIds' => $packCollection->pluck('tokenIds')->all()]);
+            TokensRemoved::safeBroadcast(event: ['code' => $code, 'tokenIds' => $packCollection->pluck('tokenIds')->flatten()->all()]);
         }
 
         return true;

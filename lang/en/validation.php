@@ -27,4 +27,5 @@ return [
     'can_use_on_beam_pack' => 'This mutation is not applicable to non-beam packs.',
     'can_use_on_beam' => 'This mutation is not applicable to beam packs.',
     'beam_pack_exist_in_beam' => 'The :attribute doesn\'t exist in beam.',
+    'tokens_exist_in_beam_pack' => 'The :attribute doesn\'t exist in beam pack.',
 ];

@@ -86,7 +86,7 @@ class ExpireSingleUseCodesTest extends TestCaseGraphQL
 
         $response = $this->graphql('ClaimBeam', [
             'code' => Arr::get($singleUseCodes, 'edges.0.node.code'),
-            'account' => app(Generator::class)->public_key()
+            'account' => app(Generator::class)->public_key(),
         ], true);
 
     }

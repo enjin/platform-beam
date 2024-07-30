@@ -4,8 +4,9 @@ namespace Enjin\Platform\Beam\GraphQL\Mutations;
 
 use Closure;
 use Enjin\Platform\Beam\Rules\BeamExists;
+use Enjin\Platform\Beam\Rules\BeamPackExistInBeam;
 use Enjin\Platform\Beam\Rules\CanUseOnBeamPack;
-use Enjin\Platform\Beam\Rules\TokensExistInBeam;
+use Enjin\Platform\Beam\Rules\TokensExistInBeamPack;
 use Enjin\Platform\Beam\Services\BeamService;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
@@ -77,16 +78,30 @@ class RemoveTokensBeamPackMutation extends Mutation
                 new BeamExists(),
                 new CanUseOnBeamPack(),
             ],
-            'tokenIds' => [
+            'packs' => [
+                'bail',
+                'required',
                 'array',
                 'min:1',
                 'max:1000',
             ],
-            'tokenIds.*' => [
+            'packs.*.id' => [
+                'filled',
+                'integer',
+                'distinct',
+                new BeamPackExistInBeam(),
+            ],
+            'packs.*.tokenIds' => [
+                'array',
+                'min:1',
+                'max:1000',
+                'distinct',
+            ],
+            'packs.*.tokenIds.*' => [
                 'bail',
                 'filled',
                 'distinct',
-                new TokensExistInBeam(),
+                new TokensExistInBeamPack(),
             ],
         ];
     }
