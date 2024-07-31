@@ -34,7 +34,7 @@ class BeamScanType extends Type
             ],
             'walletPublicKey' => [
                 'type' => GraphQL::type('String!'),
-                'description' => __('enjin-platform-beam::type.beam_scan.field.walletPublicKe'),
+                'description' => __('enjin-platform-beam::type.beam_scan.field.walletPublicKey'),
                 'alias' => 'wallet_public_key',
             ],
             'message' => [
