@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 
-class Beam extends BaseModel
+class BeamPack extends BaseModel
 {
     use HasFactory;
     use SoftDeletes;
@@ -46,6 +46,8 @@ class Beam extends BaseModel
         'collection_chain_id',
         'flags_mask',
         'is_pack',
+        'beam_id',
+        'nonce',
     ];
 
     /**
@@ -118,7 +120,7 @@ class Beam extends BaseModel
      */
     public function packs(): HasMany
     {
-        return $this->hasMany(BeamPack::class, 'beam_id');
+        return $this->hasMany(self::class, 'beam_id');
     }
 
     /**

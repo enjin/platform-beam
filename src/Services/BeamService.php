@@ -19,6 +19,7 @@ use Enjin\Platform\Beam\Jobs\CreateClaim;
 use Enjin\Platform\Beam\Jobs\DispatchCreateBeamClaimsJobs;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
+use Enjin\Platform\Beam\Models\BeamPack;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Beam\Support\ClaimProbabilities;
 use Enjin\Platform\Support\BitMask;
@@ -77,24 +78,96 @@ class BeamService
     /**
      * Create a beam.
      */
-    public function create(array $args): Model
+    public function create(array $args, bool $isPack = false): Model
     {
         $beam = Beam::create([
-            ...Arr::except($args, ['tokens', 'flags']),
+            ...Arr::except($args, ['tokens', 'packs', 'flags']),
             'flags_mask' => static::getFlagsValue(Arr::get($args, 'flags')),
             'code' => bin2hex(openssl_random_pseudo_bytes(16)),
+            'is_pack' => $isPack,
         ]);
         if ($beam) {
-            Cache::forever(
-                self::key($beam->code),
-                $this->createClaims(Arr::get($args, 'tokens', []), $beam)
-            );
+            if ($isPack) {
+                $this->createPackClaims($beam, Arr::get($args, 'packs', []), true);
+            } else {
+                Cache::forever(
+                    self::key($beam->code),
+                    $this->createClaims($beam, Arr::get($args, 'tokens', []))
+                );
+            }
             event(new BeamCreated($beam));
 
             return $beam;
         }
 
         return throw new BeamException(__('enjin-platform-beam::error.unable_to_save'));
+    }
+
+    /**
+     * Create beam pack claims.
+     */
+    public function createPackClaims(Model $beam, array $packs, bool $isNew = false): bool
+    {
+        if (empty($packs)) {
+            return false;
+        }
+
+        $quantity = 0;
+        foreach ($packs as $pack) {
+            if (!($id = Arr::get($pack, 'id'))) {
+                $quantity++;
+            }
+
+            $model = BeamPack::firstOrcreate(['id' => $id], [
+                'beam_id' => $beam->id,
+                'code' => bin2hex(openssl_random_pseudo_bytes(16)),
+                'nonce' => 1,
+            ]);
+
+            $tokens = collect($pack['tokens']);
+            $tokenIds = $tokens->whereNotNull('tokenIds');
+
+            if ($tokenIds->count()) {
+                DispatchCreateBeamClaimsJobs::dispatch($beam, $tokenIds->all(), $model->id)->afterCommit();
+            }
+
+            $tokenUploads = $tokens->whereNotNull('tokenIdDataUpload');
+            if ($tokenUploads->count()) {
+                $ids = $tokenIds->pluck('tokenIds');
+                $tokenUploads->each(function ($token) use ($beam, $ids, $model) {
+                    LazyCollection::make(function () use ($token, $ids) {
+                        $handle = fopen($token['tokenIdDataUpload']->getPathname(), 'r');
+                        while (($line = fgets($handle)) !== false) {
+                            if (! $this->tokenIdExists($ids->all(), $tokenId = trim($line))) {
+                                $ids->push($tokenId);
+                                yield $tokenId;
+                            }
+                        }
+                        fclose($handle);
+                    })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token, $model) {
+                        $token['tokenIds'] = $tokenIds->all();
+                        unset($token['tokenIdDataUpload']);
+                        DispatchCreateBeamClaimsJobs::dispatch($beam, [$token], $model->id)->afterCommit();
+                        unset($tokenIds, $token);
+                    });
+                });
+            }
+
+        }
+
+        if ($isNew) {
+            return Cache::forever(self::key($beam->code), count($packs));
+        }
+
+        TokensAdded::safeBroadcast(
+            event: [
+                'beamCode' => $beam->code,
+                'code' => $beam->code,
+                'tokenIds' => collect($packs)->map(fn ($pack) => $pack['tokens'])->flatten()->pluck('tokenIds')->all(),
+            ]
+        );
+
+        return Cache::increment(self::key($beam->code), $quantity);
     }
 
     /**
@@ -377,7 +450,7 @@ class BeamService
     /**
      * Create beam claims.
      */
-    protected function createClaims(array $tokens, Model $beam): int
+    protected function createClaims(Model $beam, array $tokens): int
     {
         $totalClaimCount = 0;
         $tokens = collect($tokens);
