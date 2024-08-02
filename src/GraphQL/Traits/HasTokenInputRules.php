@@ -17,12 +17,12 @@ use Enjin\Platform\Beam\Rules\BeamPackExistInBeam;
 
 trait HasTokenInputRules
 {
-    public function tokenRules(array $args, bool $withPacks = true): array
+    public function tokenRules(array $args, ?string $collectionId = null, bool $withPacks = true): array
     {
         return [
             'tokens' => [
                 'bail',
-                ...($withPacks ? ['required_without:packs', 'prohibits:packs'] : []),
+                ...($withPacks ? ['required_without:packs', 'prohibits:packs'] : ['prohibits:packs']),
                 'array',
                 'min:1',
                 'max:1000',
@@ -45,25 +45,25 @@ trait HasTokenInputRules
             }),
             'tokens.*.attributes.*.key' => 'max:255',
             'tokens.*.attributes.*.value' => 'max:1000',
-            'tokens.*.tokenIds' => Rule::forEach(function ($value, $attribute) use ($args) {
+            'tokens.*.tokenIds' => Rule::forEach(function ($value, $attribute) use ($args, $collectionId) {
                 return [
                     'bail',
                     'required_without:tokens.*.tokenIdDataUpload',
                     'prohibits:tokens.*.tokenIdDataUpload',
                     'distinct',
                     BeamType::getEnumCase(Arr::get($args, str_replace('tokenIds', 'type', $attribute))) == BeamType::TRANSFER_TOKEN
-                        ? new TokensExistInCollection($args['collectionId'])
+                        ? new TokensExistInCollection($collectionId)
                         : '',
                     new TokensDoNotExistInBeam(),
                 ];
             }),
-            'tokens.*.tokenIdDataUpload' => Rule::forEach(function ($value, $attribute) use ($args) {
+            'tokens.*.tokenIdDataUpload' => Rule::forEach(function ($value, $attribute) use ($args, $collectionId) {
                 return [
                     'bail',
                     'required_without:tokens.*.tokenIds',
                     'prohibits:tokens.*.tokenIds',
                     BeamType::getEnumCase(Arr::get($args, str_replace('tokenIdDataUpload', 'type', $attribute))) == BeamType::TRANSFER_TOKEN
-                        ? new TokenUploadExistInCollection($args['collectionId'])
+                        ? new TokenUploadExistInCollection($collectionId)
                         : '',
                     new TokenUploadNotExistInBeam(),
                 ];
@@ -73,14 +73,14 @@ trait HasTokenInputRules
                 'filled',
                 'integer',
                 'min:1',
-                new MaxTokenSupply($args['collectionId']),
+                new MaxTokenSupply($collectionId),
             ],
             'tokens.*.claimQuantity' => [
                 'bail',
                 'filled',
                 'integer',
                 'min:1',
-                new MaxTokenCount($args['collectionId']),
+                new MaxTokenCount($collectionId),
             ],
         ];
     }
@@ -90,7 +90,7 @@ trait HasTokenInputRules
         return [
             'packs' => [
                 'bail',
-                ...($withTokens ? ['required_without:tokens', 'prohibits:tokens'] : []),
+                ...($withTokens ? ['required_without:tokens', 'prohibits:tokens'] : ['prohibits:tokens']),
                 'array',
                 'min:1',
                 'max:1000',

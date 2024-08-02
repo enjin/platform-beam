@@ -10,6 +10,7 @@ use Enjin\Platform\Beam\Events\TokensAdded;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Beam\Tests\Feature\GraphQL\TestCaseGraphQL;
+use Enjin\Platform\Beam\Tests\Feature\Traits\CreateBeamData;
 use Enjin\Platform\Beam\Tests\Feature\Traits\SeedBeamData;
 use Enjin\Platform\Enums\Substrate\TokenMintCapType;
 use Enjin\Platform\GraphQL\Types\Scalars\Traits\HasIntegerRanges;
@@ -23,6 +24,10 @@ use Illuminate\Support\Facades\Event;
 
 class UpdateBeamTest extends TestCaseGraphQL
 {
+    use CreateBeamData {
+        generateBeamData as protected parentGenerateBeamData;
+        generateBeamPackData as protected parentGenerateBeamPackData;
+    }
     use HasIntegerRanges;
     use IntegerRange;
     use SeedBeamData;
@@ -49,11 +54,12 @@ class UpdateBeamTest extends TestCaseGraphQL
         Event::fake();
         $response = $this->graphql($this->method, $updates = $this->generateBeamData(BeamType::MINT_ON_DEMAND));
         $this->assertTrue($response);
+        Event::assertDispatched(BeamUpdated::class);
         Event::assertDispatched(TokensAdded::class);
 
         $this->beam->refresh();
         $this->assertEquals(
-            $expected = Arr::except($updates, ['tokens']),
+            $expected = Arr::except($updates, ['tokens', 'collectionId']),
             $this->beam->only(array_keys($expected))
         );
 
@@ -69,6 +75,16 @@ class UpdateBeamTest extends TestCaseGraphQL
             }, 10);
         });
         $this->assertEquals($totalClaims, Cache::get(BeamService::key($this->beam->code)));
+
+        $this->seedBeamPack(1);
+        $response = $this->graphql(
+            $this->method,
+            $updates = $this->generateBeamPackData(BeamType::MINT_ON_DEMAND, $count = random_int(1, 10))
+        );
+        $this->assertTrue($response);
+        Event::assertDispatched(BeamUpdated::class);
+        Event::assertDispatched(TokensAdded::class);
+        $this->assertEquals(1 + $count, Cache::get(BeamService::key($this->beam->code)));
     }
 
     /**
@@ -89,6 +105,23 @@ class UpdateBeamTest extends TestCaseGraphQL
             )
         );
         $this->assertTrue($response);
+        Event::assertDispatched(BeamUpdated::class);
+        Event::assertDispatched(TokensAdded::class);
+
+        $this->seedBeamPack(1);
+        $response = $this->graphql(
+            $this->method,
+            $this->generateBeamPackData(
+                BeamType::MINT_ON_DEMAND,
+                1,
+                [
+                    ['key' => 'test', 'value' => 'test'],
+                    ['key' => 'test2', 'value' => 'test2'],
+                ]
+            )
+        );
+        $this->assertTrue($response);
+        Event::assertDispatched(BeamUpdated::class);
         Event::assertDispatched(TokensAdded::class);
     }
 
@@ -97,6 +130,7 @@ class UpdateBeamTest extends TestCaseGraphQL
      */
     public function test_it_can_update_beam_with_file_upload(): void
     {
+        Event::fake();
         $file = UploadedFile::fake()->createWithContent('tokens.txt', "1\n2..10");
         $response = $this->graphql($this->method, array_merge(
             $this->generateBeamData(BeamType::MINT_ON_DEMAND),
@@ -104,6 +138,7 @@ class UpdateBeamTest extends TestCaseGraphQL
         ));
         $this->assertNotEmpty($response);
         Event::assertDispatched(BeamUpdated::class);
+        Event::assertDispatched(TokensAdded::class);
 
         $file = UploadedFile::fake()->createWithContent('tokens.txt', "{$this->token->token_chain_id}\n{$this->token->token_chain_id}..{$this->token->token_chain_id}");
         $response = $this->graphql($this->method, array_merge(
@@ -112,6 +147,26 @@ class UpdateBeamTest extends TestCaseGraphQL
         ));
         $this->assertNotEmpty($response);
         Event::assertDispatched(BeamUpdated::class);
+        Event::assertDispatched(TokensAdded::class);
+
+        $this->seedBeamPack(1);
+        $file = UploadedFile::fake()->createWithContent('tokens.txt', "1\n2..10");
+        $response = $this->graphql($this->method, array_merge(
+            $data = Arr::except($this->generateBeamPackData(BeamType::MINT_ON_DEMAND), ['start']),
+            ['packs' => [['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]]]]]
+        ));
+        $this->assertNotEmpty($response);
+        Event::assertDispatched(BeamUpdated::class);
+        Event::assertDispatched(TokensAdded::class);
+
+        $file = UploadedFile::fake()->createWithContent('tokens.txt', "{$this->token->token_chain_id}\n{$this->token->token_chain_id}..{$this->token->token_chain_id}");
+        $response = $this->graphql($this->method, array_merge(
+            $data,
+            ['packs' => [['tokens' => [['tokenIdDataUpload' => $file]]]]]
+        ));
+        $this->assertNotEmpty($response);
+        Event::assertDispatched(BeamUpdated::class);
+        Event::assertDispatched(TokensAdded::class);
     }
 
     /**
@@ -147,6 +202,35 @@ class UpdateBeamTest extends TestCaseGraphQL
         $this->assertArraySubset([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload already exist in beam.'],
         ], $response['error']);
+
+
+        $this->seedBeamPack();
+        $claim = $this->claims->first();
+        $response = $this->graphql(
+            $this->method,
+            [
+                'code' => $this->beam->code,
+                'packs' => [['tokens' => [['tokenIds' => [$claim->token_chain_id], 'type' => BeamType::TRANSFER_TOKEN->name]]]],
+            ],
+            true
+        );
+        $this->assertArraySubset([
+            'packs.0.tokens.0.tokenIds' => ['The packs.0.tokens.0.tokenIds already exist in beam.'],
+        ], $response['error']);
+
+        $file = UploadedFile::fake()->createWithContent('tokens.txt', $claim->token_chain_id);
+        $response = $this->graphql(
+            $this->method,
+            [
+                'code' => $this->beam->code,
+                'packs' => [['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::TRANSFER_TOKEN->name]]]],
+            ],
+            true
+        );
+        $this->assertArraySubset([
+            'packs.0.tokens.0.tokenIdDataUpload' => ['The packs.0.tokens.0.tokenIdDataUpload already exist in beam.'],
+        ], $response['error']);
+
     }
 
     /**
@@ -154,26 +238,6 @@ class UpdateBeamTest extends TestCaseGraphQL
      */
     public function test_it_will_fail_to_create_beam_with_invalid_file_upload(): void
     {
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', $this->token->token_chain_id);
-        $response = $this->graphql($this->method, array_merge(
-            $this->generateBeamData(),
-            ['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]]]
-        ), true);
-        $this->assertArraySubset([
-            'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload exists in the specified collection.'],
-        ], $response['error']);
-        Event::assertNotDispatched(BeamUpdated::class);
-
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', "{$this->token->token_chain_id}..{$this->token->token_chain_id}");
-        $response = $this->graphql($this->method, array_merge(
-            $this->generateBeamData(),
-            ['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]]]
-        ), true);
-        $this->assertArraySubset([
-            'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload exists in the specified collection.'],
-        ], $response['error']);
-        Event::assertNotDispatched(BeamUpdated::class);
-
         $file = UploadedFile::fake()->createWithContent('tokens.txt', '1');
         $response = $this->graphql($this->method, array_merge(
             $this->generateBeamData(),
@@ -243,16 +307,6 @@ class UpdateBeamTest extends TestCaseGraphQL
         $response = $this->graphql($this->method, $updates, true);
         $this->assertArraySubset(
             ['tokens.0.tokenIds' => ['The tokens.0.tokenIds already exist in beam.']],
-            $response['error']
-        );
-
-        $updates = array_merge(
-            $updates,
-            ['tokens' => [['tokenIds' => [$token->token_chain_id . '..' . $token->token_chain_id], 'type' => BeamType::MINT_ON_DEMAND->name]]]
-        );
-        $response = $this->graphql($this->method, $updates, true);
-        $this->assertArraySubset(
-            ['tokens.0.tokenIds' => ['The tokens.0.tokenIds exists in the specified collection.']],
             $response['error']
         );
 
@@ -473,27 +527,40 @@ class UpdateBeamTest extends TestCaseGraphQL
         );
     }
 
-    /**
-     * Generate beam data.
-     */
     protected function generateBeamData(BeamType $type = BeamType::TRANSFER_TOKEN, int $count = 1, array $attributes = [], array $singleUse = []): array
     {
-        return [
-            'code' => $this->beam->code,
-            'name' => 'Updated',
-            'description' => 'Updated',
-            'image' => fake()->url(),
-            'start' => Carbon::now()->addDays(10)->toDateTimeString(),
-            'end' => Carbon::now()->addDays(20)->toDateTimeString(),
-            'tokens' => [[
-                'type' => $type->name,
-                'tokenIds' => $type == BeamType::TRANSFER_TOKEN
-                    ? [(string) $this->token->token_chain_id]
-                    : [(string) fake()->unique()->numberBetween(100, 10000), fake()->unique()->numberBetween(0, 10) . '..' . fake()->unique()->numberBetween(11, 20)],
-                'tokenQuantityPerClaim' => random_int(1, $count),
-                'claimQuantity' => $count,
-                'attributes' => $attributes ?: null,
-            ]],
-        ];
+        return $this->parentGenerateBeamData(
+            $type,
+            $count,
+            $attributes,
+            $singleUse,
+            [
+                'code' => $this->beam->code,
+                'name' => 'Updated',
+                'description' => 'Updated',
+                'collectionId' => $this->beam->collection_chain_id,
+            ]
+        );
+    }
+
+    protected function generateBeamPackData(
+        BeamType $type = BeamType::TRANSFER_TOKEN,
+        int $count = 1,
+        array $attributes = [],
+        array $flags = [],
+        array $extra = []
+    ): array {
+        return $this->parentGenerateBeamPackData(
+            $type,
+            $count,
+            $attributes,
+            $flags,
+            [
+                'code' => $this->beam->code,
+                'name' => 'Updated',
+                'description' => 'Updated',
+                'collectionId' => $this->beam->collection_chain_id,
+            ]
+        );
     }
 }

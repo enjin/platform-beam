@@ -113,6 +113,7 @@ class BeamService
         }
 
         $quantity = 0;
+        $allTokenIds = [];
         foreach ($packs as $pack) {
             if (!($id = Arr::get($pack, 'id'))) {
                 $quantity++;
@@ -128,6 +129,7 @@ class BeamService
             $tokenIds = $tokens->whereNotNull('tokenIds');
 
             if ($tokenIds->count()) {
+                $allTokenIds = $tokenIds->pluck('tokenIds')->flatten()->all();
                 DispatchCreateBeamClaimsJobs::dispatch($beam, $tokenIds->all(), $model->id)->afterCommit();
             }
 
@@ -151,6 +153,7 @@ class BeamService
                         unset($tokenIds, $token);
                     });
                 });
+                $allTokenIds = $ids->pluck('tokenIds')->flatten()->all();
             }
 
         }
@@ -163,7 +166,7 @@ class BeamService
             event: [
                 'beamCode' => $beam->code,
                 'code' => $beam->code,
-                'tokenIds' => collect($packs)->map(fn ($pack) => $pack['tokens'])->flatten()->pluck('tokenIds')->all(),
+                'tokenIds' => $allTokenIds,
             ]
         );
 
@@ -182,10 +185,12 @@ class BeamService
         }
 
         if ($beam->fill($values)->save()) {
-            if ($tokens = Arr::get($values, 'tokens', [])) {
+            if ($beam->is_pack && ($packs = Arr::get($values, 'packs', []))) {
+                $this->createPackClaims($beam, $packs, false);
+            } elseif ($tokens = Arr::get($values, 'tokens', [])) {
                 Cache::increment(
                     self::key($beam->code),
-                    $this->createClaims($tokens, $beam)
+                    $this->createClaims($beam, $tokens)
                 );
                 TokensAdded::safeBroadcast(event: ['beamCode' => $beam->code, 'code' => $code, 'tokenIds' => collect($tokens)->pluck('tokenIds')->all()]);
             }
@@ -205,7 +210,7 @@ class BeamService
         $beam = Beam::whereCode($code)->firstOrFail();
         Cache::increment(
             self::key($beam->code),
-            $this->createClaims($tokens, $beam)
+            $this->createClaims($beam, $tokens)
         );
         TokensAdded::safeBroadcast(event: ['beamCode' => $beam->code, 'code' => $code, 'tokenIds' => collect($tokens)->pluck('tokenIds')->all()]);
 

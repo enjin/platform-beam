@@ -104,7 +104,7 @@ class CreateBeamMutation extends Mutation
                 new IsCollectionOwnerOrApproved(),
             ],
             'flags.*.flag' => ['required', 'distinct'],
-            ...$this->tokenRules($args),
+            ...$this->tokenRules($args, $args['collectionId']),
             ...$this->packTokenRules($args, $args['collectionId']),
         ];
     }

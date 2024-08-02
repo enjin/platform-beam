@@ -4,6 +4,7 @@ namespace Enjin\Platform\Beam\Tests\Feature\Traits;
 
 use Carbon\Carbon;
 use Enjin\Platform\Beam\Enums\BeamType;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 trait CreateBeamData
@@ -11,14 +12,19 @@ trait CreateBeamData
     /**
      * Generate beam data.
      */
-    protected function generateBeamData(BeamType $type = BeamType::TRANSFER_TOKEN, int $count = 1, array $attributes = [], array $singleUse = []): array
-    {
+    protected function generateBeamData(
+        BeamType $type = BeamType::TRANSFER_TOKEN,
+        int $count = 1,
+        array $attributes = [],
+        array $singleUse = [],
+        array $extra = [],
+    ): array {
         return [
             'name' => fake()->name(),
             'description' => fake()->word(),
             'image' => fake()->url(),
-            'start' => Carbon::now()->toDateTimeString(),
-            'end' => Carbon::now()->addDays(random_int(1, 1000))->toDateTimeString(),
+            'start' => Carbon::now()->addDays(Arr::get($extra, 'code') ? 20 : 0)->toDateTimeString(),
+            'end' => Carbon::now()->addDays(random_int(100, 1000))->toDateTimeString(),
             'collectionId' => $this->collection->collection_chain_id,
             'flags' => $singleUse,
             'tokens' => [[
@@ -30,14 +36,20 @@ trait CreateBeamData
                 'claimQuantity' => $count,
                 'attributes' => $attributes ?: null,
             ]],
+            ...$extra,
         ];
     }
 
     /**
      * Generate beam pack data.
      */
-    protected function generateBeamPackData(BeamType $type = BeamType::TRANSFER_TOKEN, int $count = 1, array $attributes = [], array $flags = []): array
-    {
+    protected function generateBeamPackData(
+        BeamType $type = BeamType::TRANSFER_TOKEN,
+        int $count = 1,
+        array $attributes = [],
+        array $flags = [],
+        array $extra = []
+    ): array {
         $data = [
             'name' => fake()->name(),
             'description' => fake()->word(),
@@ -54,6 +66,7 @@ trait CreateBeamData
                 'tokenQuantityPerClaim' => random_int(1, $count),
                 'attributes' => $attributes ?: null,
             ]]])->all(),
+            ...$extra,
         ];
 
         return $data;
