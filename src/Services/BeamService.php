@@ -186,7 +186,7 @@ class BeamService
 
         if ($beam->fill($values)->save()) {
             if ($beam->is_pack && ($packs = Arr::get($values, 'packs', []))) {
-                $this->createPackClaims($beam, $packs, false);
+                $this->createPackClaims($beam, $packs);
             } elseif ($tokens = Arr::get($values, 'tokens', [])) {
                 Cache::increment(
                     self::key($beam->code),
@@ -205,14 +205,19 @@ class BeamService
     /**
      * Update beam by code.
      */
-    public function addTokens(string $code, array $tokens): bool
+    public function addTokens(string $code, ?array $tokens = [], ?array $packs = []): bool
     {
         $beam = Beam::whereCode($code)->firstOrFail();
-        Cache::increment(
-            self::key($beam->code),
-            $this->createClaims($beam, $tokens)
-        );
-        TokensAdded::safeBroadcast(event: ['beamCode' => $beam->code, 'code' => $code, 'tokenIds' => collect($tokens)->pluck('tokenIds')->all()]);
+
+        if ($beam->is_pack && $packs) {
+            $this->createPackClaims($beam, $packs);
+        } elseif ($tokens) {
+            Cache::increment(
+                self::key($beam->code),
+                $this->createClaims($beam, $tokens)
+            );
+            TokensAdded::safeBroadcast(event: ['beamCode' => $beam->code, 'code' => $code, 'tokenIds' => collect($tokens)->pluck('tokenIds')->all()]);
+        }
 
         return true;
     }

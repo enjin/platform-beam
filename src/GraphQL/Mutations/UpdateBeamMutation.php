@@ -107,8 +107,8 @@ class UpdateBeamMutation extends Mutation
             'end' => ['filled', 'date', new IsEndDateValid()],
             ...match (true) {
                 !$beam => [],
-                !$beam?->is_pack => $this->tokenRules($args, $beam?->collection_chain_id, false),
-                default => $this->packTokenRules($args, $beam?->collection_chain_id, false),
+                !$beam?->is_pack => $this->tokenRules($args, $beam?->collection_chain_id),
+                default => $this->packTokenRules($args, $beam?->collection_chain_id),
             },
         ];
     }

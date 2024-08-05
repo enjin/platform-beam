@@ -17,7 +17,7 @@ use Enjin\Platform\Beam\Rules\BeamPackExistInBeam;
 
 trait HasTokenInputRules
 {
-    public function tokenRules(array $args, ?string $collectionId = null, bool $withPacks = true): array
+    public function tokenRules(array $args, ?string $collectionId = null, bool $withPacks = false): array
     {
         return [
             'tokens' => [
@@ -85,7 +85,7 @@ trait HasTokenInputRules
         ];
     }
 
-    public function packTokenRules(array $args, ?string $collectionId = null, bool $withTokens = true): array
+    public function packTokenRules(array $args, ?string $collectionId = null, bool $withTokens = false): array
     {
         return [
             'packs' => [
