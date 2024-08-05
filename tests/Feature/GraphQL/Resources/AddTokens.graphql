@@ -1,9 +1,7 @@
 mutation AddTokens(
   $code: String!
-  $tokens: [ClaimToken!]!
+  $tokens: [ClaimToken!]
+  $packs: [BeamPackInput!]
 ) {
-  AddTokens(
-    code: $code
-    tokens: $tokens
-  )
+  AddTokens(code: $code, tokens: $tokens, packs: $packs)
 }
