@@ -2,27 +2,23 @@
 
 namespace Enjin\Platform\Beam\Models\Laravel;
 
-use Carbon\Carbon;
-use Enjin\Platform\Beam\Database\Factories\BeamFactory;
-use Enjin\Platform\Beam\Enums\BeamFlag;
-use Enjin\Platform\Beam\Services\BeamService;
-use Enjin\Platform\Beam\Support\ClaimProbabilities;
+use Enjin\Platform\Beam\Database\Factories\BeamPackFactory;
+use Enjin\Platform\Beam\GraphQL\Types\BeamPackType;
 use Enjin\Platform\Models\BaseModel;
-use Enjin\Platform\Models\Laravel\Collection;
-use Enjin\Platform\Support\BitMask;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Pagination\Cursor;
+use Illuminate\Support\Arr;
 
 class BeamPack extends BaseModel
 {
     use HasFactory;
-    use SoftDeletes;
     use Traits\EagerLoadSelectFields;
     use Traits\HasBeamQr;
+    use Traits\HasCodeScope;
+    use Traits\HasSingleUseCodeScope;
 
     /**
      * The attributes that aren't mass assignable.
@@ -37,23 +33,11 @@ class BeamPack extends BaseModel
      * @var array
      */
     protected $fillable = [
-        'name',
-        'code',
-        'description',
-        'image',
-        'start',
-        'end',
-        'collection_chain_id',
-        'flags_mask',
-        'is_pack',
+        'is_claimed',
         'beam_id',
+        'code',
         'nonce',
     ];
-
-    /**
-     * Cascade softdeletes.
-     */
-    protected $cascadeDeletes = ['claims', 'scans'];
 
     /**
      * The hidden fields.
@@ -63,132 +47,90 @@ class BeamPack extends BaseModel
     protected $hidden = [
         'created_at',
         'updated_at',
-        'deleted_at',
+        'beam_id',
     ];
+
+    /**
+     * The beam's relationship.
+     */
+    public function beam(): BelongsTo
+    {
+        return $this->belongsTo(Beam::class);
+    }
 
     /**
      * The beam claim's relationship.
      */
     public function claims(): HasMany
     {
-        return $this->hasMany(BeamClaim::class, 'beam_id');
+        return $this->hasMany(BeamClaim::class, 'beam_pack_id');
+    }
+
+    public function scopeClaimable(Builder $query): Builder
+    {
+        return $query->where('is_claimed', false);
     }
 
     /**
-     * The beam scans relationship.
+     * Load beam claim's select and relationship fields.
      */
-    public function scans(): HasMany
-    {
-        return $this->hasMany(BeamScan::class, 'beam_id');
-    }
+    public static function loadClaims(
+        array $selections,
+        string $attribute,
+        array $args = [],
+        ?string $key = null,
+        bool $isParent = false
+    ): array {
+        $fields = Arr::get($selections, $attribute, $selections);
+        $select = array_filter([
+            'id',
+            'beam_id',
+            ...(isset($fields['qr']) ? ['code'] : []),
+            ...(static::$query == 'GetSingleUseCodes' ? ['code', 'nonce'] : ['nonce']),
+            ...BeamPackType::getSelectFields($fieldKeys = array_keys($fields)),
+        ]);
 
-    /**
-     * The collection relationship.
-     */
-    public function collection(): BelongsTo
-    {
-        return $this->belongsTo(Collection::class, 'collection_chain_id', 'collection_chain_id');
-    }
+        $with = [];
+        $withCount = [];
 
-    /**
-     * Check if the beam has a flag.
-     */
-    public function hasFlag(BeamFlag $flag): bool
-    {
-        return BitMask::getBit($flag->value, $this->flags_mask ?? 0);
-    }
+        if (! $isParent) {
+            $with = [
+                $key => function ($query) use ($select, $args) {
+                    $query->select(array_unique($select))
+                        ->when($cursor = Cursor::fromEncoded(Arr::get($args, 'after')), fn ($q) => $q->where('id', '>', $cursor->parameter('id')))
+                        ->orderBy('beam_packs.id');
+                    // This must be done this way to load eager limit correctly.
+                    if ($limit = Arr::get($args, 'first')) {
+                        $query->limit($limit + 1);
+                    }
+                },
+            ];
+        }
 
-    /**
-     * Boot model.
-     */
-    public static function boot()
-    {
-        static::deleting(function ($model) {
-            BeamScan::where('beam_id', $model->id)->update(['deleted_at' => $now = now()]);
-            BeamClaim::where('beam_id', $model->id)->update(['deleted_at' => $now]);
-        });
+        foreach ([
+            ...BeamPackType::getRelationFields($fieldKeys),
+            ...(isset($fields['code']) ? ['beam'] : []),
+        ] as $relation) {
+            $with = array_merge(
+                $with,
+                static::getRelationQuery(
+                    BeamPackType::class,
+                    $relation,
+                    $fields,
+                    $key,
+                    $with
+                )
+            );
+        }
 
-        static::deleted(function ($model) {
-            Cache::forget(BeamService::key($model->code));
-        });
-
-        parent::boot();
-    }
-
-    /**
-     * The beam pack' relationship.
-     */
-    public function packs(): HasMany
-    {
-        return $this->hasMany(self::class, 'beam_id');
-    }
-
-    /**
-     * Interact with the beam's start attribute.
-     */
-    protected function start(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => $value,
-            set: fn ($value) => Carbon::parse($value)->toDateTimeString(),
-        );
-    }
-
-    /**
-     * Interact with the beam's end attribute.
-     */
-    protected function end(): Attribute
-    {
-        return $this->start();
-    }
-
-    /**
-     * Interact with the beam's claims remaining attribute.
-     */
-    protected function claimsRemaining(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => Cache::get(BeamService::key($this->code), BeamService::claimsCountResolver($this->code))
-        );
-    }
-
-    /**
-     * Interact with the beam's claims remaining attribute.
-     */
-    protected function probabilities(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => ClaimProbabilities::getProbabilities($this->code)['probabilities'] ?? null
-        );
+        return [$select, $with, $withCount];
     }
 
     /**
      * This model's factory.
      */
-    protected static function newFactory(): BeamFactory
+    protected static function newFactory(): BeamPackFactory
     {
-        return BeamFactory::new();
-    }
-
-    /**
-     * The beam flags attribute.
-     */
-    protected function flags(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => collect(BitMask::getBits($this->flags_mask))->map(function ($flag) {
-                return BeamFlag::from($flag)->name;
-            })->toArray()
-        );
-    }
-
-    /**
-     * This model's specific pivot identifier.
-     */
-    protected function pivotIdentifier(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => $this->code,
-        );
+        return BeamPackFactory::new();
     }
 }

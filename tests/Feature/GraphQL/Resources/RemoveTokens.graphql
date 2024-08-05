@@ -1,3 +1,7 @@
-mutation RemoveTokens($code: String!, $tokenIds: [IntegerRangeString!]!) {
-  RemoveTokens(code: $code, tokenIds: $tokenIds)
+mutation RemoveTokens(
+  $code: String!
+  $tokenIds: [IntegerRangeString!]
+  $packs: [RemoveBeamPack!]
+) {
+  RemoveTokens(code: $code, tokenIds: $tokenIds, packs: $packs)
 }

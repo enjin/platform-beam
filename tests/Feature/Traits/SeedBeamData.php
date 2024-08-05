@@ -65,18 +65,20 @@ trait SeedBeamData
             ...$beam,
         ])->create();
 
+        $this->claims = collect();
         Collection::times($claimsCount ?: 1, function () use ($type) {
-            $this->claims = BeamClaim::factory()
-                ->count(random_int(1, 10))
-                ->for(BeamPack::factory()->state(['beam_id' => $this->beam]))
-                ->create([
-                    'collection_id' => $this->collection->id,
-                    'wallet_public_key' => null,
-                    'claimed_at' => null,
-                    'state' => null,
-                    'beam_id' => $this->beam->id,
-                    ...($type ? ['type' => $type->name] : []),
-                ]);
+            $this->claims->push(
+                BeamClaim::factory()
+                    ->create([
+                        'collection_id' => $this->collection->id,
+                        'wallet_public_key' => null,
+                        'claimed_at' => null,
+                        'state' => null,
+                        'beam_id' => $this->beam->id,
+                        'beam_pack_id' => BeamPack::factory(['beam_id' => $this->beam])->create()->id,
+                        ...($type ? ['type' => $type->name] : []),
+                    ])
+            );
         });
 
         Cache::remember(BeamService::key($this->beam->code), 3600, fn () => $claimsCount);

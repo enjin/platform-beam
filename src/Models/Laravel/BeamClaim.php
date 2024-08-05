@@ -77,6 +77,7 @@ class BeamClaim extends BaseModel
         'beam_id',
         'nonce',
         'code',
+        'beam_pack_id',
     ];
 
     /**
@@ -127,6 +128,14 @@ class BeamClaim extends BaseModel
     public function collection(): BelongsTo
     {
         return $this->belongsTo(Collection::class);
+    }
+
+    /**
+     * The Beam Pack's relationship.
+     */
+    public function beamPack(): BelongsTo
+    {
+        return $this->belongsTo(BeamPack::class, 'beam_pack_id');
     }
 
     /**
