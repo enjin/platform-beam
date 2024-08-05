@@ -349,22 +349,25 @@ class BeamService
      */
     public function expireSingleUseCodes(array $codes): int
     {
-        $beams = [];
-        collect($codes)->each(function ($code) use (&$beams) {
-            if ($claim = BeamClaim::claimable()->withSingleUseCode($code)->first()) {
-                if (! isset($beams[$claim->beam_id])) {
-                    $beams[$claim->beam_id] = 0;
+        $beamCodes = collect($codes)
+            ->keyBy(fn ($code) => static::getSingleUseCodeData($code)->beamCode)
+            ->all();
+
+        Beam::whereIn('code', array_keys($beamCodes))
+            ->get(['id', 'code', 'is_pack'])
+            ->each(function ($beam) use ($beamCodes) {
+                if ($claim = ($beam->is_pack ? new BeamPack() : new BeamClaim())
+                    ->claimable()
+                    ->where('beam_id', $beam->id)
+                    ->withSingleUseCode($beamCodes[$beam->code])
+                    ->first()
+                ) {
+                    $claim->increment('nonce');
+                    Cache::decrement($this->key($beam->code));
                 }
-                $beams[$claim->beam_id] += $claim->increment('nonce');
-            }
-        });
+            });
 
-        if ($beams) {
-            Beam::findMany(array_keys($beams), ['id', 'code'])
-                ->each(fn ($beam) => Cache::decrement($this->key($beam->code, $beams[$beam->id])));
-        }
-
-        return array_sum($beams);
+        return count($codes);
     }
 
     /**

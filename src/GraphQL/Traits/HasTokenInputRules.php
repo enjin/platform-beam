@@ -95,7 +95,7 @@ trait HasTokenInputRules
                 'min:1',
                 'max:1000',
             ],
-            'packs.*.id' => [new BeamPackExistInBeam()],
+            $withTokens ? '' : 'packs.*.id' => [new BeamPackExistInBeam()],
             'packs.*.tokens' => [
                 'bail',
                 'array',
