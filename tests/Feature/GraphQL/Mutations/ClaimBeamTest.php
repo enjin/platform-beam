@@ -22,6 +22,7 @@ use Enjin\Platform\Support\Account;
 use Enjin\Platform\Support\BitMask;
 use Enjin\Platform\Support\SS58Address;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
 
@@ -98,12 +99,38 @@ class ClaimBeamTest extends TestCaseGraphQL
         $this->genericClaimTest(CryptoSignatureType::SR25519, Arr::get($response, 'edges.0.node.code'));
     }
 
+    public function test_it_can_claim_beam_pack_with_sr25519_single_use_codes(): void
+    {
+        $code = $this->graphql('CreateBeam', $this->generateBeamPackData(
+            BeamType::MINT_ON_DEMAND,
+            1,
+            [],
+            [['flag' => 'SINGLE_USE']],
+        ));
+        $response = $this->graphql('GetSingleUseCodes', ['code' => $code]);
+        $this->assertNotEmpty($response['totalCount']);
+
+        $this->genericClaimTest(CryptoSignatureType::SR25519, Arr::get($response, 'edges.0.node.code'));
+    }
+
     /**
      * Test claiming beam with ed25519.
      */
     public function test_it_can_claim_beam_with_ed25519(): void
     {
         $this->genericClaimTest(CryptoSignatureType::ED25519);
+    }
+
+    public function test_it_can_claim_beam_pack_with_ed25519(): void
+    {
+        $this->seedBeamPack();
+        $this->genericClaimTest(CryptoSignatureType::ED25519);
+    }
+
+    public function test_it_can_claim_beam_pack_with_sr25519(): void
+    {
+        $this->seedBeamPack();
+        $this->genericClaimTest(CryptoSignatureType::SR25519);
     }
 
     public function test_it_can_claim_beam_job_with_idempotency_key(): void
@@ -488,7 +515,7 @@ class ClaimBeamTest extends TestCaseGraphQL
         ]);
         $this->assertNotEmpty($response['message']);
         if (! $singleUseCode) {
-            $this->assertEquals(1, $this->beam->scans()->count());
+            $this->assertEquals(1, DB::table('beam_scans')->where('beam_id', $this->beam->id)->count());
         }
 
         $message = $response['message']['message'];

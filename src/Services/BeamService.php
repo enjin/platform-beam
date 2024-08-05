@@ -235,14 +235,16 @@ class BeamService
      */
     public function scanByCode(string $code, ?string $wallet = null): ?Model
     {
-        $isSingleUse = static::isSingleUse($code);
+        $beamCode = static::getSingleUseCodeData($code)?->beamCode;
+        $beam = Beam::whereCode($beamCode ?? $code)->firstOrFail();
 
-        $beam = $isSingleUse
-                ? BeamClaim::withSingleUseCode($code)
-                    ->with('beam')
-                    ->first()
-                    ->beam
-                : $this->findByCode($code);
+        if ($beamCode) {
+            ($beam->is_pack ? new BeamPack() : new BeamClaim())
+                ->withSingleUseCode($code)
+                ->firstOrFail();
+        }
+
+
         if ($wallet) {
             // Pushing this to the queue for performance
             CreateClaim::dispatch($claim = [
@@ -254,7 +256,7 @@ class BeamService
             $beam->setRelation('scans', collect(json_decode(json_encode([$claim]))));
         }
 
-        if ($isSingleUse) {
+        if ($beamCode) {
             $beam['code'] = $code;
         }
 
@@ -267,21 +269,20 @@ class BeamService
     public function claim(string $code, string $wallet, ?string $idempotencyKey = null): bool
     {
         $singleUseCode = null;
-        $singleUse = static::isSingleUse($code);
-
-        if ($singleUse) {
-            $singleUseCode = $code;
-            $beam = BeamClaim::withSingleUseCode($singleUseCode)
-                ->with('beam')
-                ->first()
-                ->beam;
-            $code = $beam?->code;
-        } else {
-            $beam = $this->findByCode($code);
-        }
-
+        $singleUse = static::getSingleUseCodeData($code);
+        $beam = $this->findByCode($singleUse ? $singleUse->beamCode : $code);
         if (! $beam) {
             throw new BeamException(__('enjin-platform-beam::error.beam_not_found', ['code' => $code]));
+        }
+
+        if ($singleUse) {
+            if (!($beam->is_pack ? new BeamPack() : new BeamClaim())
+                ->withSingleUseCode($code)
+                ->first()) {
+                throw new BeamException(__('enjin-platform-beam::error.beam_not_found', ['code' => $code]));
+            }
+            $singleUseCode = $singleUse->claimCode;
+            $code = $singleUse->beamCode;
         }
 
         $lock = Cache::lock(self::key($code, 'claim-lock'), 5);
@@ -614,6 +615,7 @@ class BeamService
             'state' => ClaimStatus::PENDING->name,
             'beam' => $beam->toArray(),
             'beam_id' => $beam->id,
+            'is_pack' => $beam->is_pack,
             'ip_address' => request()->getClientIp(),
             'code' => $singleUseCode,
             'idempotency_key' => $idempotencyKey ?: Str::uuid()->toString(),
