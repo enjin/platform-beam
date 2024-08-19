@@ -7,10 +7,10 @@ use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Models\Collection;
+use Enjin\Platform\Models\Token;
 use Enjin\Platform\Rules\Traits\HasDataAwareRule;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Illuminate\Support\Arr;
 
 class MaxTokenCount implements DataAwareRule, ValidationRule
 {
@@ -33,34 +33,51 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if ($this->collectionId && ($collection = Collection::withCount('tokens')->firstWhere(['collection_chain_id' => $this->collectionId]))) {
-            if (! is_null($this->limit = $collection->max_token_count)) {
-                $passes = $collection->max_token_count >= $collection->tokens_count
-                    + collect($this->data['tokens'])
-                        ->filter(fn ($token) => BeamType::getEnumCase($token['type']) == BeamType::MINT_ON_DEMAND)
-                        ->reduce(function ($carry, $token) {
-                            return collect(Arr::get($token, 'tokenIds'))->reduce(function ($val, $tokenId) use ($token) {
-                                $range = $this->integerRange($tokenId);
+        /**
+         * The sum of existing tokens, tokens in beams and tokens to be created
+         * must not exceed the collection's max token count.
+         */
+        if ($this->collectionId
+            && ($collection = Collection::withCount('tokens')->firstWhere(['collection_chain_id' => $this->collectionId]))
+            && ! is_null($this->limit = $collection->max_token_count)
+        ) {
+            $existingCount = BeamClaim::where('type', BeamType::MINT_ON_DEMAND->name)
+                ->whereHas(
+                    'beam',
+                    fn ($query) => $query->where('collection_chain_id', $this->collectionId)->where('end', '>', now())
+                )->whereNotExists(function ($query) {
+                    $query->selectRaw('1')
+                        ->from('tokens')
+                        ->whereColumn('tokens.token_chain_id', 'beam_claims.token_chain_id');
+                })
+                ->groupBy('token_chain_id')
+                ->count();
 
-                                return $val + (
-                                    $range === false
-                                        ? $token['claimQuantity']
-                                        : (($range[1] - $range[0]) + 1) * $token['claimQuantity']
-                                );
-                            }, $carry);
-                        }, 0)
-                    + BeamClaim::whereHas(
-                        'beam',
-                        fn ($query) => $query->where('collection_chain_id', $this->collectionId)->where('end', '>', now())
-                    )->where('type', BeamType::MINT_ON_DEMAND->name)
+            [$integers, $ranges] = collect($this->data['tokens'])
+                ->pluck('tokenIds')
+                ->flatten()
+                ->partition(fn ($val) => $this->integerRange($val) === false);
+
+            $createTokenTotal = 0;
+            if (count($integers)) {
+                $createTokenTotal = Token::where('collection_id', $collection->id)
+                    ->whereNotIn('token_chain_id', $integers->pluck('tokenIds'))
+                    ->count();
+            }
+
+            if (count($ranges)) {
+                foreach ($ranges as $range) {
+                    [$from, $to] = $this->integerRange($range);
+                    $count = Token::where('collection_id', $collection->id)
+                        ->whereBetween('token_chain_id', [(int) $from, (int) $to])
                         ->count();
-
-                if (! $passes) {
-                    $fail('enjin-platform-beam::validation.max_token_count')
-                        ->translate([
-                            'limit' => $this->limit,
-                        ]);
+                    $createTokenTotal += (($to - $from) + 1) - $count;
                 }
+            }
+
+            $passes = $collection->max_token_count >= $collection->tokens_count + $existingCount + $createTokenTotal;
+            if (! $passes) {
+                $fail('enjin-platform-beam::validation.max_token_count')->translate(['limit' => $this->limit]);
             }
         }
     }
