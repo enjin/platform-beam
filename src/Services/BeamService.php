@@ -120,7 +120,7 @@ class BeamService
                 $quantity++;
             }
 
-            $model = BeamPack::firstOrcreate(['id' => $id], [
+            $beamPack = BeamPack::firstOrcreate(['id' => $id], [
                 'beam_id' => $beam->id,
                 'code' => bin2hex(openssl_random_pseudo_bytes(16)),
                 'nonce' => 1,
@@ -134,13 +134,13 @@ class BeamService
 
             if ($tokenIds->count()) {
                 $allTokenIds = $tokenIds->pluck('tokenIds')->flatten()->all();
-                DispatchCreateBeamClaimsJobs::dispatch($beam, $tokenIds->all(), $model->id)->afterCommit();
+                DispatchCreateBeamClaimsJobs::dispatch($beam, $tokenIds->all(), $beamPack->id)->afterCommit();
             }
 
             $tokenUploads = $tokens->whereNotNull('tokenIdDataUpload');
             if ($tokenUploads->count()) {
                 $ids = $tokenIds->pluck('tokenIds');
-                $tokenUploads->each(function ($token) use ($beam, $ids, $model) {
+                $tokenUploads->each(function ($token) use ($beam, $ids, $beamPack) {
                     LazyCollection::make(function () use ($token, $ids) {
                         $handle = fopen($token['tokenIdDataUpload']->getPathname(), 'r');
                         while (($line = fgets($handle)) !== false) {
@@ -150,10 +150,10 @@ class BeamService
                             }
                         }
                         fclose($handle);
-                    })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token, $model) {
+                    })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token, $beamPack) {
                         $token['tokenIds'] = $tokenIds->all();
                         unset($token['tokenIdDataUpload']);
-                        DispatchCreateBeamClaimsJobs::dispatch($beam, [$token], $model->id)->afterCommit();
+                        DispatchCreateBeamClaimsJobs::dispatch($beam, [$token], $beamPack->id)->afterCommit();
                         unset($tokenIds, $token);
                     });
                 });
