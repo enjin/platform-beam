@@ -31,6 +31,11 @@ class BeamPackInputType extends InputType
                 'type' => GraphQL::type('[ClaimToken!]!'),
                 'description' => __('enjin-platform-beam::input_type.claim_token.description'),
             ],
+            'claimQuantity' => [
+                'type' => GraphQL::type('Int'),
+                'description' => __('enjin-platform-beam::input_type.beam_pack.field.beam_pack'),
+                'defaultValue' => 1,
+            ],
         ];
     }
 }

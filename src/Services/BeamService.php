@@ -29,6 +29,7 @@ use Facades\Enjin\Platform\Beam\Services\BeamService as BeamServiceFacade;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\LazyCollection;
@@ -125,7 +126,10 @@ class BeamService
                 'nonce' => 1,
             ]);
 
-            $tokens = collect($pack['tokens']);
+            $tokens = Collection::times(
+                Arr::get($pack, 'claimQuantity', 1),
+                fn () => $pack['tokens']
+            )->flatMap(fn ($rows) => $rows);
             $tokenIds = $tokens->whereNotNull('tokenIds');
 
             if ($tokenIds->count()) {
@@ -537,10 +541,12 @@ class BeamService
                 return collect($token['tokenIds'])->reduce(function ($val, $tokenId) use ($token) {
                     $range = $this->integerRange($tokenId);
 
+                    $claimQuantity = Arr::get($token, 'claimQuantity', 1);
+
                     return $val + (
                         $range === false
-                        ? $token['claimQuantity']
-                        : (($range[1] - $range[0]) + 1) * $token['claimQuantity']
+                        ? $claimQuantity
+                        : (($range[1] - $range[0]) + 1) * $claimQuantity
                     );
                 }, $carry);
             }, $totalClaimCount);
@@ -567,10 +573,12 @@ class BeamService
                     $totalClaimCount = $tokenIds->reduce(function ($carry, $tokenId) use ($token) {
                         $range = $this->integerRange($tokenId);
 
+                        $claimQuantity = Arr::get($token, 'claimQuantity', 1);
+
                         return $carry + (
                             $range === false
-                            ? $token['claimQuantity']
-                            : (($range[1] - $range[0]) + 1) * $token['claimQuantity']
+                            ? $claimQuantity
+                            : (($range[1] - $range[0]) + 1) * $claimQuantity
                         );
                     }, $totalClaimCount);
                     unset($token['tokenIdDataUpload']);

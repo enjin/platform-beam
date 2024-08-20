@@ -154,6 +154,15 @@ trait HasTokenInputRules
                 'min:1',
                 new MaxTokenSupply($collectionId),
             ],
+            'packs.*.tokens.*.claimQuantity' => [
+                'prohibited',
+            ],
+            'packs.claimQuantity' => [
+                'bail',
+                'integer',
+                'min:1',
+                'max:1000',
+            ],
         ];
     }
 }

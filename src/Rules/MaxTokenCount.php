@@ -42,10 +42,12 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
                             return collect(Arr::get($token, 'tokenIds'))->reduce(function ($val, $tokenId) use ($token) {
                                 $range = $this->integerRange($tokenId);
 
+                                $claimQuantity = Arr::get($token, 'claimQuantity', 1);
+
                                 return $val + (
                                     $range === false
-                                        ? $token['claimQuantity']
-                                        : (($range[1] - $range[0]) + 1) * $token['claimQuantity']
+                                        ? $claimQuantity
+                                        : (($range[1] - $range[0]) + 1) * $claimQuantity
                                 );
                             }, $carry);
                         }, 0)

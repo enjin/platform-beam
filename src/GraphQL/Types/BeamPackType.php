@@ -32,7 +32,7 @@ class BeamPackType extends Type
         return [
             'id' => [
                 'type' => GraphQL::type('Int'),
-                'description' => __('enjin-platform-beam::type.beam_claim.field.id'),
+                'description' => __('enjin-platform-beam::type.beam_pack.field.id'),
             ],
             'code' => [
                 'type' => GraphQL::type('String!'),
@@ -42,7 +42,7 @@ class BeamPackType extends Type
             ],
             'isClaimed' => [
                 'type' => GraphQL::type('Boolean!'),
-                'description' => __('enjin-platform-beam::type.beam_claim.field.code'),
+                'description' => __('enjin-platform-beam::type.beam_pack.field.isClaimed'),
                 'alias' => 'is_claimed',
             ],
             'beam' => [

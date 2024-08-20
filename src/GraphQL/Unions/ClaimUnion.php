@@ -16,7 +16,7 @@ class ClaimUnion extends UnionType implements PlatformGraphQlUnion
     {
         return [
             'name' => 'ClaimUnion',
-            'description' => __('enjin-platform-marketplace::union.listing_data.description'),
+            'description' => __('enjin-platform-beam::union.claim_union.description'),
         ];
     }
 
