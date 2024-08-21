@@ -114,7 +114,7 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
 
                 }, $tokenCount);
 
-            if (! $this->limit >= $balanceCount + $claimCount + $tokenCount) {
+            if ($this->limit < $balanceCount + $claimCount + $tokenCount) {
                 $fail($this->maxTokenSupplyMessage)->translate(['limit' => $this->limit]);
             }
         }

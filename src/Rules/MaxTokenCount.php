@@ -12,6 +12,7 @@ use Enjin\Platform\Rules\Traits\HasDataAwareRule;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
+use Illuminate\Support\LazyCollection;
 
 class MaxTokenCount implements DataAwareRule, ValidationRule
 {
@@ -35,8 +36,8 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         /**
-         * The sum of existing tokens, tokens in beams and tokens to be created
-         * must not exceed the collection's max token count.
+         * The sum of all unique tokens (including existing tokens, tokens in beams, and tokens to be created)
+         * must not exceed the collection's maximum token count.
          */
         if ($this->collectionId
             && ($collection = Collection::withCount('tokens')->firstWhere(['collection_chain_id' => $this->collectionId]))
@@ -65,7 +66,6 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
                 ->pluck('tokenIds')
                 ->flatten();
 
-
             collect($this->data['tokens'])
                 ->filter(fn ($data) => !empty(Arr::get($data, 'tokenIdDataUpload')))
                 ->map(function ($data) use ($tokens) {
@@ -78,31 +78,57 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
                     fclose($handle);
                 });
 
-            [$integers, $ranges] = collect($tokens)
-                ->filter(fn ($val) => !empty(Arr::get($val, 'tokenIds')))
-                ->pluck('tokenIds')
-                ->flatten()
-                ->partition(fn ($val) => $this->integerRange($val) === false);
+            [$integers, $ranges] = collect($tokens)->partition(fn ($val) => $this->integerRange($val) === false);
 
             $createTokenTotal = 0;
-            if (count($integers)) {
-                $createTokenTotal = Token::where('collection_id', $collection->id)
-                    ->whereNotIn('token_chain_id', $integers->pluck('tokenIds'))
-                    ->count();
-            }
+            if ($integers->count()) {
+                $existingTokens = Token::where('collection_id', $collection->id)
+                    ->whereIn('token_chain_id', $integers)
+                    ->pluck('token_chain_id');
 
-            if (count($ranges)) {
-                foreach ($ranges as $range) {
-                    [$from, $to] = $this->integerRange($range);
-                    $count = Token::where('collection_id', $collection->id)
-                        ->whereBetween('token_chain_id', [(int) $from, (int) $to])
-                        ->count();
-                    $createTokenTotal += (($to - $from) + 1) - $count;
+                $integers = $integers->diff($existingTokens);
+                if ($integers->count()) {
+                    $existingClaimsCount = BeamClaim::where('collection_id', $collection->id)
+                        ->whereIn('token_chain_id', $integers)
+                        ->claimable()
+                        ->pluck('token_chain_id');
+
+                    $createTokenTotal = $integers->diff($existingClaimsCount)->count();
                 }
             }
 
-            $passes = $collection->max_token_count >= $collection->tokens_count + $claimCount + $createTokenTotal;
-            if (! $passes) {
+            if ($ranges->count()) {
+                foreach ($ranges as $range) {
+                    [$from, $to] = $this->integerRange($range);
+                    $existingTokensCount = Token::where('collection_id', $collection->id)
+                        ->whereBetween('token_chain_id', [(int) $from, (int) $to])
+                        ->count();
+
+                    if (($to - $from) + 1 == $existingTokensCount) {
+                        continue;
+                    }
+
+                    LazyCollection::range((int) $from, (int) $to)
+                        ->chunk(5000)
+                        ->each(function ($chunk) use (&$createTokenTotal, $collection) {
+                            $existingTokens = Token::where('collection_id', $collection->id)
+                                ->whereIn('token_chain_id', $chunk)
+                                ->pluck('token_chain_id');
+
+                            $integers = $chunk->diff($existingTokens);
+                            if ($integers->count()) {
+                                $existingClaimsCount = BeamClaim::where('collection_id', $collection->id)
+                                    ->whereIn('token_chain_id', $integers)
+                                    ->claimable()
+                                    ->pluck('token_chain_id');
+                                $createTokenTotal += $integers->diff($existingClaimsCount)->count();
+                            }
+                        });
+                }
+            }
+
+            $createTokenTotal = $createTokenTotal > 0 ? $createTokenTotal : 0;
+            if ($collection->max_token_count < $collection->tokens_count + $claimCount + $createTokenTotal) {
                 $fail('enjin-platform-beam::validation.max_token_count')->translate(['limit' => $this->limit]);
             }
         }

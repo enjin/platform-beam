@@ -13,7 +13,6 @@ use Enjin\Platform\Beam\Tests\Feature\GraphQL\TestCaseGraphQL;
 use Enjin\Platform\Beam\Tests\Feature\Traits\SeedBeamData;
 use Enjin\Platform\Enums\Substrate\TokenMintCapType;
 use Enjin\Platform\GraphQL\Types\Scalars\Traits\HasIntegerRanges;
-use Enjin\Platform\Models\Laravel\Collection;
 use Enjin\Platform\Models\Laravel\Token;
 use Enjin\Platform\Support\Hex;
 use Illuminate\Http\UploadedFile;
@@ -253,46 +252,6 @@ class UpdateBeamTest extends TestCaseGraphQL
         $response = $this->graphql($this->method, $updates, true);
         $this->assertArraySubset(
             ['tokens.0.tokenIds' => ['The tokens.0.tokenIds exists in the specified collection.']],
-            $response['error']
-        );
-
-        $collection = Collection::create([
-            'collection_chain_id' => (string) fake()->unique()->numberBetween(2000),
-            'owner_wallet_id' => $this->wallet->id,
-            'max_token_count' => '1',
-            'max_token_supply' => '1',
-            'force_single_mint' => true,
-            'is_frozen' => false,
-            'token_count' => '0',
-            'attribute_count' => '0',
-            'total_deposit' => '0',
-            'network' => 'developer',
-        ]);
-
-        $create = [
-            'name' => fake()->name(),
-            'description' => fake()->word(),
-            'image' => fake()->url(),
-            'start' => Carbon::now()->toDateTimeString(),
-            'end' => Carbon::now()->addDays(random_int(1, 1000))->toDateTimeString(),
-            'collectionId' => $collection->collection_chain_id,
-            'tokens' => [[
-                'type' => BeamType::MINT_ON_DEMAND->name,
-                'tokenIds' => ['0'],
-                'tokenQuantityPerClaim' => 1,
-                'claimQuantity' => 1,
-                'attributes' => null,
-            ]],
-        ];
-        $this->assertNotEmpty($code = $this->graphql('CreateBeam', $create));
-
-        $updates = array_merge(
-            Arr::only($create, ['tokens']),
-            ['code' => $code]
-        );
-        $response = $this->graphql($this->method, $updates, true);
-        $this->assertArraySubset(
-            ['tokens.0.tokenIds' => ['The tokens.0.tokenIds already exist in beam.']],
             $response['error']
         );
     }

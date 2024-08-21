@@ -370,7 +370,7 @@ class CreateBeamTest extends TestCaseGraphQL
             true
         );
         $this->assertArraySubset(
-            ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for each token for this collection.']],
+            ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for unique tokens for this collection.']],
             $response['error']
         );
 
@@ -381,7 +381,7 @@ class CreateBeamTest extends TestCaseGraphQL
         );
         $this->assertNotEmpty($response);
         $this->assertArraySubset(
-            ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for each token for this collection.']],
+            ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for unique tokens for this collection.']],
             $response['error']
         );
     }
