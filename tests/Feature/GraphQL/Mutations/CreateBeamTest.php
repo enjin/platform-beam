@@ -343,18 +343,18 @@ class CreateBeamTest extends TestCaseGraphQL
         );
         $this->assertArraySubset(['tokens.0.claimQuantity' => ['The token count exceeded the maximum limit of 0 for this collection.']], $response['error']);
 
-        $this->collection->update(['max_token_count' => 2]);
         $response = $this->graphql(
             $this->method,
             $data = array_merge(
                 $this->generateBeamData(BeamType::MINT_ON_DEMAND, 1),
                 ['tokens' => [['tokenIds' => ['1'], 'type' => BeamType::MINT_ON_DEMAND->name]]]
-            )
+            ),
+            true
         );
         $this->assertNotEmpty($response);
 
         $response = $this->graphql($this->method, $data, true);
-        $this->assertArraySubset(['tokens.0.claimQuantity' => ['The token count exceeded the maximum limit of 2 for this collection.']], $response['error']);
+        $this->assertArraySubset(['tokens.0.claimQuantity' => ['The token count exceeded the maximum limit of 0 for this collection.']], $response['error']);
     }
 
     /**

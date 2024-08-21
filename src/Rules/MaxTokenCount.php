@@ -11,6 +11,7 @@ use Enjin\Platform\Models\Token;
 use Enjin\Platform\Rules\Traits\HasDataAwareRule;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Support\Arr;
 
 class MaxTokenCount implements DataAwareRule, ValidationRule
 {
@@ -41,6 +42,12 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
             && ($collection = Collection::withCount('tokens')->firstWhere(['collection_chain_id' => $this->collectionId]))
             && ! is_null($this->limit = $collection->max_token_count)
         ) {
+            if ($this->limit == 0) {
+                $fail('enjin-platform-beam::validation.max_token_count')->translate(['limit' => $this->limit]);
+
+                return;
+            }
+
             $existingCount = BeamClaim::where('type', BeamType::MINT_ON_DEMAND->name)
                 ->whereHas(
                     'beam',
@@ -53,7 +60,26 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
                 ->groupBy('token_chain_id')
                 ->count();
 
-            [$integers, $ranges] = collect($this->data['tokens'])
+            $tokens = collect($this->data['tokens'])
+                ->filter(fn ($data) => !empty(Arr::get($data, 'tokenIds')))
+                ->pluck('tokenIds')
+                ->flatten();
+
+
+            collect($this->data['tokens'])
+                ->filter(fn ($data) => !empty(Arr::get($data, 'tokenIdDataUpload')))
+                ->map(function ($data) use ($tokens) {
+                    $handle = fopen($data['tokenIdDataUpload']->getPathname(), 'r');
+                    while (($line = fgets($handle)) !== false) {
+                        if (! $this->tokenIdExists($tokens->all(), $tokenId = trim($line))) {
+                            $tokens->push($tokenId);
+                        }
+                    }
+                    fclose($handle);
+                });
+
+            [$integers, $ranges] = collect($tokens)
+                ->filter(fn ($val) => !empty(Arr::get($val, 'tokenIds')))
                 ->pluck('tokenIds')
                 ->flatten()
                 ->partition(fn ($val) => $this->integerRange($val) === false);
