@@ -50,7 +50,7 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
          * the total circulating supply must not exceed 100.
          */
         if ($this->collectionId
-            && ($collection = Collection::withCount('tokens')->firstWhere(['collection_chain_id' => $this->collectionId]))
+            && ($collection = Collection::firstWhere(['collection_chain_id' => $this->collectionId]))
             && ! is_null($this->limit = $collection->max_token_supply)
         ) {
             if ((Arr::get($this->data, str_replace('tokenQuantityPerClaim', 'type', $attribute)) == BeamType::MINT_ON_DEMAND->name
