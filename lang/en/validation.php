@@ -18,7 +18,7 @@ return [
     'verify_signed_message' => 'The :attribute is invalid.',
     'beam_scan_not_found' => 'Beam scan record is not found.',
     'max_token_count' => 'The token count exceeded the maximum limit of :limit for this collection.',
-    'max_token_supply' => 'The :attribute exceeded the maximum supply limit of :limit for each token for this collection.',
+    'max_token_supply' => 'The :attribute exceeded the maximum supply limit of :limit for unique tokens for this collection.',
     'has_beam_flag' => 'The :attribute is invalid.',
     'not_expired' => 'The beam has expired.',
     'tokens_doesnt_exist_in_beam' => 'The :attribute already exist in beam.',
