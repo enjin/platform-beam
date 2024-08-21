@@ -374,16 +374,14 @@ class CreateBeamTest extends TestCaseGraphQL
             $response['error']
         );
 
-        $this->collection->update(['max_token_supply' => 2]);
         $response = $this->graphql(
             $this->method,
-            $data = $this->generateBeamData(BeamType::TRANSFER_TOKEN, 1),
+            $this->generateBeamData(BeamType::TRANSFER_TOKEN, 1),
+            true
         );
         $this->assertNotEmpty($response);
-
-        $response = $this->graphql($this->method, $data, true);
         $this->assertArraySubset(
-            ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim is invalid, the amount provided is bigger than the token account balance.']],
+            ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for each token for this collection.']],
             $response['error']
         );
     }

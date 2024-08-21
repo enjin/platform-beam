@@ -48,7 +48,7 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
                 return;
             }
 
-            $existingCount = BeamClaim::where('type', BeamType::MINT_ON_DEMAND->name)
+            $claimCount = BeamClaim::where('type', BeamType::MINT_ON_DEMAND->name)
                 ->whereHas(
                     'beam',
                     fn ($query) => $query->where('collection_chain_id', $this->collectionId)->where('end', '>', now())
@@ -101,7 +101,7 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
                 }
             }
 
-            $passes = $collection->max_token_count >= $collection->tokens_count + $existingCount + $createTokenTotal;
+            $passes = $collection->max_token_count >= $collection->tokens_count + $claimCount + $createTokenTotal;
             if (! $passes) {
                 $fail('enjin-platform-beam::validation.max_token_count')->translate(['limit' => $this->limit]);
             }

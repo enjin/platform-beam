@@ -8,9 +8,7 @@ use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Models\Collection;
 use Enjin\Platform\Models\TokenAccount;
-use Enjin\Platform\Models\Wallet;
 use Enjin\Platform\Rules\Traits\HasDataAwareRule;
-use Enjin\Platform\Support\Account;
 use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
@@ -46,97 +44,78 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
+        /**
+         * The total circulating supply of tokens must not exceed the collection's maximum token supply.
+         * For example, if the maximum token count is 10 and the maximum token supply is 10,
+         * the total circulating supply must not exceed 100.
+         */
         if ($this->collectionId
-            && ($collection = Collection::firstWhere(['collection_chain_id' => $this->collectionId]))
+            && ($collection = Collection::withCount('tokens')->firstWhere(['collection_chain_id' => $this->collectionId]))
             && ! is_null($this->limit = $collection->max_token_supply)
         ) {
-            if (Arr::get($this->data, str_replace('tokenQuantityPerClaim', 'type', $attribute)) == BeamType::MINT_ON_DEMAND->name) {
-                if (! $collection->max_token_supply >= $value) {
-                    $fail($this->maxTokenSupplyMessage)
-                        ->translate([
-                            'limit' => $this->limit,
-                        ]);
+            if ((Arr::get($this->data, str_replace('tokenQuantityPerClaim', 'type', $attribute)) == BeamType::MINT_ON_DEMAND->name
+                    && !$collection->max_token_supply >= $value)
+                || $this->limit == 0
+            ) {
+                $fail($this->maxTokenSupplyMessage)->translate(['limit' => $this->limit]);
 
-                    return;
-                }
+                return;
             }
 
-            $tokenIds = Arr::get($this->data, str_replace('tokenQuantityPerClaim', 'tokenIds', $attribute));
-            $integers = collect($tokenIds)->filter(fn ($val) => $this->integerRange($val) === false)->all();
-            if ($integers) {
-                $wallet = Wallet::firstWhere(['public_key' => Account::daemonPublicKey()]);
-                $collection = Collection::firstWhere(['collection_chain_id' => $this->collectionId]);
-                if (! $wallet || ! $collection) {
-                    $fail($this->maxTokenSupplyMessage)
-                        ->translate([
-                            'limit' => $this->limit,
-                        ]);
+            if ($collection->max_token_count == 0) {
+                $fail('enjin-platform-beam::validation.max_token_count')->translate(['limit' => $this->limit]);
 
-                    return;
-                }
-                $accounts = TokenAccount::join('tokens', 'tokens.id', '=', 'token_accounts.token_id')
-                    ->where('token_accounts.wallet_id', $wallet->id)
-                    ->where('token_accounts.collection_id', $collection->id)
-                    ->whereIn('tokens.token_chain_id', $integers)
-                    ->selectRaw('tokens.token_chain_id, sum(token_accounts.balance) as balance')
-                    ->groupBy('tokens.token_chain_id')
-                    ->get();
+                return;
+            }
 
-                $claims = BeamClaim::whereHas(
-                    'beam',
-                    fn ($query) => $query->where('collection_chain_id', $this->collectionId)->where('end', '>', now())
-                )->where('type', BeamType::TRANSFER_TOKEN->name)
-                    ->whereIn('token_chain_id', $integers)
-                    ->whereNull('wallet_public_key')
-                    ->selectRaw('token_chain_id, sum(quantity) as quantity')
-                    ->groupBy('token_chain_id')
-                    ->pluck('quantity', 'token_chain_id');
-                foreach ($accounts as $account) {
-                    if ((int) $account->balance < $value + Arr::get($claims, $account->token_chain_id, 0)) {
-                        $fail($this->maxTokenBalanceMessage)->translate();
+            $this->limit = $collection->max_token_supply * ($collection->max_token_count ?? 1);
 
-                        return;
+            $balanceCount = TokenAccount::where('token_accounts.collection_id', $collection->id)->sum('balance');
+            $claimCount = BeamClaim::where('type', BeamType::MINT_ON_DEMAND->name)
+                ->whereHas('beam', fn ($query) => $query->where('collection_chain_id', $this->collectionId)->where('end', '>', now()))
+                ->claimable()
+                ->sum('quantity');
+
+            $tokenCount = 0;
+            $tokenCount = collect($this->data['tokens'])
+                ->reduce(function ($carry, $token) {
+
+                    if (Arr::get($token, 'tokenIds')) {
+                        return collect($token['tokenIds'])->reduce(function ($val, $tokenId) use ($token) {
+                            $range = $this->integerRange($tokenId);
+                            $claimQuantity = Arr::get($token, 'claimQuantity', 1);
+                            $quantityPerClaim = Arr::get($token, 'tokenQuantityPerClaim', 1);
+
+                            return $val + (
+                                $range === false
+                                ? $claimQuantity * $quantityPerClaim
+                                : (($range[1] - $range[0]) + 1) * $claimQuantity * $quantityPerClaim
+                            );
+                        }, $carry);
                     }
-                }
-            }
 
-            $ranges = collect($tokenIds)->filter(fn ($val) => $this->integerRange($val) !== false)->all();
-            if ($ranges) {
-                $wallet = Wallet::firstWhere(['public_key' => Account::daemonPublicKey()]);
-                $collection = Collection::firstWhere(['collection_chain_id' => $this->collectionId]);
-                if (! $wallet || ! $collection) {
-                    $fail($this->maxTokenSupplyMessage)
-                        ->translate([
-                            'limit' => $this->limit,
-                        ]);
-
-                    return;
-                }
-                foreach ($ranges as $range) {
-                    [$from, $to] = $this->integerRange($range);
-                    $accounts = TokenAccount::join('tokens', 'tokens.id', '=', 'token_accounts.token_id')
-                        ->where('token_accounts.wallet_id', $wallet->id)
-                        ->where('token_accounts.collection_id', $collection->id)
-                        ->whereBetween('tokens.token_chain_id', [(int) $from, (int) $to])
-                        ->selectRaw('tokens.token_chain_id, sum(token_accounts.balance) as balance')
-                        ->groupBy('tokens.token_chain_id')
-                        ->get();
-
-                    $claims = BeamClaim::whereHas(
-                        'beam',
-                        fn ($query) => $query->where('collection_chain_id', $this->collectionId)->where('end', '>', now())
-                    )->where('type', BeamType::TRANSFER_TOKEN->name)
-                        ->whereBetween('token_chain_id', [(int) $from, (int) $to])
-                        ->whereNull('wallet_public_key')
-                        ->selectRaw('token_chain_id, sum(quantity) as quantity')
-                        ->groupBy('token_chain_id')
-                        ->pluck('quantity', 'token_chain_id');
-                    foreach ($accounts as $account) {
-                        if ((int) $account->balance < $value + Arr::get($claims, $account->token_chain_id, 0)) {
-                            $fail($this->maxTokenBalanceMessage)->translate();
+                    if (Arr::get($token, 'tokenIdDataUpload')) {
+                        $total = 0;
+                        $handle = fopen($token['tokenIdDataUpload']->getPathname(), 'r');
+                        while (($line = fgets($handle)) !== false) {
+                            $range = $this->integerRange(trim($line));
+                            $claimQuantity = Arr::get($token, 'claimQuantity', 1);
+                            $quantityPerClaim = Arr::get($token, 'tokenQuantityPerClaim', 1);
+                            $total += (
+                                $range === false
+                                ? $claimQuantity * $quantityPerClaim
+                                : (($range[1] - $range[0]) + 1) * $claimQuantity * $quantityPerClaim
+                            );
                         }
+                        fclose($handle);
+
+                        return $total;
                     }
-                }
+
+                }, $tokenCount);
+
+            if (! $this->limit >= $balanceCount + $claimCount + $tokenCount) {
+                $fail($this->maxTokenSupplyMessage)->translate(['limit' => $this->limit]);
             }
         }
     }
