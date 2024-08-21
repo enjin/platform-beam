@@ -78,7 +78,7 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
                     fclose($handle);
                 });
 
-            [$integers, $ranges] = collect($tokens)->partition(fn ($val) => $this->integerRange($val) === false);
+            [$integers, $ranges] = collect($tokens)->unique()->partition(fn ($val) => $this->integerRange($val) === false);
 
             $createTokenTotal = 0;
             if ($integers->count()) {
