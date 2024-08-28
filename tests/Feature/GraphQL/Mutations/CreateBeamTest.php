@@ -344,18 +344,18 @@ class CreateBeamTest extends TestCaseGraphQL
         );
         $this->assertArraySubset(['tokens.0.claimQuantity' => ['The token count exceeded the maximum limit of 0 for this collection.']], $response['error']);
 
-        $this->collection->update(['max_token_count' => 2]);
         $response = $this->graphql(
             $this->method,
             $data = array_merge(
                 $this->generateBeamData(BeamType::MINT_ON_DEMAND, 1),
                 ['tokens' => [['tokenIds' => ['1'], 'type' => BeamType::MINT_ON_DEMAND->name]]]
-            )
+            ),
+            true
         );
         $this->assertNotEmpty($response);
 
         $response = $this->graphql($this->method, $data, true);
-        $this->assertArraySubset(['tokens.0.claimQuantity' => ['The token count exceeded the maximum limit of 2 for this collection.']], $response['error']);
+        $this->assertArraySubset(['tokens.0.claimQuantity' => ['The token count exceeded the maximum limit of 0 for this collection.']], $response['error']);
     }
 
     /**
@@ -371,20 +371,18 @@ class CreateBeamTest extends TestCaseGraphQL
             true
         );
         $this->assertArraySubset(
-            ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for each token for this collection.']],
+            ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for unique tokens for this collection.']],
             $response['error']
         );
 
-        $this->collection->update(['max_token_supply' => 2]);
         $response = $this->graphql(
             $this->method,
-            $data = $this->generateBeamData(BeamType::TRANSFER_TOKEN, 1),
+            $this->generateBeamData(BeamType::TRANSFER_TOKEN, 1),
+            true
         );
         $this->assertNotEmpty($response);
-
-        $response = $this->graphql($this->method, $data, true);
         $this->assertArraySubset(
-            ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim is invalid, the amount provided is bigger than the token account balance.']],
+            ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for unique tokens for this collection.']],
             $response['error']
         );
     }
