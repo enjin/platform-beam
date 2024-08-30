@@ -59,7 +59,8 @@ class BeamServiceProvider extends PackageServiceProvider
         Event::listen(TransactionUpdated::class, UpdateClaimStatus::class);
         Event::listen(TokenBurned::class, RemoveClaimToken::class);
         Event::listen(TokenDestroyed::class, RemoveClaimToken::class);
-        Event::listen(TokenTransferred::class, RemoveClaimToken::class);
+        // TODO: Uncomment this line after improving the RemoveClaimToken listener
+        // Event::listen(TokenTransferred::class, RemoveClaimToken::class);
         Event::listen(CollectionFrozen::class, PauseBeam::class);
         Event::listen(CollectionThawed::class, UnpauseBeam::class);
         Event::listen(CollectionDestroyed::class, ExpireBeam::class);
