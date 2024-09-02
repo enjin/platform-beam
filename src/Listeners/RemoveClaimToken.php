@@ -38,7 +38,7 @@ class RemoveClaimToken implements ShouldQueue
                 ->delete();
 
             Beam::whereIn('id', $beamsToDecrement)
-                ->get(['id,code'])
+                ->get(['id', 'code'])
                 ->each(fn ($beam) => Cache::decrement(BeamService::key($beam->code)));
         }
 
