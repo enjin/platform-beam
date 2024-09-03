@@ -18,30 +18,30 @@ class RemoveClaimToken implements ShouldQueue
      */
     public function handle(PlatformBroadcastEvent $event): void
     {
-        $collection = Cache::remember(
+        $collectionId = Cache::remember(
             'collection:' . $event->broadcastData['collectionId'],
             30,
-            fn () => Collection::where('collection_chain_id', $event->broadcastData['collectionId'])->first(['id'])
+            fn () => Collection::where('collection_chain_id', $event->broadcastData['collectionId'])->value('id')
         );
 
-        if (!$collection) {
+        if (!$collectionId) {
             return;
         }
 
-        if (Token::where('collection_id', $collection->id)
+        if (Token::where('collection_id', $collectionId)
             ->where('token_chain_id', $event->broadcastData['tokenId'])
             ->first()
             ?->nonFungible
         ) {
             $beamsToDecrement = BeamClaim::where('token_chain_id', $event->broadcastData['tokenId'])
-                ->where('collection_id', $collection->id)
+                ->where('collection_id', $collectionId)
                 ->selectRaw('beam_id, count(*) total')
                 ->claimable()
                 ->groupBy('beam_id')
                 ->pluck('total', 'beam_id');
 
             BeamClaim::where('token_chain_id', $event->broadcastData['tokenId'])
-                ->where('collection_id', $collection->id)
+                ->where('collection_id', $collectionId)
                 ->claimable()
                 ->delete();
 
