@@ -49,6 +49,12 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
          * For example, if the maximum token count is 10 and the maximum token supply is 10,
          * the total circulating supply must not exceed 100.
          */
+        if (!Arr::get($this->data, 'tokens')) {
+            return;
+        }
+
+
+
         if ($this->collectionId
             && ($collection = Collection::firstWhere(['collection_chain_id' => $this->collectionId]))
             && ! is_null($this->limit = $collection->max_token_supply)
