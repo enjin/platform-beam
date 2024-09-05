@@ -47,7 +47,7 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
          */
         if ($this->collectionId
             && ($collection = Collection::withCount('tokens')->firstWhere(['collection_chain_id' => $this->collectionId]))
-            && ! is_null($this->limit = $collection->max_token_count)
+            && !is_null($this->limit = $collection->max_token_count)
         ) {
             if ($this->limit == 0) {
                 $fail('enjin-platform-beam::validation.max_token_count')->translate(['limit' => $this->limit]);
@@ -77,7 +77,7 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
                 ->map(function ($data) use ($tokens) {
                     $handle = fopen($data['tokenIdDataUpload']->getPathname(), 'r');
                     while (($line = fgets($handle)) !== false) {
-                        if (! $this->tokenIdExists($tokens->all(), $tokenId = trim($line))) {
+                        if (!$this->tokenIdExists($tokens->all(), $tokenId = trim($line))) {
                             $tokens->push($tokenId);
                         }
                     }

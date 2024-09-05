@@ -84,7 +84,6 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
             $tokenCount = 0;
             $tokenCount = collect($this->data['tokens'])
                 ->reduce(function ($carry, $token) {
-
                     if (Arr::get($token, 'tokenIds')) {
                         return collect($token['tokenIds'])->reduce(function ($val, $tokenId) use ($token) {
                             $range = $this->integerRange($tokenId);
@@ -116,7 +115,6 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
 
                         return $total;
                     }
-
                 }, $tokenCount);
 
             if ($this->limit < $balanceCount + $claimCount + $tokenCount) {
