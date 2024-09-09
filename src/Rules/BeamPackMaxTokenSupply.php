@@ -5,12 +5,8 @@ namespace Enjin\Platform\Beam\Rules;
 use Closure;
 use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Models\BeamClaim;
-use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Models\Collection;
 use Enjin\Platform\Models\TokenAccount;
-use Enjin\Platform\Rules\Traits\HasDataAwareRule;
-use Illuminate\Contracts\Validation\DataAwareRule;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Support\Arr;
 
 class BeamPackMaxTokenSupply extends MaxTokenSupply
