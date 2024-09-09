@@ -39,6 +39,10 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
          * The sum of all unique tokens (including existing tokens, tokens in beams, and tokens to be created)
          * must not exceed the collection's maximum token count.
          */
+        if (!Arr::get($this->data, 'tokens')) {
+            return;
+        }
+
         if ($this->collectionId
             && ($collection = Collection::withCount('tokens')->firstWhere(['collection_chain_id' => $this->collectionId]))
             && ! is_null($this->limit = $collection->max_token_count)

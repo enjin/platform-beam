@@ -316,7 +316,7 @@ class UpdateBeamTest extends TestCaseGraphQL
         );
         $response = $this->graphql($this->method, $updates, true);
         $this->assertArraySubset(
-            ['tokens.0.tokenIds' => ['The tokens.0.tokenIds exists in the specified collection.']],
+            ['tokens.0.tokenIds' => ['The tokens.0.tokenIds already exist in beam.']],
             $response['error']
         );
     }
