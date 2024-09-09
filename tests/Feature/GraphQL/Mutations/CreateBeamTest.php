@@ -537,11 +537,11 @@ class CreateBeamTest extends TestCaseGraphQL
             $response['error']
         );
 
-        // $response = $this->graphql($this->method, $this->generateBeamPackData(), true);
-        // $this->assertArraySubset(
-        //     ['packs.0.tokens.0.tokenQuantityPerClaim' => ['The packs.0.tokens.0.tokenQuantityPerClaim is invalid, the amount provided is bigger than the token account balance.']],
-        //     $response['error']
-        // );
+        $response = $this->graphql($this->method, $this->generateBeamPackData(), true);
+        $this->assertArraySubset(
+            ['packs.0.tokens.0.tokenQuantityPerClaim' => ['The packs.0.tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for unique tokens for this collection.']],
+            $response['error']
+        );
     }
 
     /**

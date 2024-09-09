@@ -4,7 +4,7 @@ namespace Enjin\Platform\Beam\Rules;
 
 use Illuminate\Support\Arr;
 
-class BeamPackMaxTokenSupply extends MaxTokenSupply
+class BeamPackMaxTokenCount extends MaxTokenCount
 {
     protected function getInputTokens(): array
     {

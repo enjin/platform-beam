@@ -49,7 +49,7 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
          * For example, if the maximum token count is 10 and the maximum token supply is 10,
          * the total circulating supply must not exceed 100.
          */
-        if (!Arr::get($this->data, 'tokens')) {
+        if (!$inputTokens = $this->getInputTokens()) {
             return;
         }
 
@@ -81,7 +81,7 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
                 ->sum('quantity');
 
             $tokenCount = 0;
-            $tokenCount = collect($this->data['tokens'])
+            $tokenCount = collect($inputTokens)
                 ->reduce(function ($carry, $token) {
 
                     if (Arr::get($token, 'tokenIds')) {
@@ -122,5 +122,10 @@ class MaxTokenSupply implements DataAwareRule, ValidationRule
                 $fail($this->maxTokenSupplyMessage)->translate(['limit' => $this->limit]);
             }
         }
+    }
+
+    protected function getInputTokens(): array
+    {
+        return Arr::get($this->data, 'tokens', []);
     }
 }

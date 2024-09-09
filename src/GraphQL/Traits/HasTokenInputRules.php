@@ -14,6 +14,8 @@ use Enjin\Platform\Rules\DistinctAttributes;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Rule;
 use Enjin\Platform\Beam\Rules\BeamPackExistInBeam;
+use Enjin\Platform\Beam\Rules\BeamPackMaxTokenCount;
+use Enjin\Platform\Beam\Rules\BeamPackMaxTokenSupply;
 
 trait HasTokenInputRules
 {
@@ -152,16 +154,17 @@ trait HasTokenInputRules
                 'filled',
                 'integer',
                 'min:1',
-                new MaxTokenSupply($collectionId),
+                new BeamPackMaxTokenSupply($collectionId),
             ],
             'packs.*.tokens.*.claimQuantity' => [
                 'prohibited',
             ],
-            'packs.claimQuantity' => [
+            'packs.*.claimQuantity' => [
                 'bail',
                 'integer',
                 'min:1',
                 'max:1000',
+                new BeamPackMaxTokenCount($collectionId),
             ],
         ];
     }
