@@ -68,7 +68,7 @@ class TokensDoNotExistInBeam implements DataAwareRule, ValidationRule
                     collections.max_token_supply = '1'
                     OR (collections.force_single_mint is true AND tokens.supply = '1')
                     OR (tokens.cap='" . TokenMintCapType::SUPPLY->name . "' AND tokens.cap_supply = '1')
-                    OR (tokens.cap='" . TokenMintCapType::SINGLE_MINT->name . "' AND tokens.supply = '1')
+                    OR (tokens.cap='" . TokenMintCapType::COLLAPSING_SUPPLY->name . "' AND tokens.supply = '1')
                 )
             ")->when($beam, fn ($query) => $query->where('beam_claims.beam_id', $beam->id));
     }
