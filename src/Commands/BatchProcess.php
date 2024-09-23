@@ -13,6 +13,7 @@ use Enjin\Platform\Enums\Substrate\TokenMintCapType;
 use Enjin\Platform\GraphQL\Schemas\Primary\Substrate\Mutations\BatchMintMutation;
 use Enjin\Platform\Models\Token;
 use Enjin\Platform\Services\Blockchain\Implementations\Substrate;
+use Enjin\Platform\Services\Database\CollectionService;
 use Enjin\Platform\Services\Database\TransactionService;
 use Enjin\Platform\Services\Serialization\Interfaces\SerializationServiceInterface;
 use Enjin\Platform\Support\Account;
@@ -153,15 +154,18 @@ class BatchProcess extends Command
                     $params[$collectionId]['beamId'] = $claim->beam_id;
 
                     if ($type == BeamType::TRANSFER_TOKEN) {
+                        $daemon = Account::daemonPublicKey();
                         $params[$collectionId]['recipients'][] = [
                             'accountId' => $claim->wallet_public_key,
                             'params' => $this->substrate->getTransferParams([
                                 'tokenId' => ['integer' => $claim->token_chain_id],
                                 'amount' => $claim->quantity,
                                 'keepAlive' => false,
-                                'source' => Account::daemonPublicKey() !== $claim->collection->owner->public_key
-                                    ? $claim->collection->owner->public_key
-                                    : null,
+                                'source' => match(true) {
+                                    resolve(CollectionService::class)->approvalExistsInCollection($collectionId, $daemon) => $daemon,
+                                    $daemon !== $claim->collection->owner->public_key => $claim->collection->owner->public_key,
+                                    default => null
+                                },
                             ])->toEncodable(),
                         ];
                     } else {
