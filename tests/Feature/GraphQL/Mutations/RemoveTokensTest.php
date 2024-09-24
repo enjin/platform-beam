@@ -31,11 +31,42 @@ class RemoveTokensTest extends TestCaseGraphQL
         $this->assertTrue($response);
         Event::assertDispatched(TokensRemoved::class);
 
-        Event::fake();
+
         $claim = $this->claims->shift();
         $response = $this->graphql($this->method, [
             'code' => $this->beam->code,
             'tokenIds' => ["{$claim->token_chain_id}..{$claim->token_chain_id}"],
+        ]);
+        $this->assertTrue($response);
+        Event::assertDispatched(TokensRemoved::class);
+
+        $this->seedBeamPack(3);
+        $claim = $this->claims->shift();
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'packs' => [
+                ['id' => $claim->beam_pack_id, 'tokenIds' => [$claim->token_chain_id]],
+            ],
+        ]);
+        $this->assertTrue($response);
+        Event::assertDispatched(TokensRemoved::class);
+
+        $claim = $this->claims->shift();
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'packs' => [
+                ['id' => $claim->beam_pack_id, 'tokenIds' => ["{$claim->token_chain_id}..{$claim->token_chain_id}"]],
+            ],
+        ]);
+        $this->assertTrue($response);
+        Event::assertDispatched(TokensRemoved::class);
+
+        $claim = $this->claims->shift();
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'packs' => [
+                ['id' => $claim->beam_pack_id],
+            ],
         ]);
         $this->assertTrue($response);
         Event::assertDispatched(TokensRemoved::class);
@@ -70,7 +101,7 @@ class RemoveTokensTest extends TestCaseGraphQL
             'tokenIds' => null,
         ], true);
         $this->assertEquals(
-            'Variable "$tokenIds" of non-null type "[IntegerRangeString!]!" must not be null.',
+            ['tokenIds' => ['The token ids field is required.']],
             $response['error']
         );
 
@@ -79,7 +110,7 @@ class RemoveTokensTest extends TestCaseGraphQL
             'tokenIds' => [],
         ], true);
         $this->assertArraySubset(
-            ['tokenIds' => ['The token ids field must have at least 1 items.']],
+            ['tokenIds' => ['The token ids field is required.']],
             $response['error']
         );
 
@@ -140,5 +171,37 @@ class RemoveTokensTest extends TestCaseGraphQL
             ['tokenIds.0' => ["The tokenIds.0 doesn't exist in beam."]],
             $response['error']
         );
+
+        $this->seedBeamPack();
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'packs' => [],
+        ], true);
+        $this->assertArraySubset(
+            ['packs' => ['The packs field is required.']],
+            $response['error']
+        );
+
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'packs' => [['tokens' => null]],
+        ], true);
+        $this->assertEquals(
+            'Variable "$packs" got invalid value {"tokens":null} at "packs[0]"; Field "id" of required type "Int!" was not provided.',
+            $response['error']
+        );
+
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'packs' => [['id' => 100000, 'tokenIds' => ['10000']]],
+        ], true);
+        $this->assertArraySubset(
+            [
+                'packs.0.id' => ['The packs.0.id doesn\'t exist in beam.'],
+                'packs.0.tokenIds.0' => ['The packs.0.tokenIds.0 doesn\'t exist in beam pack.'],
+            ],
+            $response['error']
+        );
+
     }
 }
