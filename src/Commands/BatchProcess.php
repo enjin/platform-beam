@@ -31,6 +31,11 @@ class BatchProcess extends Command
     public static $signingAccountResolver;
 
     /**
+     * Adhoc functions before transfer.
+     */
+    public static $beforeTransferCallbacks = [];
+
+    /**
      * The name and signature of the console command.
      *
      * @var string
@@ -154,6 +159,7 @@ class BatchProcess extends Command
                     $params[$collectionId]['beamId'] = $claim->beam_id;
 
                     if ($type == BeamType::TRANSFER_TOKEN) {
+                        $this->runBeforeTransferCallbacks($claim);
                         $daemon = Account::daemonPublicKey();
                         $params[$collectionId]['recipients'][] = [
                             'accountId' => $claim->wallet_public_key,
@@ -162,7 +168,7 @@ class BatchProcess extends Command
                                 'amount' => $claim->quantity,
                                 'keepAlive' => false,
                                 'source' => match(true) {
-                                    resolve(CollectionService::class)->approvalExistsInCollection($collectionId, $daemon) => $daemon,
+                                    resolve(CollectionService::class)->approvalExistsInCollection($collectionId, $daemon, false) => $daemon,
                                     $daemon !== $claim->collection->owner->public_key => $claim->collection->owner->public_key,
                                     default => null
                                 },
@@ -256,5 +262,12 @@ class BatchProcess extends Command
         }
 
         return null;
+    }
+
+    protected function runBeforeTransferCallbacks(mixed $claim)
+    {
+        foreach (static::$beforeTransferCallbacks as $callback) {
+            call_user_func($callback, $claim);
+        }
     }
 }
