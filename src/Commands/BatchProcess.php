@@ -267,7 +267,7 @@ class BatchProcess extends Command
     protected function runBeforeTransferCallbacks(mixed $claim)
     {
         foreach (static::$beforeTransferCallbacks as $callback) {
-            call_user_func($callback, [$claim]);
+            call_user_func($callback, $claim);
         }
     }
 }
