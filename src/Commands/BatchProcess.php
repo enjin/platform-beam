@@ -166,7 +166,7 @@ class BatchProcess extends Command
                                 'tokenId' => ['integer' => $claim->token_chain_id],
                                 'amount' => $claim->quantity,
                                 'keepAlive' => false,
-                                'source' => match(true) {
+                                'source' => match (true) {
                                     resolve(CollectionService::class)->approvalExistsInCollection($collectionId, $daemon, false) => $daemon,
                                     $daemon !== $claim->collection->owner->public_key => $claim->collection->owner->public_key,
                                     default => null
