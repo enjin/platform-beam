@@ -13,7 +13,6 @@ use Enjin\Platform\Enums\Substrate\TokenMintCapType;
 use Enjin\Platform\GraphQL\Schemas\Primary\Substrate\Mutations\BatchMintMutation;
 use Enjin\Platform\Models\Token;
 use Enjin\Platform\Services\Blockchain\Implementations\Substrate;
-use Enjin\Platform\Services\Database\CollectionService;
 use Enjin\Platform\Services\Database\TransactionService;
 use Enjin\Platform\Services\Serialization\Interfaces\SerializationServiceInterface;
 use Enjin\Platform\Support\Account;
@@ -29,11 +28,6 @@ class BatchProcess extends Command
      * The signing account resolver.
      */
     public static $signingAccountResolver;
-
-    /**
-     * Adhoc functions before transfer.
-     */
-    public static $beforeTransferCallbacks = [];
 
     /**
      * The name and signature of the console command.
@@ -158,20 +152,16 @@ class BatchProcess extends Command
 
                     $params[$collectionId]['beamId'] = $claim->beam_id;
 
-                    if ($type == BeamType::TRANSFER_TOKEN) {
-                        $this->runBeforeTransferCallbacks($claim);
-                        $daemon = Account::daemonPublicKey();
+                    if (BeamType::TRANSFER_TOKEN == $type) {
                         $params[$collectionId]['recipients'][] = [
                             'accountId' => $claim->wallet_public_key,
                             'params' => $this->substrate->getTransferParams([
                                 'tokenId' => ['integer' => $claim->token_chain_id],
                                 'amount' => $claim->quantity,
                                 'keepAlive' => false,
-                                'source' => match(true) {
-                                    resolve(CollectionService::class)->approvalExistsInCollection($collectionId, $daemon, false) => $daemon,
-                                    $daemon !== $claim->collection->owner->public_key => $claim->collection->owner->public_key,
-                                    default => null
-                                },
+                                'source' => Account::daemonPublicKey() !== $claim->collection->owner->public_key
+                                    ? $claim->collection->owner->public_key
+                                    : null,
                             ])->toEncodable(),
                         ];
                     } else {
@@ -262,12 +252,5 @@ class BatchProcess extends Command
         }
 
         return null;
-    }
-
-    protected function runBeforeTransferCallbacks(mixed $claim)
-    {
-        foreach (static::$beforeTransferCallbacks as $callback) {
-            call_user_func($callback, $claim);
-        }
     }
 }
