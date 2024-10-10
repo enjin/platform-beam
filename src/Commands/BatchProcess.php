@@ -13,7 +13,6 @@ use Enjin\Platform\Enums\Substrate\TokenMintCapType;
 use Enjin\Platform\GraphQL\Schemas\Primary\Substrate\Mutations\BatchMintMutation;
 use Enjin\Platform\Models\Token;
 use Enjin\Platform\Services\Blockchain\Implementations\Substrate;
-use Enjin\Platform\Services\Database\CollectionService;
 use Enjin\Platform\Services\Database\TransactionService;
 use Enjin\Platform\Services\Serialization\Interfaces\SerializationServiceInterface;
 use Enjin\Platform\Support\Account;
@@ -165,7 +164,7 @@ class BatchProcess extends Command
                                 'tokenId' => ['integer' => $claim->token_chain_id],
                                 'amount' => $claim->quantity,
                                 'keepAlive' => false,
-                                'source' => match(true) {
+                                'source' => match (true) {
                                     !empty($claim->beam?->source) => SS58Address::getPublicKey($claim->beam->source),
                                     Account::daemonPublicKey() !== $claim->collection->owner->public_key => $claim->collection->owner->public_key,
                                     default => null,
