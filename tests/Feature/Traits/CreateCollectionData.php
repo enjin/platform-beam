@@ -47,7 +47,7 @@ trait CreateCollectionData
             'owner_wallet_id' => $this->wallet->id,
             'max_token_count' => fake()->numberBetween(1),
             'max_token_supply' => (string) fake()->numberBetween(1),
-            'force_single_mint' => fake()->boolean(),
+            'force_collapsing_supply' => fake()->boolean(),
             'is_frozen' => false,
             'token_count' => '0',
             'attribute_count' => '0',
