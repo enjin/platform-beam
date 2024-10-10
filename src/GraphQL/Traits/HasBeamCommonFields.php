@@ -2,7 +2,6 @@
 
 namespace Enjin\Platform\Beam\GraphQL\Traits;
 
-use Enjin\Platform\Support\SS58Address;
 use Rebing\GraphQL\Support\Facades\GraphQL;
 
 trait HasBeamCommonFields
