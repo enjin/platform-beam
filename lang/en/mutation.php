@@ -15,6 +15,7 @@ return [
     'common.args.quantityPerClaim' => 'The quantity per claim.',
     'common.args.start' => 'The claim period start date.',
     'common.args.type' => 'The beam type.',
+    'common.args.source' => 'The wallet from which the beam asset will be retrieved.',
     'create_beam.args.collectionId' => 'The collection ID.',
     'create_beam.args.tokenIds' => 'The token chain IDs to claim.',
     'create_beam.description' => 'Mutation for creating a beam.',

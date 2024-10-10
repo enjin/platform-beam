@@ -9,6 +9,7 @@ use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\GraphQL\Schemas\Traits\HasAuthorizableFields;
 use Enjin\Platform\GraphQL\Types\Pagination\ConnectionInput;
+use Enjin\Platform\Support\SS58Address;
 use Enjin\Platform\Traits\HasSelectFields;
 use Illuminate\Pagination\Cursor;
 use Illuminate\Pagination\CursorPaginator;
@@ -48,7 +49,15 @@ class BeamType extends Type
                 'type' => GraphQL::type('String!'),
                 'description' => __('enjin-platform-beam::mutation.claim_beam.args.code'),
             ],
-            ...$this->getCommonFields(),
+            ...$this->getCommonFields(['source']),
+            'source' => [
+                'type' => GraphQL::type('Account'),
+                'description' => __('enjin-platform-beam::mutation.common.args.source'),
+                'resolve' => fn ($beam) => [
+                    'publicKey' => $beam->source ? SS58Address::getPublicKey($beam->source) : '',
+                    'address' => $beam->source ? SS58Address::encode($beam->source) : '',
+                ],
+            ],
             'collection' => [
                 'type' => GraphQL::type('Collection'),
                 'description' => __('enjin-platform-beam::type.beam.field.collection'),

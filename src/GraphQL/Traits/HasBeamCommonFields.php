@@ -2,6 +2,7 @@
 
 namespace Enjin\Platform\Beam\GraphQL\Traits;
 
+use Enjin\Platform\Support\SS58Address;
 use Rebing\GraphQL\Support\Facades\GraphQL;
 
 trait HasBeamCommonFields
@@ -32,6 +33,10 @@ trait HasBeamCommonFields
             'end' => [
                 'type' => GraphQL::type('DateTime' . $required),
                 'description' => __('enjin-platform-beam::mutation.common.args.end'),
+            ],
+            'source' => [
+                'type' => GraphQL::type('String'),
+                'description' => __('enjin-platform-beam::mutation.common.args.source'),
             ],
         ];
 
