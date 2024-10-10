@@ -30,11 +30,6 @@ class BatchProcess extends Command
      */
     public static $signingAccountResolver;
     /**
-     * Adhoc functions before transfer.
-     */
-    public static $beforeTransferCallbacks = [];
-
-    /**
      * The name and signature of the console command.
      *
      * @var string
@@ -253,12 +248,5 @@ class BatchProcess extends Command
         }
 
         return null;
-    }
-
-    protected function runBeforeTransferCallbacks(mixed $claim)
-    {
-        foreach (static::$beforeTransferCallbacks as $callback) {
-            call_user_func($callback, $claim);
-        }
     }
 }
