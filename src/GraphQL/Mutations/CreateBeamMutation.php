@@ -16,6 +16,7 @@ use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Models\Collection;
 use Enjin\Platform\Rules\DistinctAttributes;
 use Enjin\Platform\Rules\IsCollectionOwnerOrApproved;
+use Enjin\Platform\Rules\ValidSubstrateAddress;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Illuminate\Support\Arr;
@@ -160,6 +161,10 @@ class CreateBeamMutation extends Mutation
                 new MaxTokenCount($args['collectionId']),
             ],
             'flags.*.flag' => ['required', 'distinct'],
+            'source' => [
+                'nullable',
+                new ValidSubstrateAddress(),
+            ],
         ];
     }
 }

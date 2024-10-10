@@ -45,6 +45,7 @@ class Beam extends BaseModel
         'end',
         'collection_chain_id',
         'flags_mask',
+        'source',
     ];
 
     /**
