@@ -90,7 +90,7 @@ class EventTest extends TestCaseGraphQL
         event($event = new TokenDestroyed($tokenDestroyed));
         $this->collection->update([
             'max_token_supply' => 100,
-            'force_single_mint' => false,
+            'force_collapsing_supply' => false,
         ]);
         BeamClaim::where('beam_id', $this->beam->id)->first()->update([
             'collection_id' => $this->collection->id,
