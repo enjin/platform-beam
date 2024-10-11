@@ -2,7 +2,6 @@
 
 namespace Enjin\Platform\Beam\Tests\Feature\Traits;
 
-use Enjin\Platform\Enums\Substrate\TokenMintCapType;
 use Enjin\Platform\Models\Collection;
 use Enjin\Platform\Models\Token;
 use Enjin\Platform\Models\TokenAccount;
