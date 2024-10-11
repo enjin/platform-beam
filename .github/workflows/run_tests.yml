@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        php: [8.2]
+        php: [8.3]
 
     name: PHP ${{ matrix.php }}
 
@@ -66,7 +66,7 @@ jobs:
 
       - name: Run Laravel Pint
         run: |
-          ./vendor/bin/pint --test     
+          ./vendor/bin/pint --test
 
       - name: Execute tests
         run: |
