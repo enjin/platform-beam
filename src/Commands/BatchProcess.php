@@ -217,7 +217,7 @@ class BatchProcess extends Command
                             continueOnFailure: true
                         ));
                     } else {
-                        $encodedData = $this->serialize->encode(isRunningLatest() ? $method . 'V1010' : $method, [
+                        $encodedData = $this->serialize->encode($method, [
                             'collectionId' => $param['collectionId'],
                             'recipients' => $param['recipients'],
                         ]);
