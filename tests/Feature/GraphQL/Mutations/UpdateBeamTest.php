@@ -214,7 +214,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             'token_chain_id' => (string) fake()->unique()->numberBetween(2000),
             'supply' => (string) $supply = 1,
             'cap' => TokenMintCapType::COLLAPSING_SUPPLY->name,
-            'cap_supply' => null,
+            'cap_supply' => 1,
             'is_frozen' => false,
             'unit_price' => (string) $unitPrice = fake()->numberBetween(1 / $supply * 10 ** 17),
             'mint_deposit' => (string) ($unitPrice * $supply),
