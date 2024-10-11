@@ -60,7 +60,7 @@ trait CreateCollectionData
             'collection_id' => $this->collection->id,
             'token_chain_id' => (string) fake()->unique()->numberBetween(2000),
             'supply' => (string) $supply = fake()->numberBetween(1),
-            'cap' => TokenMintCapType::COLLAPSING_SUPPLY->name,
+            'cap' => null,
             'cap_supply' => null,
             'is_frozen' => false,
             'unit_price' => (string) $unitPrice = fake()->numberBetween(1 / $supply * 10 ** 17),
