@@ -186,7 +186,7 @@ class BatchProcess extends Command
                                 'initialSupply' => $this->tokenCreatedCache[$key] ? null : $claim->quantity,
                                 'amount' => $this->tokenCreatedCache[$key] ? $claim->quantity : null,
                                 'cap' => [
-                                    'type' => $claim->quantity == 1 || $claim->collection?->force_collapsing_supply ? TokenMintCapType::COLLAPSING_SUPPLY->name : TokenMintCapType::SUPPLY->name,
+                                    'type' => $claim->quantity == 1 || $claim->collection?->force_collapsing_supply ? TokenMintCapType::COLLAPSING_SUPPLY->name : null,
                                     'amount' => null,
                                 ],
                                 'listingForbidden' => false,
