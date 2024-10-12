@@ -193,6 +193,9 @@ class BatchProcess extends Command
                                 'behaviour' => null,
                                 'unitPrice' => config('enjin-platform-beam.unit_price'),
                                 'attributes' => $claim->attributes ?: [],
+                                'accountDepositCount' => 0,
+                                'infusion' => 0,
+                                'anyoneCanInfuse' => false,
                             ]),
                         ];
 

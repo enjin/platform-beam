@@ -45,18 +45,20 @@ class EventTest extends TestCaseGraphQL
     {
         Event::fake();
 
-        $collectionCreated = CollectionDestroyedPolkadart::fromChain($this->mockPolkadartEvent('MultiTokens', 'CollectionDestroyed', [
-            'collection_id' => $this->collection->id,
-            'caller' => 'd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d',
+        $collectionId = $this->collection->collection_chain_id;
+
+        $collectionDestroyed = CollectionDestroyedPolkadart::fromChain($this->mockPolkadartEvent('MultiTokens', 'CollectionDestroyed', [
+            'T::CollectionId' => $collectionId,
+            'T::AccountId' => 'd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d',
         ]));
 
-        event($event = new CollectionDestroyed($collectionCreated));
+        event($event = new CollectionDestroyed($collectionDestroyed));
         Event::assertListening(CollectionDestroyed::class, ExpireBeam::class);
         resolve(ExpireBeam::class)->handle($event);
 
         $collectionFrozen = CollectionFrozenPolkadart::fromChain($this->mockPolkadartEvent('MultiTokens', 'Frozen', [
-            'collection_id' => $this->collection->collection_chain_id,
-            'freeze_type' => 'Collection',
+            'FreezeOf<T>.collection_id' => $collectionId,
+            'FreezeOf<T>.freeze_type' => 'Collection',
         ]));
 
         event($event = new CollectionFrozen($collectionFrozen));
@@ -64,8 +66,8 @@ class EventTest extends TestCaseGraphQL
         resolve(PauseBeam::class)->handle($event);
 
         $collectionThawed = CollectionThawedPolkadart::fromChain($this->mockPolkadartEvent('MultiTokens', 'Thawed', [
-            'collection_id' => $this->collection->collection_chain_id,
-            'freeze_type' => 'Collection',
+            'FreezeOf<T>.collection_id' => $collectionId,
+            'FreezeOf<T>.freeze_type' => 'Collection',
         ]));
 
         event($event = new CollectionThawed($collectionThawed));
@@ -82,9 +84,9 @@ class EventTest extends TestCaseGraphQL
         resolve(UpdateClaimStatus::class)->handle($event);
 
         $tokenDestroyed = TokenDestroyedPolkadart::fromChain($this->mockPolkadartEvent('MultiTokens', 'TokenDestroyed', [
-            'collection_id' => $this->collection->collection_chain_id,
-            'token_id' => $this->token->token_chain_id,
-            'caller' => $this->wallet->public_key,
+            'T::CollectionId' => $collectionId,
+            'T::TokenId' => $this->token->token_chain_id,
+            'T::AccountId' => $this->wallet->public_key,
         ]));
 
         event($event = new TokenDestroyed($tokenDestroyed));

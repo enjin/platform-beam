@@ -198,7 +198,7 @@ CREATE TABLE `collections` (
   `owner_wallet_id` bigint unsigned NOT NULL,
   `max_token_count` varchar(255) DEFAULT NULL,
   `max_token_supply` varchar(255) DEFAULT NULL,
-  `force_collapsing_supply` tinyint(1) NOT NULL DEFAULT '0',
+  `force_single_mint` tinyint(1) NOT NULL DEFAULT '0',
   `royalty_wallet_id` bigint unsigned DEFAULT NULL,
   `royalty_percentage` double(8,2) DEFAULT NULL,
   `is_frozen` tinyint(1) NOT NULL DEFAULT '0',
