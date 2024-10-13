@@ -152,7 +152,7 @@ class BatchProcess extends Command
 
                     $params[$collectionId]['beamId'] = $claim->beam_id;
 
-                    if (BeamType::TRANSFER_TOKEN == $type) {
+                    if ($type == BeamType::TRANSFER_TOKEN) {
                         $params[$collectionId]['recipients'][] = [
                             'accountId' => $claim->wallet_public_key,
                             'params' => $this->substrate->getTransferParams([
@@ -186,13 +186,16 @@ class BatchProcess extends Command
                                 'initialSupply' => $this->tokenCreatedCache[$key] ? null : $claim->quantity,
                                 'amount' => $this->tokenCreatedCache[$key] ? $claim->quantity : null,
                                 'cap' => [
-                                    'type' => $claim->quantity == 1 || $claim->collection?->force_single_mint ? TokenMintCapType::SINGLE_MINT->name : TokenMintCapType::INFINITE->name,
+                                    'type' => $claim->quantity == 1 || $claim->collection?->force_collapsing_supply ? TokenMintCapType::COLLAPSING_SUPPLY->name : null,
                                     'amount' => null,
                                 ],
                                 'listingForbidden' => false,
                                 'behaviour' => null,
                                 'unitPrice' => config('enjin-platform-beam.unit_price'),
                                 'attributes' => $claim->attributes ?: [],
+                                'accountDepositCount' => 0,
+                                'infusion' => 0,
+                                'anyoneCanInfuse' => false,
                             ]),
                         ];
 
@@ -214,7 +217,7 @@ class BatchProcess extends Command
                             continueOnFailure: true
                         ));
                     } else {
-                        $encodedData = $this->serialize->encode(isRunningLatest() ? $method . 'V1010' : $method, [
+                        $encodedData = $this->serialize->encode($method, [
                             'collectionId' => $param['collectionId'],
                             'recipients' => $param['recipients'],
                         ]);
