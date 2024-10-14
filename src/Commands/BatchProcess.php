@@ -16,6 +16,7 @@ use Enjin\Platform\Services\Blockchain\Implementations\Substrate;
 use Enjin\Platform\Services\Database\TransactionService;
 use Enjin\Platform\Services\Serialization\Interfaces\SerializationServiceInterface;
 use Enjin\Platform\Support\Account;
+use Enjin\Platform\Support\SS58Address;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
@@ -159,9 +160,11 @@ class BatchProcess extends Command
                                 'tokenId' => ['integer' => $claim->token_chain_id],
                                 'amount' => $claim->quantity,
                                 'keepAlive' => false,
-                                'source' => Account::daemonPublicKey() !== $claim->collection->owner->public_key
-                                    ? $claim->collection->owner->public_key
-                                    : null,
+                                'source' => match (true) {
+                                    !empty($claim->beam?->source) => SS58Address::getPublicKey($claim->beam->source),
+                                    Account::daemonPublicKey() !== $claim->collection->owner->public_key => $claim->collection->owner->public_key,
+                                    default => null,
+                                },
                             ])->toEncodable(),
                         ];
                     } else {
