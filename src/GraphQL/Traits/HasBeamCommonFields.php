@@ -33,6 +33,10 @@ trait HasBeamCommonFields
                 'type' => GraphQL::type('DateTime' . $required),
                 'description' => __('enjin-platform-beam::mutation.common.args.end'),
             ],
+            'source' => [
+                'type' => GraphQL::type('String'),
+                'description' => __('enjin-platform-beam::mutation.common.args.source'),
+            ],
         ];
 
         return array_diff_key($fields, array_flip($exclude));

@@ -3,10 +3,10 @@ name: Dependencies Security Checker
 on:
   pull_request:
     paths-ignore:
-      - '**.md'
+      - "**.md"
   push:
     paths-ignore:
-      - '**.md'
+      - "**.md"
 
 jobs:
   security-checker:
@@ -22,15 +22,15 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.1
+          php-version: 8.3
           tools: composer:v2
           coverage: none
 
       - name: Checkout sensiolabs security-checker code
         uses: actions/checkout@v4
         with:
-          repository: 'sensiolabs/security-checker'
-          path: 'security-checker'
+          repository: "sensiolabs/security-checker"
+          path: "security-checker"
 
       - name: Install dependencies
         run: |

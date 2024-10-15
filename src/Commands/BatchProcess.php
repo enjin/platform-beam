@@ -16,6 +16,7 @@ use Enjin\Platform\Services\Blockchain\Implementations\Substrate;
 use Enjin\Platform\Services\Database\TransactionService;
 use Enjin\Platform\Services\Serialization\Interfaces\SerializationServiceInterface;
 use Enjin\Platform\Support\Account;
+use Enjin\Platform\Support\SS58Address;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
@@ -159,9 +160,11 @@ class BatchProcess extends Command
                                 'tokenId' => ['integer' => $claim->token_chain_id],
                                 'amount' => $claim->quantity,
                                 'keepAlive' => false,
-                                'source' => Account::daemonPublicKey() !== $claim->collection->owner->public_key
-                                    ? $claim->collection->owner->public_key
-                                    : null,
+                                'source' => match (true) {
+                                    !empty($claim->beam?->source) => SS58Address::getPublicKey($claim->beam->source),
+                                    Account::daemonPublicKey() !== $claim->collection->owner->public_key => $claim->collection->owner->public_key,
+                                    default => null,
+                                },
                             ])->toEncodable(),
                         ];
                     } else {
@@ -186,13 +189,16 @@ class BatchProcess extends Command
                                 'initialSupply' => $this->tokenCreatedCache[$key] ? null : $claim->quantity,
                                 'amount' => $this->tokenCreatedCache[$key] ? $claim->quantity : null,
                                 'cap' => [
-                                    'type' => $claim->quantity == 1 || $claim->collection?->force_single_mint ? TokenMintCapType::SINGLE_MINT->name : TokenMintCapType::INFINITE->name,
+                                    'type' => $claim->quantity == 1 || $claim->collection?->force_collapsing_supply ? TokenMintCapType::COLLAPSING_SUPPLY->name : null,
                                     'amount' => null,
                                 ],
                                 'listingForbidden' => false,
                                 'behaviour' => null,
                                 'unitPrice' => config('enjin-platform-beam.unit_price'),
                                 'attributes' => $claim->attributes ?: [],
+                                'accountDepositCount' => 0,
+                                'infusion' => 0,
+                                'anyoneCanInfuse' => false,
                             ]),
                         ];
 
@@ -214,7 +220,7 @@ class BatchProcess extends Command
                             continueOnFailure: true
                         ));
                     } else {
-                        $encodedData = $this->serialize->encode(isRunningLatest() ? $method . 'V1010' : $method, [
+                        $encodedData = $this->serialize->encode($method, [
                             'collectionId' => $param['collectionId'],
                             'recipients' => $param['recipients'],
                         ]);

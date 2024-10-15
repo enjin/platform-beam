@@ -8,6 +8,7 @@ use Enjin\Platform\Beam\GraphQL\Traits\HasTokenInputRules;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Models\Collection;
 use Enjin\Platform\Rules\IsCollectionOwnerOrApproved;
+use Enjin\Platform\Rules\ValidSubstrateAddress;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Illuminate\Support\Arr;
@@ -106,6 +107,10 @@ class CreateBeamMutation extends Mutation
             'flags.*.flag' => ['required', 'distinct'],
             ...$this->tokenRules($args, $args['collectionId'], true),
             ...$this->packTokenRules($args, $args['collectionId'], true),
+            'source' => [
+                'nullable',
+                new ValidSubstrateAddress(),
+            ],
         ];
     }
 }
