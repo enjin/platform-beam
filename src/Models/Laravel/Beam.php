@@ -45,6 +45,7 @@ class Beam extends BaseModel
         'end',
         'collection_chain_id',
         'flags_mask',
+        'is_pack',
         'source',
     ];
 
@@ -111,6 +112,14 @@ class Beam extends BaseModel
         });
 
         parent::boot();
+    }
+
+    /**
+     * The beam pack' relationship.
+     */
+    public function packs(): HasMany
+    {
+        return $this->hasMany(BeamPack::class, 'beam_id');
     }
 
     /**
