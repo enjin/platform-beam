@@ -1,0 +1,70 @@
+name: Static Application Security Testing
+
+on:
+  pull_request:
+  push:
+    paths-ignore:
+      - "**.md"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_DATABASE: platform
+          MYSQL_ROOT_PASSWORD: password
+        ports:
+          - 33306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: --entrypoint redis-server
+    strategy:
+      fail-fast: true
+      matrix:
+        php: [8.3]
+
+    name: PHP ${{ matrix.php }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, gd, gmp, intl, json, mysql, readline, sodium, bcmath, pcov
+          tools: composer:v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup problem matchers
+        run: |
+          echo "::add-matcher::${{ runner.tool_cache }}/php.json"
+          echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+
+      - name: Install dependencies
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PHP_COMMONS }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          composer install --no-interaction --prefer-dist --no-autoloader --no-dev --no-scripts
+
+      - name: Update packages
+        run: |
+          composer require enjin/platform-core:dev-master --no-update
+          composer update --no-interaction --optimize-autoloader
+          composer build-sr25519
+
+      - name: Run Rector
+        run: |
+          ./vendor/bin/rector process --dry-run
+
+      - name: Run Laravel Pint
+        run: |
+          ./vendor/bin/pint --test
