@@ -48,7 +48,7 @@ jobs:
       - name: Setup GO
         uses: actions/setup-go@v5
         with:
-          go-version: "^1.19"
+          go-version: "^1.23"
 
       - name: Setup problem matchers
         run: |
@@ -60,13 +60,13 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PHP_COMMONS }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          composer install --no-interaction --prefer-dist --optimize-autoloader
-          composer build-sr25519
-          composer dump-autoload
+          composer install --no-interaction --prefer-dist --no-autoloader --no-dev --no-scripts
 
-      - name: Run Laravel Pint
+      - name: Update packages
         run: |
-          ./vendor/bin/pint --test
+          composer require enjin/platform-core:dev-master --no-update
+          composer update --no-interaction --optimize-autoloader
+          composer build-sr25519
 
       - name: Execute tests
         run: |
