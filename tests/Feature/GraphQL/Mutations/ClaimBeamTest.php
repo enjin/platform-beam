@@ -460,60 +460,6 @@ class ClaimBeamTest extends TestCaseGraphQL
         return $signature;
     }
 
-    /**
-     * Get keypair.
-     */
-    protected function getKeyPair(CryptoSignatureType $type = CryptoSignatureType::SR25519): array
-    {
-        if ($type == CryptoSignatureType::SR25519) {
-            $sr = new sr25519();
-            $keypair = $sr->InitKeyPair(bin2hex(sodium_crypto_sign_publickey(sodium_crypto_sign_keypair())));
-            $public = HexConverter::prefix($keypair->publicKey);
-            $private = ''; // not accessible
-        } else {
-            $keypair = sodium_crypto_sign_keypair();
-            $public = HexConverter::prefix(bin2hex(sodium_crypto_sign_publickey($keypair)));
-            $private = sodium_crypto_sign_secretkey($keypair);
-        }
-
-        return [$keypair, SS58Address::encode($public), $private];
-    }
-
-    /**
-     * Generate test for claiming beam.
-     */
-    protected function genericClaimTest(CryptoSignatureType $type = CryptoSignatureType::SR25519, string $singleUseCode = ''): void
-    {
-        [$keypair, $publicKey, $privateKey] = $this->getKeyPair($type);
-
-        $response = $this->graphql('GetBeam', [
-            'code' => $singleUseCode ?: $this->beam->code,
-            'account' => $publicKey,
-        ]);
-        $this->assertNotEmpty($response['message']);
-        if (! $singleUseCode) {
-            $this->assertEquals(1, $this->beam->scans()->count());
-        }
-
-        $message = $response['message']['message'];
-        $signature = $this->signMessage($type, $keypair, $message, $privateKey);
-
-        Queue::fake();
-
-        $response = $this->graphql($this->method, [
-            'code' => $singleUseCode ?: $this->beam->code,
-            'account' => $publicKey,
-            'signature' => $signature,
-            'cryptoSignatureType' => $type->name,
-        ]);
-
-        $this->assertTrue($response);
-
-        Queue::assertPushed(ClaimBeam::class);
-        Event::assertDispatched(BeamClaimPending::class);
-    }
-
-
     public function test_it_can_claim_mint_on_demand_with_frozen_collection()
     {
         $this->seedBeam(1, false, BeamType::MINT_ON_DEMAND);
@@ -610,5 +556,58 @@ class ClaimBeamTest extends TestCaseGraphQL
             $response['error'],
             ['code' => ['There are no more claims available.']]
         );
+    }
+
+    /**
+     * Get keypair.
+     */
+    protected function getKeyPair(CryptoSignatureType $type = CryptoSignatureType::SR25519): array
+    {
+        if ($type == CryptoSignatureType::SR25519) {
+            $sr = new sr25519();
+            $keypair = $sr->InitKeyPair(bin2hex(sodium_crypto_sign_publickey(sodium_crypto_sign_keypair())));
+            $public = HexConverter::prefix($keypair->publicKey);
+            $private = ''; // not accessible
+        } else {
+            $keypair = sodium_crypto_sign_keypair();
+            $public = HexConverter::prefix(bin2hex(sodium_crypto_sign_publickey($keypair)));
+            $private = sodium_crypto_sign_secretkey($keypair);
+        }
+
+        return [$keypair, SS58Address::encode($public), $private];
+    }
+
+    /**
+     * Generate test for claiming beam.
+     */
+    protected function genericClaimTest(CryptoSignatureType $type = CryptoSignatureType::SR25519, string $singleUseCode = ''): void
+    {
+        [$keypair, $publicKey, $privateKey] = $this->getKeyPair($type);
+
+        $response = $this->graphql('GetBeam', [
+            'code' => $singleUseCode ?: $this->beam->code,
+            'account' => $publicKey,
+        ]);
+        $this->assertNotEmpty($response['message']);
+        if (! $singleUseCode) {
+            $this->assertEquals(1, $this->beam->scans()->count());
+        }
+
+        $message = $response['message']['message'];
+        $signature = $this->signMessage($type, $keypair, $message, $privateKey);
+
+        Queue::fake();
+
+        $response = $this->graphql($this->method, [
+            'code' => $singleUseCode ?: $this->beam->code,
+            'account' => $publicKey,
+            'signature' => $signature,
+            'cryptoSignatureType' => $type->name,
+        ]);
+
+        $this->assertTrue($response);
+
+        Queue::assertPushed(ClaimBeam::class);
+        Event::assertDispatched(BeamClaimPending::class);
     }
 }
