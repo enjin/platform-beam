@@ -8,6 +8,7 @@ use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Models\BeamScan;
 use Enjin\Platform\Beam\Services\BatchService;
 use Enjin\Platform\Beam\Services\BeamService;
+use Enjin\Platform\Models\Collection;
 use Enjin\Platform\Services\Database\WalletService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Cache\LockTimeoutException;
@@ -101,9 +102,13 @@ class ClaimBeam implements ShouldQueue
      */
     protected function claimQuery(array $data): Builder
     {
+        $collection = Collection::where('collection_chain_id', Arr::get($data, 'beam.collection_chain_id'))
+            ->first(['id', 'collection_chain_id', 'is_frozen']);
+
         return BeamClaim::where('beam_id', $data['beam']['id'])
             ->claimable()
             ->when($data['code'], fn ($query) => $query->withSingleUseCode($data['code']))
+            ->when($collection?->is_frozen, fn ($query) => $query->where('type', BeamType::MINT_ON_DEMAND->name))
             ->unless($data['code'], fn ($query) => $query->inRandomOrder());
     }
 

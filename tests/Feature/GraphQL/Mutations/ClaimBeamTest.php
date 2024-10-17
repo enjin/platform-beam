@@ -9,6 +9,7 @@ use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Events\BeamClaimPending;
 use Enjin\Platform\Beam\Jobs\ClaimBeam;
+use Enjin\Platform\Beam\Listeners\PauseBeam;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Rules\PassesClaimConditions;
 use Enjin\Platform\Beam\Services\BatchService;
@@ -16,11 +17,14 @@ use Enjin\Platform\Beam\Tests\Feature\GraphQL\TestCaseGraphQL;
 use Enjin\Platform\Beam\Tests\Feature\Traits\CreateBeamData;
 use Enjin\Platform\Beam\Tests\Feature\Traits\SeedBeamData;
 use Enjin\Platform\Enums\Substrate\CryptoSignatureType;
+use Enjin\Platform\Events\Substrate\MultiTokens\CollectionFrozen;
 use Enjin\Platform\Providers\Faker\SubstrateProvider;
 use Enjin\Platform\Services\Database\WalletService;
+use Enjin\Platform\Services\Processor\Substrate\Codec\Polkadart\Events\MultiTokens\Frozen;
 use Enjin\Platform\Support\Account;
 use Enjin\Platform\Support\BitMask;
 use Enjin\Platform\Support\SS58Address;
+use Faker\Generator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
@@ -454,6 +458,104 @@ class ClaimBeamTest extends TestCaseGraphQL
         }
 
         return $signature;
+    }
+
+    public function test_it_can_claim_mint_on_demand_with_frozen_collection()
+    {
+        $this->seedBeam(1, false, BeamType::MINT_ON_DEMAND);
+        $this->collection->update(['is_frozen' => true]);
+        $event = Frozen::fromChain([
+            'phase' => ['ApplyExtrinsic' => 1],
+            'event' => [
+                'MultiTokens' => [
+                    'Frozen' => [
+                        'FreezeOf<T>' => [
+                            'collection_id' => $this->collection->collection_chain_id,
+                            'freeze_type' => ['Collection' => []],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+        resolve(PauseBeam::class)->handle(new CollectionFrozen($event));
+        $this->assertFalse($this->beam->refresh()->hasFlag(BeamFlag::PAUSED));
+
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'account' => app(Generator::class)->public_key(),
+            'signature' => '',
+        ]);
+        $this->assertTrue($response);
+    }
+
+    public function test_it_cannot_claim_transfer_token_with_frozen_collection()
+    {
+        $this->seedBeam(1, false, BeamType::TRANSFER_TOKEN);
+        $this->collection->update(['is_frozen' => true]);
+        $event = Frozen::fromChain([
+            'phase' => ['ApplyExtrinsic' => 1],
+            'event' => [
+                'MultiTokens' => [
+                    'Frozen' => [
+                        'FreezeOf<T>' => [
+                            'collection_id' => $this->collection->collection_chain_id,
+                            'freeze_type' => ['Collection' => []],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+        resolve(PauseBeam::class)->handle(new CollectionFrozen($event));
+        $this->assertTrue($this->beam->refresh()->hasFlag(BeamFlag::PAUSED));
+
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'account' => app(Generator::class)->public_key(),
+            'signature' => '',
+        ], true);
+        $this->assertArraySubset(
+            $response['error'],
+            ['code' => ['There are no more claims available.', 'The beam is paused.']]
+        );
+    }
+
+    public function test_it_can_claim_with_mint_on_demand_and_transfer_token_with_frozen_collection()
+    {
+        $this->seedBeam(2, false, BeamType::MINT_ON_DEMAND);
+        $this->claims->first()->update(['type' => BeamType::TRANSFER_TOKEN->name]);
+        $this->collection->update(['is_frozen' => true]);
+        $event = Frozen::fromChain([
+            'phase' => ['ApplyExtrinsic' => 1],
+            'event' => [
+                'MultiTokens' => [
+                    'Frozen' => [
+                        'FreezeOf<T>' => [
+                            'collection_id' => $this->collection->collection_chain_id,
+                            'freeze_type' => ['Collection' => []],
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+        resolve(PauseBeam::class)->handle(new CollectionFrozen($event));
+        $this->assertFalse($this->beam->refresh()->hasFlag(BeamFlag::PAUSED));
+
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'account' => app(Generator::class)->public_key(),
+            'signature' => '',
+        ]);
+        $this->assertTrue($response);
+
+        $response = $this->graphql($this->method, [
+            'code' => $this->beam->code,
+            'account' => app(Generator::class)->public_key(),
+            'signature' => '',
+        ], true);
+        $this->assertArraySubset(
+            $response['error'],
+            ['code' => ['There are no more claims available.']]
+        );
     }
 
     /**
