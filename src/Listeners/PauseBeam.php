@@ -18,15 +18,11 @@ class PauseBeam implements ShouldQueue
     public function handle(PlatformBroadcastEvent $event): void
     {
         foreach (Beam::where('collection_chain_id', $event->broadcastData['collectionId'])->get() as $beam) {
-            $hasTransfers = BeamClaim::claimable()
-                ->where('type', BeamType::TRANSFER_TOKEN->name)
-                ->where('beam_id', $beam->id)
-                ->exists();
-            $hasMints = BeamClaim::claimable()
+            if (BeamClaim::claimable()
                 ->where('type', BeamType::MINT_ON_DEMAND->name)
                 ->where('beam_id', $beam->id)
-                ->exists();
-            if (($hasMints && !$hasTransfers) || ($hasMints && $hasTransfers)) {
+                ->exists()
+            ) {
                 continue;
             }
 
