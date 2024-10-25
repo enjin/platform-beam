@@ -10,6 +10,7 @@ use Enjin\Platform\Beam\Models\BeamPack;
 use Enjin\Platform\Beam\Models\BeamScan;
 use Enjin\Platform\Beam\Services\BatchService;
 use Enjin\Platform\Beam\Services\BeamService;
+use Enjin\Platform\Models\Collection as CollectionModel;
 use Enjin\Platform\Services\Database\WalletService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Cache\LockTimeoutException;
@@ -110,6 +111,9 @@ class ClaimBeam implements ShouldQueue
      */
     protected function claims(array $data): Collection
     {
+        $collection = CollectionModel::where('collection_chain_id', Arr::get($data, 'beam.collection_chain_id'))
+            ->first(['id', 'collection_chain_id', 'is_frozen']);
+
         return BeamClaim::where('beam_id', $data['beam']['id'])
             ->with(['beam:id,collection_chain_id', 'beamPack:id,beam_id'])
             ->claimable()
@@ -125,6 +129,7 @@ class ClaimBeam implements ShouldQueue
             })
             ->when(!$isPack && $data['code'], fn ($query) => $query->withSingleUseCode($data['code']))
             ->when(!$isPack, fn ($query) => $query->inRandomOrder())
+            ->when($collection?->is_frozen, fn ($query) => $query->where('type', BeamType::MINT_ON_DEMAND->name))
             ->get(['id', 'beam_id', 'type', 'beam_pack_id']);
     }
 
