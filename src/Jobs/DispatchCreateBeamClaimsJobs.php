@@ -26,7 +26,9 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
     public function __construct(
         protected Model $beam,
         protected ?array $tokens
-    ) {}
+    ) {
+        $this->onQueue(config('enjin-platform-beam.queue'));
+    }
 
     /**
      * Execute the job.

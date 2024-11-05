@@ -60,4 +60,14 @@ return [
     |
     */
     'prune_expired_claims' => env('PRUNE_EXPIRED_CLAIMS', 30),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Queue
+    |--------------------------------------------------------------------------
+    |
+    | Here you may set the dedicated queue for this package
+    |
+    */
+    'queue' => env('PLATFORM_BEAM_QUEUE', 'default'),
 ];

@@ -23,4 +23,9 @@ class ExpireBeam implements ShouldQueue
                 Log::info("Expiring beam {$beam->code} because the collection {$beam->collection_chain_id} was deleted.");
             });
     }
+
+    public function viaQueue(): string
+    {
+        return config('enjin-platform-beam.queue');
+    }
 }

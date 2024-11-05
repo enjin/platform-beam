@@ -52,4 +52,9 @@ class UpdateClaimStatus implements ShouldQueue
             }
         }
     }
+
+    public function viaQueue(): string
+    {
+        return config('enjin-platform-beam.queue');
+    }
 }

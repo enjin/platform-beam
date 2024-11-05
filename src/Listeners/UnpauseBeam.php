@@ -27,4 +27,9 @@ class UnpauseBeam implements ShouldQueue
                 Log::info("Pausing beam {$beam->code} cause the collection {$beam->collection_chain_id} was paused.");
             });
     }
+
+    public function viaQueue(): string
+    {
+        return config('enjin-platform-beam.queue');
+    }
 }

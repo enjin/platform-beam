@@ -17,4 +17,9 @@ class UpdateClaimCollectionIds implements ShouldQueue
     {
         $this->beamClaimService->syncCollectionIds();
     }
+
+    public function viaQueue(): string
+    {
+        return config('enjin-platform-beam.queue');
+    }
 }

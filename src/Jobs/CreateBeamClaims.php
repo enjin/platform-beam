@@ -22,7 +22,10 @@ class CreateBeamClaims implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(protected ?Collection $chunk) {}
+    public function __construct(protected ?Collection $chunk)
+    {
+        $this->onQueue(config('enjin-platform-beam.queue'));
+    }
 
     /**
      * Execute the job.

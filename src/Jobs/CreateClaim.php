@@ -21,7 +21,10 @@ class CreateClaim implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(protected ?array $claim) {}
+    public function __construct(protected ?array $claim)
+    {
+        $this->onQueue(config('enjin-platform-beam.queue'));
+    }
 
     /**
      * Execute the job.

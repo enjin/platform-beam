@@ -3,12 +3,15 @@
 namespace Enjin\Platform\Beam\Events;
 
 use Enjin\Platform\Beam\Channels\PlatformBeamChannel;
+use Enjin\Platform\Beam\Traits\HasCustomQueue;
 use Enjin\Platform\Channels\PlatformAppChannel;
 use Enjin\Platform\Events\PlatformBroadcastEvent;
 use Illuminate\Database\Eloquent\Model;
 
 class BeamBatchTransactionCreated extends PlatformBroadcastEvent
 {
+    use HasCustomQueue;
+
     /**
      * Creates a new event instance.
      */

@@ -3,6 +3,7 @@
 namespace Enjin\Platform\Beam\Events;
 
 use Enjin\Platform\Beam\Channels\PlatformBeamChannel;
+use Enjin\Platform\Beam\Traits\HasCustomQueue;
 use Enjin\Platform\Channels\PlatformAppChannel;
 use Enjin\Platform\Events\PlatformBroadcastEvent;
 use Illuminate\Broadcasting\Channel;
@@ -11,6 +12,8 @@ use Illuminate\Support\Arr;
 
 class BeamCreated extends PlatformBroadcastEvent
 {
+    use HasCustomQueue;
+
     /**
      * Create a new event instance.
      */
