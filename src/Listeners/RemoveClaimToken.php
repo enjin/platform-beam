@@ -5,6 +5,7 @@ namespace Enjin\Platform\Beam\Listeners;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Services\BeamService;
+use Enjin\Platform\Beam\Traits\HasCustomQueue;
 use Enjin\Platform\Events\PlatformBroadcastEvent;
 use Enjin\Platform\Models\Collection;
 use Enjin\Platform\Models\Token;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Cache;
 
 class RemoveClaimToken implements ShouldQueue
 {
+    use HasCustomQueue;
+
     /**
      * Handle the event.
      */
@@ -54,10 +57,5 @@ class RemoveClaimToken implements ShouldQueue
                 }
             }
         });
-    }
-
-    public function viaQueue(): string
-    {
-        return config('enjin-platform-beam.queue');
     }
 }

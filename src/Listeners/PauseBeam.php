@@ -6,12 +6,15 @@ use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Services\BeamService;
+use Enjin\Platform\Beam\Traits\HasCustomQueue;
 use Enjin\Platform\Events\PlatformBroadcastEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 
 class PauseBeam implements ShouldQueue
 {
+    use HasCustomQueue;
+
     /**
      * Handle the event.
      */
@@ -34,10 +37,5 @@ class PauseBeam implements ShouldQueue
 
             Log::info("Pausing beam {$beam->code} cause the collection {$beam->collection_chain_id} was paused.");
         }
-    }
-
-    public function viaQueue(): string
-    {
-        return config('enjin-platform-beam.queue');
     }
 }
