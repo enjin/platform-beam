@@ -5,7 +5,8 @@ mutation CreateBeam(
   $start: DateTime!
   $end: DateTime!
   $collectionId: BigInt!
-  $tokens: [ClaimToken!]!
+  $tokens: [ClaimToken!]
+  $packs: [BeamPackInput!]
   $flags: [BeamFlagInputType!]
 ) {
   CreateBeam(
@@ -16,6 +17,7 @@ mutation CreateBeam(
     end: $end
     collectionId: $collectionId
     tokens: $tokens
+    packs: $packs
     flags: $flags
   )
 }

@@ -7,6 +7,7 @@ use Enjin\Platform\Beam\Enums\ClaimStatus;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamBatch;
 use Enjin\Platform\Beam\Models\BeamClaim;
+use Enjin\Platform\Beam\Models\BeamPack;
 use Enjin\Platform\Beam\Models\BeamScan;
 use Enjin\Platform\Beam\Services\BeamService;
 use Illuminate\Database\Eloquent\Model;
@@ -50,6 +51,37 @@ trait SeedBeamData
         $this->beam = Beam::find($this->claims[0]->beam_id);
 
         Cache::remember(BeamService::key($this->beam->code), 3600, fn () => count($this->claims));
+    }
+
+    /**
+     * Seed beam claim data.
+     */
+    public function seedBeamPack(?int $claimsCount = null, ?BeamType $type = null, array $beam = []): void
+    {
+
+        $this->beam = Beam::factory([
+            'collection_chain_id' => $this->collection->collection_chain_id,
+            'is_pack' => true,
+            ...$beam,
+        ])->create();
+
+        $this->claims = collect();
+        Collection::times($claimsCount ?: 1, function () use ($type) {
+            $this->claims->push(
+                BeamClaim::factory()
+                    ->create([
+                        'collection_id' => $this->collection->id,
+                        'wallet_public_key' => null,
+                        'claimed_at' => null,
+                        'state' => null,
+                        'beam_id' => $this->beam->id,
+                        'beam_pack_id' => BeamPack::factory(['beam_id' => $this->beam])->create()->id,
+                        ...($type ? ['type' => $type->name] : []),
+                    ])
+            );
+        });
+
+        Cache::remember(BeamService::key($this->beam->code), 3600, fn () => $claimsCount);
     }
 
     /**
