@@ -37,7 +37,10 @@ class ClaimBeam implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(protected ?array $data) {}
+    public function __construct(protected ?array $data)
+    {
+        $this->onQueue(config('enjin-platform-beam.queue'));
+    }
 
     /**
      * Execute the job.

@@ -4,12 +4,15 @@ namespace Enjin\Platform\Beam\Listeners;
 
 use Carbon\Carbon;
 use Enjin\Platform\Beam\Models\Beam;
+use Enjin\Platform\Beam\Traits\HasCustomQueue;
 use Enjin\Platform\Events\PlatformBroadcastEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 
 class ExpireBeam implements ShouldQueue
 {
+    use HasCustomQueue;
+
     /**
      * Handle the event.
      */
