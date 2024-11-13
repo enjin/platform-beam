@@ -156,8 +156,16 @@ class Beam extends BaseModel
      */
     protected function probabilities(): Attribute
     {
+        $probabilities = ClaimProbabilities::getProbabilities($this->code)['probabilities'] ?? null;
+
         return Attribute::make(
-            get: fn () => ClaimProbabilities::getProbabilities($this->code)['probabilities'] ?? null
+            get: fn () => $probabilities ? [
+                'ft' => (object) $probabilities['ft'],
+                'nft' => $probabilities['nft'],
+                'ftTokenIds' => (object) $probabilities['ftTokenIds'],
+                'nftTokenIds' => (object)$probabilities['nftTokenIds'],
+
+            ] : null
         );
     }
 
