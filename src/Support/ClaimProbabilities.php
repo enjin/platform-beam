@@ -193,7 +193,7 @@ class ClaimProbabilities
     /**
      * Extract the token ids from the array.
      */
-    protected function extractTokenIds(array $tokenIds, int $total): array
+    protected function extractTokenIds(array $tokenIds, int $total): object
     {
         $tokens = [];
         foreach ($tokenIds as $key => $quantity) {
@@ -207,6 +207,6 @@ class ClaimProbabilities
             }
         }
 
-        return $tokens;
+        return (object) $tokens;
     }
 }
