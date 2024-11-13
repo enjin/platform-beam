@@ -163,7 +163,7 @@ class Beam extends BaseModel
                 'ft' => (object) $probabilities['ft'],
                 'nft' => $probabilities['nft'],
                 'ftTokenIds' => (object) $probabilities['ftTokenIds'],
-                'nftTokenIds' => (object)$probabilities['nftTokenIds'],
+                'nftTokenIds' => (object) $probabilities['nftTokenIds'],
 
             ] : null
         );
