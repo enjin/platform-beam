@@ -50,9 +50,9 @@ class ClaimProbabilities
     /**
      * Get the probabilities for a code.
      */
-    public static function getProbabilities(string $code): array
+    public static function getProbabilities(?string $code): array
     {
-        return Cache::get(
+        return empty($code) ? [] : Cache::get(
             static::getCacheKey($code),
             static::getProbabilitiesFromDB($code)
         );
