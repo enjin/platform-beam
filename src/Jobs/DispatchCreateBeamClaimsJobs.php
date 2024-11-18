@@ -12,6 +12,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Log;
 
 class DispatchCreateBeamClaimsJobs implements ShouldQueue
 {
@@ -38,6 +39,13 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
     public function handle(): void
     {
         $beam = $this->beam->load('collection');
+        if (!$beam?->collection) {
+            Log::error('Beam collection not found', ['beam_id' => $beam->id]);
+
+            return;
+        }
+
+
         $tokens = collect($this->tokens);
 
         $tokens->chunk(1000)
