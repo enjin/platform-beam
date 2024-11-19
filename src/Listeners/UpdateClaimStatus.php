@@ -7,6 +7,7 @@ use Enjin\Platform\Beam\Events\BeamClaimsComplete;
 use Enjin\Platform\Beam\Events\BeamClaimsFailed;
 use Enjin\Platform\Beam\Models\BeamBatch;
 use Enjin\Platform\Beam\Models\BeamClaim;
+use Enjin\Platform\Beam\Traits\HasCustomQueue;
 use Enjin\Platform\Enums\Global\TransactionState;
 use Enjin\Platform\Enums\Substrate\SystemEventType;
 use Enjin\Platform\Events\PlatformBroadcastEvent;
@@ -15,6 +16,8 @@ use Illuminate\Support\Arr;
 
 class UpdateClaimStatus implements ShouldQueue
 {
+    use HasCustomQueue;
+
     /**
      * Create new event listener instance.
      */
