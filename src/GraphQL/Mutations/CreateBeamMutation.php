@@ -3,22 +3,30 @@
 namespace Enjin\Platform\Beam\GraphQL\Mutations;
 
 use Closure;
+use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
-use Enjin\Platform\Beam\GraphQL\Traits\HasTokenInputRules;
+use Enjin\Platform\Beam\Rules\MaxTokenCount;
+use Enjin\Platform\Beam\Rules\MaxTokenSupply;
+use Enjin\Platform\Beam\Rules\TokensDoNotExistInBeam;
+use Enjin\Platform\Beam\Rules\TokensExistInCollection;
+use Enjin\Platform\Beam\Rules\TokenUploadExistInCollection;
+use Enjin\Platform\Beam\Rules\TokenUploadNotExistInBeam;
+use Enjin\Platform\Beam\Rules\UniqueTokenIds;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Models\Collection;
+use Enjin\Platform\Rules\DistinctAttributes;
 use Enjin\Platform\Rules\IsCollectionOwnerOrApproved;
 use Enjin\Platform\Rules\ValidSubstrateAddress;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Rebing\GraphQL\Support\Facades\GraphQL;
 
 class CreateBeamMutation extends Mutation
 {
     use HasBeamCommonFields;
-    use HasTokenInputRules;
 
     /**
      * Get the mutation's attributes.
@@ -56,12 +64,8 @@ class CreateBeamMutation extends Mutation
                 'description' => __('enjin-platform-beam::mutation.create_beam.args.collectionId'),
             ],
             'tokens' => [
-                'type' => GraphQL::type('[ClaimToken!]'),
+                'type' => GraphQL::type('[ClaimToken!]!'),
                 'description' => __('enjin-platform-beam::input_type.claim_token.description'),
-            ],
-            'packs' => [
-                'type' => GraphQL::type('[BeamPackInput!]'),
-                'description' => __('enjin-platform-beam::input_type.beam_pack.description'),
             ],
         ];
     }
@@ -77,10 +81,7 @@ class CreateBeamMutation extends Mutation
         Closure $getSelectFields,
         BeamService $beam
     ) {
-        return DB::transaction(
-            fn () => $beam->create($args, (bool) Arr::get($args, 'packs'))->code,
-            3
-        );
+        return DB::transaction(fn () => $beam->create($args)->code, 3);
     }
 
     /**
@@ -104,9 +105,62 @@ class CreateBeamMutation extends Mutation
                 },
                 new IsCollectionOwnerOrApproved(),
             ],
+            'tokens' => ['bail', 'array', 'min:1', 'max:1000', new UniqueTokenIds()],
+            'tokens.*.attributes' => Rule::forEach(function ($value, $attribute) use ($args) {
+                if (empty($value)) {
+                    return [];
+                }
+
+                return [
+                    'nullable',
+                    'bail',
+                    'array',
+                    'min:1',
+                    'max:10',
+                    new DistinctAttributes(),
+                    Rule::prohibitedIf(BeamType::getEnumCase(Arr::get($args, str_replace('attributes', 'type', $attribute))) == BeamType::TRANSFER_TOKEN),
+                ];
+            }),
+            'tokens.*.attributes.*.key' => 'max:255',
+            'tokens.*.attributes.*.value' => 'max:1000',
+            'tokens.*.tokenIds' => Rule::forEach(function ($value, $attribute) use ($args) {
+                return [
+                    'bail',
+                    'required_without:tokens.*.tokenIdDataUpload',
+                    'prohibits:tokens.*.tokenIdDataUpload',
+                    'distinct',
+                    BeamType::getEnumCase(Arr::get($args, str_replace('tokenIds', 'type', $attribute))) == BeamType::TRANSFER_TOKEN
+                        ? new TokensExistInCollection($args['collectionId'])
+                        : '',
+                    new TokensDoNotExistInBeam(),
+                ];
+            }),
+            'tokens.*.tokenIdDataUpload' => Rule::forEach(function ($value, $attribute) use ($args) {
+                return [
+                    'bail',
+                    'required_without:tokens.*.tokenIds',
+                    'prohibits:tokens.*.tokenIds',
+                    BeamType::getEnumCase(Arr::get($args, str_replace('tokenIdDataUpload', 'type', $attribute))) == BeamType::TRANSFER_TOKEN
+                        ? new TokenUploadExistInCollection($args['collectionId'])
+                        : '',
+                    new TokenUploadNotExistInBeam(),
+                ];
+            }),
+            'tokens.*.tokenQuantityPerClaim' => [
+                'bail',
+                'filled',
+                'integer',
+                'min:1',
+                new MaxTokenSupply($args['collectionId']),
+            ],
+            'tokens.*.claimQuantity' => [
+                'bail',
+                'filled',
+                'integer',
+                'min:1',
+                new MaxTokenCount($args['collectionId']),
+            ],
             'flags.*.flag' => ['required', 'distinct'],
-            ...$this->tokenRules($args, $args['collectionId'], true),
-            ...$this->packTokenRules($args, $args['collectionId'], true),
             'source' => [
                 'nullable',
                 new ValidSubstrateAddress(),

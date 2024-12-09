@@ -7,7 +7,6 @@ mutation UpdateBeam(
   $end: DateTime
   $flags: [BeamFlagInputType!]
   $tokens: [ClaimToken!]
-  $packs: [BeamPackInput!]
 ) {
   UpdateBeam(
     code: $code
@@ -18,6 +17,5 @@ mutation UpdateBeam(
     end: $end
     flags: $flags
     tokens: $tokens
-    packs: $packs
   )
 }

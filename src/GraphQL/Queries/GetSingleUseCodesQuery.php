@@ -4,9 +4,7 @@ namespace Enjin\Platform\Beam\GraphQL\Queries;
 
 use Closure;
 use Enjin\Platform\Beam\Enums\BeamFlag;
-use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
-use Enjin\Platform\Beam\Models\BeamPack;
 use Enjin\Platform\Beam\Rules\HasBeamFlag;
 use Enjin\Platform\GraphQL\Middleware\ResolvePage;
 use Enjin\Platform\GraphQL\Types\Pagination\ConnectionInput;
@@ -36,7 +34,7 @@ class GetSingleUseCodesQuery extends Query
      */
     public function type(): Type
     {
-        return GraphQL::paginate('ClaimUnion', 'ClaimUnionConnection');
+        return GraphQL::paginate('BeamClaim', 'BeamClaimConnection');
     }
 
     /**
@@ -62,12 +60,8 @@ class GetSingleUseCodesQuery extends Query
         ResolveInfo $resolveInfo,
         Closure $getSelectFields
     ) {
-        $beam = Beam::whereCode($args['code'])->firstOrFail();
-
-        return ($beam->is_pack ? new BeamPack() : new BeamClaim())
-            ->loadSelectFields($resolveInfo, $this->name)
+        return BeamClaim::loadSelectFields($resolveInfo, $this->name)
             ->hasCode($args['code'])
-            ->where('nonce', 1)
             ->with('beam')
             ->claimable()
             ->cursorPaginateWithTotalDesc('id', $args['first']);

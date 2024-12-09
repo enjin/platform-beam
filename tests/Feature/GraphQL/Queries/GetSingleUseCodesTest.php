@@ -29,16 +29,6 @@ class GetSingleUseCodesTest extends TestCaseGraphQL
 
         $response = $this->graphql($this->method, ['code' => $code]);
         $this->assertNotEmpty($response['totalCount']);
-
-        $code = $this->graphql('CreateBeam', $this->generateBeamPackData(
-            BeamType::MINT_ON_DEMAND,
-            10,
-            [],
-            [['flag' => 'SINGLE_USE']]
-        ));
-
-        $response = $this->graphql($this->method, ['code' => $code]);
-        $this->assertNotEmpty($response['totalCount']);
     }
 
     /**
