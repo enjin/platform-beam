@@ -44,17 +44,6 @@ class AddTokensTest extends TestCaseGraphQL
         );
         $this->assertTrue($response);
         Event::assertDispatched(TokensAdded::class);
-
-        $this->seedBeamPack();
-        $response = $this->graphql(
-            $this->method,
-            [
-                'code' => $this->beam->code,
-                'packs' => [['tokens' => [['tokenIds' => ['1..5'], 'type' => BeamType::MINT_ON_DEMAND->name]]]],
-            ]
-        );
-        $this->assertTrue($response);
-        Event::assertDispatched(TokensAdded::class);
     }
 
     public function test_it_can_add_token_with_attributes(): void
@@ -78,31 +67,10 @@ class AddTokensTest extends TestCaseGraphQL
         );
         $this->assertTrue($response);
         Event::assertDispatched(TokensAdded::class);
-
-        $this->seedBeamPack();
-        $response = $this->graphql(
-            $this->method,
-            [
-                'code' => $this->beam->code,
-                'packs' => [['tokens' => [
-                    [
-                        'tokenIds' => ['1..5'],
-                        'type' => BeamType::MINT_ON_DEMAND->name,
-                        'attributes' => [
-                            ['key' => 'test', 'value' => 'test'],
-                            ['key' => 'test2', 'value' => 'test2'],
-                        ],
-                    ],
-                ],
-                ]]],
-        );
-        $this->assertTrue($response);
-        Event::assertDispatched(TokensAdded::class);
     }
 
     public function test_it_can_update_beam_with_file_upload(): void
     {
-        Event::fake();
         $file = UploadedFile::fake()->createWithContent('tokens.txt', "1\n2..10");
         $response = $this->graphql(
             $this->method,
@@ -120,31 +88,6 @@ class AddTokensTest extends TestCaseGraphQL
             [
                 'code' => $this->beam->code,
                 'tokens' => [['tokenIdDataUpload' => $file]],
-            ]
-        );
-        $this->assertTrue($response);
-        Event::assertDispatched(TokensAdded::class);
-
-        $this->seedBeamPack();
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', "1\n2..10");
-        $response = $this->graphql(
-            $this->method,
-            [
-                'code' => $this->beam->code,
-                'packs' => [[
-                    'tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]],
-                ]],
-            ]
-        );
-        $this->assertTrue($response);
-        Event::assertDispatched(TokensAdded::class);
-
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', "{$this->token->token_chain_id}\n{$this->token->token_chain_id}..{$this->token->token_chain_id}");
-        $response = $this->graphql(
-            $this->method,
-            [
-                'code' => $this->beam->code,
-                'packs' => [['tokens' => [['tokenIdDataUpload' => $file]]]],
             ]
         );
         $this->assertTrue($response);
@@ -181,44 +124,38 @@ class AddTokensTest extends TestCaseGraphQL
         $this->assertArraySubset([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload already exist in beam.'],
         ], $response['error']);
+    }
 
-
-        $this->seedBeamPack();
-        $claim = $this->claims->first();
-        $claim->forceFill(['token_chain_id' => $this->token->token_chain_id])->save();
-        $response = $this->graphql(
-            $this->method,
-            [
-                'code' => $this->beam->code,
-                'packs' => [[
-                    'tokens' => [['tokenIds' => [$claim->token_chain_id], 'type' => BeamType::TRANSFER_TOKEN->name]],
-                ]],
-            ],
-            true
-        );
-        $this->assertArraySubset([
-            'packs.0.tokens.0.tokenIds' => ['The packs.0.tokens.0.tokenIds already exist in beam.'],
-        ], $response['error']);
-
+    public function test_it_will_fail_to_create_beam_with_invalid_file_upload(): void
+    {
         $file = UploadedFile::fake()->createWithContent('tokens.txt', $this->token->token_chain_id);
         $response = $this->graphql(
             $this->method,
             [
                 'code' => $this->beam->code,
-                'packs' => [[
-                    'tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::TRANSFER_TOKEN->name]],
-                ]],
+                'tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]],
             ],
             true
         );
         $this->assertArraySubset([
-            'packs.0.tokens.0.tokenIdDataUpload' => ['The packs.0.tokens.0.tokenIdDataUpload already exist in beam.'],
+            'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload exists in the specified collection.'],
         ], $response['error']);
+        Event::assertNotDispatched(BeamUpdated::class);
 
-    }
+        $file = UploadedFile::fake()->createWithContent('tokens.txt', "{$this->token->token_chain_id}..{$this->token->token_chain_id}");
+        $response = $this->graphql(
+            $this->method,
+            [
+                'code' => $this->beam->code,
+                'tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]],
+            ],
+            true
+        );
+        $this->assertArraySubset([
+            'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload exists in the specified collection.'],
+        ], $response['error']);
+        Event::assertNotDispatched(BeamUpdated::class);
 
-    public function test_it_will_fail_to_create_beam_with_invalid_file_upload(): void
-    {
         $file = UploadedFile::fake()->createWithContent('tokens.txt', '1');
         $response = $this->graphql(
             $this->method,
@@ -231,6 +168,7 @@ class AddTokensTest extends TestCaseGraphQL
         $this->assertArraySubset([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
         ], $response['error']);
+        Event::assertNotDispatched(BeamUpdated::class);
 
         $file = UploadedFile::fake()->createWithContent('tokens.txt', '1..10');
         $response = $this->graphql(
@@ -244,33 +182,7 @@ class AddTokensTest extends TestCaseGraphQL
         $this->assertArraySubset([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
         ], $response['error']);
-
-        $this->seedBeamPack();
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', '1');
-        $response = $this->graphql(
-            $this->method,
-            [
-                'code' => $this->beam->code,
-                'packs' => [['tokens' => [['tokenIdDataUpload' => $file]]]],
-            ],
-            true
-        );
-        $this->assertArraySubset([
-            'packs.0.tokens.0.tokenIdDataUpload' => ['The packs.0.tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
-        ], $response['error']);
-
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', '1..10');
-        $response = $this->graphql(
-            $this->method,
-            [
-                'code' => $this->beam->code,
-                'packs' => [['tokens' => [['tokenIdDataUpload' => $file]]]],
-            ],
-            true
-        );
-        $this->assertArraySubset([
-            'packs.0.tokens.0.tokenIdDataUpload' => ['The packs.0.tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
-        ], $response['error']);
+        Event::assertNotDispatched(BeamUpdated::class);
     }
 
     /**
@@ -288,18 +200,6 @@ class AddTokensTest extends TestCaseGraphQL
         );
         $this->assertArraySubset([
             'code' => ['The selected code is invalid.'],
-        ], $response['error']);
-
-
-        $response = $this->graphql(
-            $this->method,
-            [
-                'code' => $this->beam->code,
-                'tokens' => [],
-            ],
-            true
-        );
-        $this->assertArraySubset([
             'tokens' => ['The tokens field must have at least 1 items.'],
         ], $response['error']);
 
@@ -313,6 +213,16 @@ class AddTokensTest extends TestCaseGraphQL
         );
         $this->assertEquals($response['error'], 'Variable "$code" of non-null type "String!" must not be null.');
 
+        $response = $this->graphql(
+            $this->method,
+            [
+                'code' => $this->beam->code,
+                'tokens' => null,
+            ],
+            true
+        );
+        $this->assertEquals($response['error'], 'Variable "$tokens" of non-null type "[ClaimToken!]!" must not be null.');
+
         $response = $this->graphql($this->method, [
             'code' => Str::random(1500),
             'tokens' => [['tokenIds' => ['1..5'], 'type' => BeamType::MINT_ON_DEMAND->name]],
@@ -321,18 +231,5 @@ class AddTokensTest extends TestCaseGraphQL
             ['code' => ['The code field must not be greater than 1024 characters.']],
             $response['error']
         );
-
-        $this->seedBeamPack();
-        $response = $this->graphql(
-            $this->method,
-            [
-                'code' => $this->beam->code,
-                'packs' => [],
-            ],
-            true
-        );
-        $this->assertArraySubset([
-            'packs' => ['The packs field must have at least 1 items.'],
-        ], $response['error']);
     }
 }
