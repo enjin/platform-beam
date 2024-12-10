@@ -33,8 +33,6 @@ class CreateBeamTest extends TestCaseGraphQL
     public function test_it_can_create_beam_with_transfer_token(): void
     {
         $this->genericTestCreateBeam(BeamType::TRANSFER_TOKEN, 1);
-
-        $this->genericTestCreateBeamPack(BeamType::TRANSFER_TOKEN, 1);
     }
 
     /**
@@ -48,6 +46,7 @@ class CreateBeamTest extends TestCaseGraphQL
             ['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]]]
         ));
         $this->assertNotEmpty($response);
+
         Event::assertDispatched(BeamCreated::class);
         $this->assertEquals(10, Cache::get(BeamService::key($response)));
 
@@ -57,24 +56,7 @@ class CreateBeamTest extends TestCaseGraphQL
             ['tokens' => [['tokenIdDataUpload' => $file]]]
         ));
         $this->assertNotEmpty($response);
-        Event::assertDispatched(BeamCreated::class);
-        $this->assertEquals(1, Cache::get(BeamService::key($response)));
 
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', "1\n2..10");
-        $response = $this->graphql($this->method, array_merge(
-            $this->generateBeamPackData(BeamType::MINT_ON_DEMAND),
-            ['packs' => [['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]]]]]
-        ));
-        $this->assertNotEmpty($response);
-        Event::assertDispatched(BeamCreated::class);
-        $this->assertEquals(1, Cache::get(BeamService::key($response)));
-
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', "{$this->token->token_chain_id}\n{$this->token->token_chain_id}..{$this->token->token_chain_id}");
-        $response = $this->graphql($this->method, array_merge(
-            $this->generateBeamPackData(BeamType::MINT_ON_DEMAND),
-            ['packs' => [['tokens' => [['tokenIdDataUpload' => $file]]]]]
-        ));
-        $this->assertNotEmpty($response);
         Event::assertDispatched(BeamCreated::class);
         $this->assertEquals(1, Cache::get(BeamService::key($response)));
     }
@@ -85,8 +67,6 @@ class CreateBeamTest extends TestCaseGraphQL
     public function test_it_can_create_beam_with_mint_on_demand(): void
     {
         $this->genericTestCreateBeam(BeamType::MINT_ON_DEMAND, random_int(1, 20));
-
-        $this->genericTestCreateBeamPack(BeamType::MINT_ON_DEMAND, random_int(1, 20));
     }
 
     /**
@@ -97,10 +77,6 @@ class CreateBeamTest extends TestCaseGraphQL
         $this->genericTestCreateBeam(BeamType::MINT_ON_DEMAND, random_int(1, 20), [], [
             ['flag' => 'SINGLE_USE'],
         ]);
-
-        $this->genericTestCreateBeamPack(BeamType::MINT_ON_DEMAND, random_int(1, 20), [], [
-            ['flag' => 'SINGLE_USE'],
-        ]);
     }
 
     /**
@@ -109,12 +85,6 @@ class CreateBeamTest extends TestCaseGraphQL
     public function test_it_can_create_beam_with_attribute_mint_on_demand(): void
     {
         $this->genericTestCreateBeam(
-            BeamType::MINT_ON_DEMAND,
-            random_int(1, 20),
-            [['key' => 'key1', 'value' => 'value1'], ['key' => 'key2', 'value' => 'value2']]
-        );
-
-        $this->genericTestCreateBeamPack(
             BeamType::MINT_ON_DEMAND,
             random_int(1, 20),
             [['key' => 'key1', 'value' => 'value1'], ['key' => 'key2', 'value' => 'value2']]
@@ -139,26 +109,6 @@ class CreateBeamTest extends TestCaseGraphQL
         $file = UploadedFile::fake()->createWithContent('tokens.txt', '1..10');
         $response = $this->graphql($this->method, array_merge(
             $this->generateBeamData(),
-            ['tokens' => [['tokenIdDataUpload' => $file]]]
-        ), true);
-        $this->assertArraySubset([
-            'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
-        ], $response['error']);
-        Event::assertNotDispatched(BeamCreated::class);
-
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', '1');
-        $response = $this->graphql($this->method, array_merge(
-            $this->generateBeamPackData(),
-            ['packs' => [['tokens' => [['tokenIdDataUpload' => $file]]]]]
-        ), true);
-        $this->assertArraySubset([
-            'packs.0.tokens.0.tokenIdDataUpload' => ['The packs.0.tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
-        ], $response['error']);
-        Event::assertNotDispatched(BeamCreated::class);
-
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', '1..10');
-        $response = $this->graphql($this->method, array_merge(
-            $this->generateBeamPackData(),
             ['tokens' => [['tokenIdDataUpload' => $file]]]
         ), true);
         $this->assertArraySubset([
@@ -200,31 +150,6 @@ class CreateBeamTest extends TestCaseGraphQL
         $this->assertArraySubset([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload already exist in beam.'],
         ], $response['error']);
-
-        $response = $this->graphql(
-            $this->method,
-            array_merge(
-                $data = $this->generateBeamPackData(BeamType::TRANSFER_TOKEN),
-                ['packs' => [['tokens' => [['tokenIds' => [$claim->token_chain_id], 'type' => BeamType::TRANSFER_TOKEN->name]]]]]
-            ),
-            true
-        );
-        $this->assertArraySubset([
-            'packs.0.tokens.0.tokenIds' => ['The packs.0.tokens.0.tokenIds already exist in beam.'],
-        ], $response['error']);
-
-        $file = UploadedFile::fake()->createWithContent('tokens.txt', $this->token->token_chain_id);
-        $response = $this->graphql(
-            $this->method,
-            array_merge(
-                $data,
-                ['packs' => [['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::TRANSFER_TOKEN->name]]]]]
-            ),
-            true
-        );
-        $this->assertArraySubset([
-            'packs.0.tokens.0.tokenIdDataUpload' => ['The packs.0.tokens.0.tokenIdDataUpload already exist in beam.'],
-        ], $response['error']);
     }
 
     /**
@@ -246,21 +171,6 @@ class CreateBeamTest extends TestCaseGraphQL
             'tokens.0.attributes.0.key' => ['The tokens.0.attributes.0.key field must not be greater than 255 characters.'],
             'tokens.0.attributes.0.value' => ['The tokens.0.attributes.0.value field must not be greater than 1000 characters.'],
         ], $response['error']);
-
-        $response = $this->graphql(
-            $this->method,
-            $this->generateBeamPackData(
-                BeamType::MINT_ON_DEMAND,
-                random_int(1, 20),
-                [['key' => Str::random(256), 'value' => Str::random(1001)]]
-            ),
-            true
-        );
-
-        $this->assertArraySubset([
-            'packs.0.tokens.0.attributes.0.key' => ['The packs.0.tokens.0.attributes.0.key field must not be greater than 255 characters.'],
-            'packs.0.tokens.0.attributes.0.value' => ['The packs.0.tokens.0.attributes.0.value field must not be greater than 1000 characters.'],
-        ], $response['error']);
     }
 
     /**
@@ -276,6 +186,7 @@ class CreateBeamTest extends TestCaseGraphQL
             ['message' => 'Variable "$start" of required type "DateTime!" was not provided.'],
             ['message' => 'Variable "$end" of required type "DateTime!" was not provided.'],
             ['message' => 'Variable "$collectionId" of required type "BigInt!" was not provided.'],
+            ['message' => 'Variable "$tokens" of required type "[ClaimToken!]!" was not provided.'],
         ], $response['errors']);
     }
 
@@ -311,24 +222,7 @@ class CreateBeamTest extends TestCaseGraphQL
             ['tokens' => []]
         ), true);
 
-        $this->assertArraySubset(['tokens' => ['The tokens field is required when packs is not present.']], $response['error']);
-
-        $response = $this->graphql($this->method, array_merge(
-            $this->generateBeamData(),
-            ['packs' => []]
-        ), true);
-
-        $this->assertArraySubset(['packs' => ['The packs field must have at least 1 items.']], $response['error']);
-
-        $response = $this->graphql($this->method, array_merge(
-            $this->generateBeamData(),
-            ['packs' => [], 'tokens' => []]
-        ), true);
-
-        $this->assertArraySubset([
-            'tokens' => ['The tokens field is required when packs is not present.'],
-            'packs' => ['The packs field is required when tokens is not present.'],
-        ], $response['error']);
+        $this->assertArraySubset(['tokens' => ['The tokens field must have at least 1 items.']], $response['error']);
     }
 
     /**
@@ -403,64 +297,6 @@ class CreateBeamTest extends TestCaseGraphQL
             true
         );
         $this->assertArraySubset(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
-
-
-
-        $data = $this->generateBeamPackData();
-        $response = $this->graphql(
-            $this->method,
-            array_merge($data, ['packs' => [['tokens' => [['tokenIds' => '1']]]]]),
-            true
-        );
-        $this->assertArraySubset(['packs.0.tokens.0.tokenIds' => ['The packs.0.tokens.0.tokenIds does not exist in the specified collection.']], $response['error']);
-
-        $response = $this->graphql(
-            $this->method,
-            array_merge($data, ['packs' => [['tokens' => [['tokenIds' => '1..10']]]]]),
-            true
-        );
-        $this->assertArraySubset(['packs.0.tokens.0.tokenIds' => ['The packs.0.tokens.0.tokenIds does not exist in the specified collection.']], $response['error']);
-
-        $response = $this->graphql(
-            $this->method,
-            array_merge($data, ['packs' => [['tokens' => [['tokenIds' => '1'], ['tokenIds' => '1']]]]]),
-            true
-        );
-        $this->assertArraySubset(['packs.0.tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
-
-        $response = $this->graphql(
-            $this->method,
-            array_merge($data, ['packs' => [['tokens' => [['tokenIds' => '1'], ['tokenIds' => '1..10']]]]]),
-            true
-        );
-        $this->assertArraySubset(['packs.0.tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
-
-        $response = $this->graphql(
-            $this->method,
-            array_merge($data, ['packs' => [['tokens' => [['tokenIds' => '1..10'], ['tokenIds' => '1']]]]]),
-            true
-        );
-        $this->assertArraySubset(['packs.0.tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
-
-        $response = $this->graphql(
-            $this->method,
-            array_merge($data, ['packs' => [['tokens' => [['tokenIds' => '1..10'], ['tokenIds' => '5..10']]]]]),
-            true
-        );
-        $this->assertArraySubset(['packs.0.tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
-
-        $response = $this->graphql(
-            $this->method,
-            array_merge($data, [
-                'packs' => [['tokens' => [['tokenIds' => '1..10']]]],
-                'tokens' => [['tokenIds' => '1..10']],
-            ]),
-            true
-        );
-        $this->assertArraySubset([
-            'tokens' => ['The tokens field prohibits packs from being present.'],
-            'packs' => ['The packs field prohibits tokens from being present.'],
-        ], $response['error']);
     }
 
     /**
@@ -478,12 +314,28 @@ class CreateBeamTest extends TestCaseGraphQL
     }
 
     /**
+     * Test creating beam with invalid token collection.
+     */
+    public function test_it_will_fail_with_invalid_token_collection(): void
+    {
+        $tokenId = $this->token->token_chain_id;
+        $this->prepareCollectionData();
+
+        $response = $this->graphql(
+            $this->method,
+            array_merge($this->generateBeamData(), ['tokens' => [['tokenIds' => [(string) $tokenId]]]]),
+            true
+        );
+        $this->assertArraySubset(['tokens.0.tokenIds' => ['The tokens.0.tokenIds does not exist in the specified collection.']], $response['error']);
+    }
+
+    /**
      * Test creating beam with invalid claimQuantity.
      */
     public function test_it_will_fail_with_invalid_claim_quantity(): void
     {
         $this->prepareCollectionData();
-        $this->collection->update(['max_token_count' => 0, 'max_token_supply' => 0]);
+        $this->collection->update(['max_token_count' => 0]);
         $response = $this->graphql(
             $this->method,
             $this->generateBeamData(BeamType::MINT_ON_DEMAND, 10),
@@ -502,11 +354,7 @@ class CreateBeamTest extends TestCaseGraphQL
         $this->assertNotEmpty($response);
 
         $response = $this->graphql($this->method, $data, true);
-        $this->assertArraySubset([
-            'tokens.0.tokenQuantityPerClaim' => [
-                'The tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for unique tokens for this collection.',
-            ],
-        ], $response['error']);
+        $this->assertArraySubset(['tokens.0.claimQuantity' => ['The token count exceeded the maximum limit of 0 for this collection.']], $response['error']);
     }
 
     /**
@@ -536,12 +384,6 @@ class CreateBeamTest extends TestCaseGraphQL
             ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for unique tokens for this collection.']],
             $response['error']
         );
-
-        $response = $this->graphql($this->method, $this->generateBeamPackData(), true);
-        $this->assertArraySubset(
-            ['packs.0.tokens.0.tokenQuantityPerClaim' => ['The packs.0.tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for unique tokens for this collection.']],
-            $response['error']
-        );
     }
 
     /**
@@ -558,20 +400,5 @@ class CreateBeamTest extends TestCaseGraphQL
         Event::assertDispatched(BeamCreated::class);
         $tokenIds = $this->expandRanges(array_column($data['tokens'], 'tokenIds')[0]);
         $this->assertEquals(count($tokenIds) * $count, Cache::get(BeamService::key($response)));
-    }
-
-    /**
-     * Generic test for create beam pack.
-     */
-    protected function genericTestCreateBeamPack(BeamType $type = BeamType::MINT_ON_DEMAND, int $count = 1, array $attributes = [], array $singleUse = []): void
-    {
-        $this->truncateBeamTables();
-
-        $response = $this->graphql($this->method, $data = $this->generateBeamPackData($type, $count, $attributes, $singleUse));
-
-        $this->assertNotEmpty($response);
-
-        Event::assertDispatched(BeamCreated::class);
-        $this->assertEquals($count, Cache::get(BeamService::key($response)));
     }
 }

@@ -11,8 +11,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 use Illuminate\Support\LazyCollection;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Log;
 
 class DispatchCreateBeamClaimsJobs implements ShouldQueue
 {
@@ -27,11 +25,8 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
      */
     public function __construct(
         protected Model $beam,
-        protected ?array $tokens,
-        protected ?int $packId = null
-    ) {
-        $this->onQueue(config('enjin-platform-beam.queue'));
-    }
+        protected ?array $tokens
+    ) {}
 
     /**
      * Execute the job.
@@ -55,7 +50,7 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
                     collect($token['tokenIds'])->each(function ($tokenId) use ($beam, $claims, $token) {
                         $range = $this->integerRange($tokenId);
                         if ($range === false) {
-                            for ($i = 0; $i < Arr::get($token, 'claimQuantity', 1); $i++) {
+                            for ($i = 0; $i < $token['claimQuantity']; $i++) {
                                 $claims->push([
                                     'beam_id' => $beam->id,
                                     'token_chain_id' => $tokenId,
@@ -65,7 +60,6 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
                                     'nonce' => 1,
                                     'attributes' => json_encode($token['attributes']) ?: null,
                                     'quantity' => $token['quantity'],
-                                    'beam_pack_id' => $this->packId,
                                 ]);
                             }
                         } else {
@@ -79,7 +73,7 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
                             })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token) {
                                 $claims = collect();
                                 $tokenIds->each(function ($tokenId) use ($token, $beam, $claims) {
-                                    for ($i = 0; $i < Arr::get($token, 'claimQuantity', 1); $i++) {
+                                    for ($i = 0; $i < $token['claimQuantity']; $i++) {
                                         $claims->push([
                                             'beam_id' => $beam->id,
                                             'token_chain_id' => $tokenId,
@@ -89,7 +83,6 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
                                             'nonce' => 1,
                                             'attributes' => json_encode($token['attributes']) ?: null,
                                             'quantity' => $token['quantity'],
-                                            'beam_pack_id' => $this->packId,
                                         ]);
                                     }
                                 });

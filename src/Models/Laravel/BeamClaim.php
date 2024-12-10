@@ -12,6 +12,7 @@ use Enjin\Platform\Models\Laravel\Collection;
 use Enjin\Platform\Models\Laravel\Token;
 use Enjin\Platform\Models\Laravel\Transaction;
 use Enjin\Platform\Models\Laravel\Wallet;
+use Illuminate\Contracts\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\MassPrunable;
@@ -76,7 +77,6 @@ class BeamClaim extends BaseModel
         'beam_id',
         'nonce',
         'code',
-        'beam_pack_id',
     ];
 
     /**
@@ -130,11 +130,31 @@ class BeamClaim extends BaseModel
     }
 
     /**
-     * The Beam Pack's relationship.
+     * Local scope for single use.
      */
-    public function beamPack(): BelongsTo
+    public function scopeSingleUse(Builder $query): Builder
     {
-        return $this->belongsTo(BeamPack::class, 'beam_pack_id');
+        return $query->whereNotNull('code');
+    }
+
+    /**
+     * Local scope for single use code.
+     */
+    public function scopeWithSingleUseCode(Builder $query, string $code): Builder
+    {
+        $parsed = BeamService::getSingleUseCodeData($code);
+
+        return $query->where(['code' => $parsed->claimCode, 'nonce' => $parsed->nonce]);
+    }
+
+    /**
+     * The claimable code, encoded with the open platform host url.
+     */
+    public function singleUseCode(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => encrypt(implode(':', [$this->code, $this->beam?->code, $this->nonce]))
+        );
     }
 
     /**

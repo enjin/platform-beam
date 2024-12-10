@@ -19,7 +19,6 @@ use Enjin\Platform\Beam\Jobs\CreateClaim;
 use Enjin\Platform\Beam\Jobs\DispatchCreateBeamClaimsJobs;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
-use Enjin\Platform\Beam\Models\BeamPack;
 use Enjin\Platform\Beam\Rules\Traits\IntegerRange;
 use Enjin\Platform\Beam\Support\ClaimProbabilities;
 use Enjin\Platform\Support\BitMask;
@@ -29,7 +28,6 @@ use Facades\Enjin\Platform\Beam\Services\BeamService as BeamServiceFacade;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\LazyCollection;
@@ -79,102 +77,24 @@ class BeamService
     /**
      * Create a beam.
      */
-    public function create(array $args, bool $isPack = false): Model
+    public function create(array $args): Model
     {
         $beam = Beam::create([
-            ...Arr::except($args, ['tokens', 'packs', 'flags']),
+            ...Arr::except($args, ['tokens', 'flags']),
             'flags_mask' => static::getFlagsValue(Arr::get($args, 'flags')),
             'code' => bin2hex(openssl_random_pseudo_bytes(16)),
-            'is_pack' => $isPack,
         ]);
         if ($beam) {
-            if ($isPack) {
-                $this->createPackClaims($beam, Arr::get($args, 'packs', []), true);
-            } else {
-                Cache::forever(
-                    self::key($beam->code),
-                    $this->createClaims($beam, Arr::get($args, 'tokens', []))
-                );
-            }
+            Cache::forever(
+                self::key($beam->code),
+                $this->createClaims(Arr::get($args, 'tokens', []), $beam)
+            );
             event(new BeamCreated($beam));
 
             return $beam;
         }
 
         return throw new BeamException(__('enjin-platform-beam::error.unable_to_save'));
-    }
-
-    /**
-     * Create beam pack claims.
-     */
-    public function createPackClaims(Model $beam, array $packs, bool $isNew = false): bool
-    {
-        if (empty($packs)) {
-            return false;
-        }
-
-        $quantity = 0;
-        $allTokenIds = [];
-        foreach ($packs as $pack) {
-            if (!($id = Arr::get($pack, 'id'))) {
-                $quantity++;
-            }
-
-            $beamPack = BeamPack::firstOrcreate(['id' => $id], [
-                'beam_id' => $beam->id,
-                'code' => bin2hex(openssl_random_pseudo_bytes(16)),
-                'nonce' => 1,
-            ]);
-
-            $tokens = Collection::times(
-                Arr::get($pack, 'claimQuantity', 1),
-                fn () => $pack['tokens']
-            )->flatMap(fn ($rows) => $rows);
-            $tokenIds = $tokens->whereNotNull('tokenIds');
-
-            if ($tokenIds->count()) {
-                $allTokenIds = $tokenIds->pluck('tokenIds')->flatten()->all();
-                DispatchCreateBeamClaimsJobs::dispatch($beam, $tokenIds->all(), $beamPack->id)->afterCommit();
-            }
-
-            $tokenUploads = $tokens->whereNotNull('tokenIdDataUpload');
-            if ($tokenUploads->count()) {
-                $ids = $tokenIds->pluck('tokenIds');
-                $tokenUploads->each(function ($token) use ($beam, $ids, $beamPack) {
-                    LazyCollection::make(function () use ($token, $ids) {
-                        $handle = fopen($token['tokenIdDataUpload']->getPathname(), 'r');
-                        while (($line = fgets($handle)) !== false) {
-                            if (! $this->tokenIdExists($ids->all(), $tokenId = trim($line))) {
-                                $ids->push($tokenId);
-                                yield $tokenId;
-                            }
-                        }
-                        fclose($handle);
-                    })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token, $beamPack) {
-                        $token['tokenIds'] = $tokenIds->all();
-                        unset($token['tokenIdDataUpload']);
-                        DispatchCreateBeamClaimsJobs::dispatch($beam, [$token], $beamPack->id)->afterCommit();
-                        unset($tokenIds, $token);
-                    });
-                });
-                $allTokenIds = $ids->pluck('tokenIds')->flatten()->all();
-            }
-
-        }
-
-        if ($isNew) {
-            return Cache::forever(self::key($beam->code), count($packs));
-        }
-
-        TokensAdded::safeBroadcast(
-            event: [
-                'beamCode' => $beam->code,
-                'code' => $beam->code,
-                'tokenIds' => $allTokenIds,
-            ]
-        );
-
-        return Cache::increment(self::key($beam->code), $quantity);
     }
 
     /**
@@ -189,12 +109,10 @@ class BeamService
         }
 
         if ($beam->fill($values)->save()) {
-            if ($beam->is_pack && ($packs = Arr::get($values, 'packs', []))) {
-                $this->createPackClaims($beam, $packs);
-            } elseif ($tokens = Arr::get($values, 'tokens', [])) {
+            if ($tokens = Arr::get($values, 'tokens', [])) {
                 Cache::increment(
                     self::key($beam->code),
-                    $this->createClaims($beam, $tokens)
+                    $this->createClaims($tokens, $beam)
                 );
                 TokensAdded::safeBroadcast(event: ['beamCode' => $beam->code, 'code' => $code, 'tokenIds' => collect($tokens)->pluck('tokenIds')->all()]);
             }
@@ -209,19 +127,14 @@ class BeamService
     /**
      * Update beam by code.
      */
-    public function addTokens(string $code, ?array $tokens = [], ?array $packs = []): bool
+    public function addTokens(string $code, array $tokens): bool
     {
         $beam = Beam::whereCode($code)->firstOrFail();
-
-        if ($beam->is_pack && $packs) {
-            $this->createPackClaims($beam, $packs);
-        } elseif ($tokens) {
-            Cache::increment(
-                self::key($beam->code),
-                $this->createClaims($beam, $tokens)
-            );
-            TokensAdded::safeBroadcast(event: ['beamCode' => $beam->code, 'code' => $code, 'tokenIds' => collect($tokens)->pluck('tokenIds')->all()]);
-        }
+        Cache::increment(
+            self::key($beam->code),
+            $this->createClaims($tokens, $beam)
+        );
+        TokensAdded::safeBroadcast(event: ['beamCode' => $beam->code, 'code' => $code, 'tokenIds' => collect($tokens)->pluck('tokenIds')->all()]);
 
         return true;
     }
@@ -239,16 +152,14 @@ class BeamService
      */
     public function scanByCode(string $code, ?string $wallet = null): ?Model
     {
-        $beamCode = static::getSingleUseCodeData($code)?->beamCode;
-        $beam = Beam::whereCode($beamCode ?? $code)->firstOrFail();
+        $isSingleUse = static::isSingleUse($code);
 
-        if ($beamCode) {
-            ($beam->is_pack ? new BeamPack() : new BeamClaim())
-                ->withSingleUseCode($code)
-                ->firstOrFail();
-        }
-
-
+        $beam = $isSingleUse
+                ? BeamClaim::withSingleUseCode($code)
+                    ->with('beam')
+                    ->first()
+                    ->beam
+                : $this->findByCode($code);
         if ($wallet) {
             // Pushing this to the queue for performance
             CreateClaim::dispatch($claim = [
@@ -260,7 +171,7 @@ class BeamService
             $beam->setRelation('scans', collect(json_decode(json_encode([$claim]))));
         }
 
-        if ($beamCode) {
+        if ($isSingleUse) {
             $beam['code'] = $code;
         }
 
@@ -273,20 +184,21 @@ class BeamService
     public function claim(string $code, string $wallet, ?string $idempotencyKey = null): bool
     {
         $singleUseCode = null;
-        $singleUse = static::getSingleUseCodeData($code);
-        $beam = $this->findByCode($singleUse ? $singleUse->beamCode : $code);
-        if (! $beam) {
-            throw new BeamException(__('enjin-platform-beam::error.beam_not_found', ['code' => $code]));
-        }
+        $singleUse = static::isSingleUse($code);
 
         if ($singleUse) {
-            if (!($beam->is_pack ? new BeamPack() : new BeamClaim())
-                ->withSingleUseCode($code)
-                ->first()) {
-                throw new BeamException(__('enjin-platform-beam::error.beam_not_found', ['code' => $code]));
-            }
             $singleUseCode = $code;
-            $code = $singleUse->beamCode;
+            $beam = BeamClaim::withSingleUseCode($singleUseCode)
+                ->with('beam')
+                ->first()
+                ->beam;
+            $code = $beam?->code;
+        } else {
+            $beam = $this->findByCode($code);
+        }
+
+        if (! $beam) {
+            throw new BeamException(__('enjin-platform-beam::error.beam_not_found', ['code' => $code]));
         }
 
         $lock = Cache::lock(self::key($code, 'claim-lock'), 5);
@@ -354,25 +266,22 @@ class BeamService
      */
     public function expireSingleUseCodes(array $codes): int
     {
-        $beamCodes = collect($codes)
-            ->keyBy(fn ($code) => static::getSingleUseCodeData($code)->beamCode)
-            ->all();
-
-        Beam::whereIn('code', array_keys($beamCodes))
-            ->get(['id', 'code', 'is_pack'])
-            ->each(function ($beam) use ($beamCodes) {
-                if ($claim = ($beam->is_pack ? new BeamPack() : new BeamClaim())
-                    ->claimable()
-                    ->where('beam_id', $beam->id)
-                    ->withSingleUseCode($beamCodes[$beam->code])
-                    ->first()
-                ) {
-                    $claim->increment('nonce');
-                    Cache::decrement($this->key($beam->code));
+        $beams = [];
+        collect($codes)->each(function ($code) use (&$beams) {
+            if ($claim = BeamClaim::claimable()->withSingleUseCode($code)->first()) {
+                if (! isset($beams[$claim->beam_id])) {
+                    $beams[$claim->beam_id] = 0;
                 }
-            });
+                $beams[$claim->beam_id] += $claim->increment('nonce');
+            }
+        });
 
-        return count($codes);
+        if ($beams) {
+            Beam::findMany(array_keys($beams), ['id', 'code'])
+                ->each(fn ($beam) => Cache::decrement($this->key($beam->code, $beams[$beam->id])));
+        }
+
+        return array_sum($beams);
     }
 
     /**
@@ -432,97 +341,34 @@ class BeamService
     /**
      * Remove tokens from a beam.
      */
-    public function removeTokens(string $code, ?array $tokens = [], ?array $packs = []): bool
+    public function removeTokens(string $code, array $tokens): bool
     {
-        $beam = Beam::whereCode($code)->firstOrFail();
-        if ($beam->is_pack) {
-            $this->removeBeamPack($packs, $beam);
-        } else {
-            $this->removeClaimTokens($tokens, $beam);
-        }
-
-        return true;
-    }
-
-    public function removeClaimTokens(array $tokens, Model $beam): void
-    {
-        [$integers, $ranges] = collect($tokens)->partition(fn ($val) => $this->integerRange($val) === false)->all();
+        $integers = collect($tokens)->filter(fn ($val) => $this->integerRange($val) === false)->all();
         if ($integers) {
             Cache::decrement(
-                self::key($beam->code),
+                self::key($code),
                 BeamClaim::whereIn('token_chain_id', $integers)
-                    ->where('beam_id', $beam->id)
+                    ->whereHas('beam', fn ($query) => $query->where('code', $code))
                     ->whereNull('claimed_at')
                     ->delete()
             );
         }
 
+        $ranges = collect($tokens)->filter(fn ($val) => $this->integerRange($val) !== false)->all();
         foreach ($ranges as $range) {
             [$from, $to] = $this->integerRange($range);
             Cache::decrement(
-                self::key($beam->code),
+                self::key($code),
                 BeamClaim::whereBetween('token_chain_id', [(int) $from, (int) $to])
-                    ->where('beam_id', $beam->id)
+                    ->whereHas('beam', fn ($query) => $query->where('code', $code))
                     ->whereNull('claimed_at')
                     ->delete()
             );
         }
 
         if ($tokens) {
-            $this->probability->removeTokens($beam->code, $tokens);
-            TokensRemoved::safeBroadcast(event: ['code' => $beam->code, 'tokenIds' => $tokens]);
-        }
-    }
-
-    /**
-     * Remove beam pack tokens.
-     */
-    public function removeBeamPack(array $packs, Model $beam): bool
-    {
-        $packCollection = collect($packs)->keyBy('id');
-        $deletedTokens = 0;
-        $forDeletion = [];
-        foreach ($packCollection as $pack) {
-            if (empty($pack['tokenIds'])) {
-                $forDeletion[] = $pack['id'];
-
-                continue;
-            }
-
-            [$tokenIds, $tokenIdRanges] = collect($pack['tokenIds'])->partition(fn ($val) => $this->integerRange($val) === false);
-            if ($tokenIds) {
-                $deletedTokens += BeamClaim::where('beam_pack_id', $pack['id'])
-                    ->whereNull('claimed_at')
-                    ->whereIn('token_chain_id', $tokenIds)
-                    ->delete();
-            }
-
-            if ($tokenIdRanges) {
-                $deletedTokens += BeamClaim::where('beam_pack_id', $pack['id'])
-                    ->whereNull('claimed_at')
-                    ->where(function ($query) use ($tokenIdRanges) {
-                        $tokenIdRanges->each(function ($tokenString) use ($query) {
-                            $ranges = $this->integerRange($tokenString);
-                            $query->orWhereBetween('token_chain_id', [(int) $ranges[0], (int) $ranges[1]]);
-                        });
-                    })
-                    ->delete();
-            }
-        }
-
-        $beamPacks = BeamPack::where('beam_id', $beam->id)
-            ->whereIn('id', $packCollection->pluck('id'))
-            ->withCount('claims')
-            ->get(['id']);
-        $forDeletion = array_merge($forDeletion, $beamPacks->where('claims_count', 0)->pluck('id')->all());
-        if (count($forDeletion)) {
-            BeamPack::whereIn('id', $forDeletion)
-                ->whereDoesntHave('claims', fn ($query) => $query->whereNotNull('claimed_at'))
-                ->delete();
-        }
-
-        if ($deletedTokens) {
-            TokensRemoved::safeBroadcast(event: ['code' => $beam->code, 'tokenIds' => $packCollection->pluck('tokenIds')->flatten()->all()]);
+            $this->probability->removeTokens($code, $tokens);
+            TokensRemoved::safeBroadcast(event: ['code' => $code, 'tokenIds' => $tokens]);
         }
 
         return true;
@@ -531,7 +377,7 @@ class BeamService
     /**
      * Create beam claims.
      */
-    protected function createClaims(Model $beam, array $tokens): int
+    protected function createClaims(array $tokens, Model $beam): int
     {
         $totalClaimCount = 0;
         $tokens = collect($tokens);
@@ -541,12 +387,10 @@ class BeamService
                 return collect($token['tokenIds'])->reduce(function ($val, $tokenId) use ($token) {
                     $range = $this->integerRange($tokenId);
 
-                    $claimQuantity = Arr::get($token, 'claimQuantity', 1);
-
                     return $val + (
                         $range === false
-                        ? $claimQuantity
-                        : (($range[1] - $range[0]) + 1) * $claimQuantity
+                        ? $token['claimQuantity']
+                        : (($range[1] - $range[0]) + 1) * $token['claimQuantity']
                     );
                 }, $carry);
             }, $totalClaimCount);
@@ -573,12 +417,10 @@ class BeamService
                     $totalClaimCount = $tokenIds->reduce(function ($carry, $tokenId) use ($token) {
                         $range = $this->integerRange($tokenId);
 
-                        $claimQuantity = Arr::get($token, 'claimQuantity', 1);
-
                         return $carry + (
                             $range === false
-                            ? $claimQuantity
-                            : (($range[1] - $range[0]) + 1) * $claimQuantity
+                            ? $token['claimQuantity']
+                            : (($range[1] - $range[0]) + 1) * $token['claimQuantity']
                         );
                     }, $totalClaimCount);
                     unset($token['tokenIdDataUpload']);
@@ -623,7 +465,6 @@ class BeamService
             'state' => ClaimStatus::PENDING->name,
             'beam' => $beam->toArray(),
             'beam_id' => $beam->id,
-            'is_pack' => $beam->is_pack,
             'ip_address' => request()->getClientIp(),
             'code' => $singleUseCode,
             'idempotency_key' => $idempotencyKey ?: Str::uuid()->toString(),

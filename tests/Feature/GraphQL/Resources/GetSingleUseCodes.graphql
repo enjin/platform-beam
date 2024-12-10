@@ -3,20 +3,10 @@ query GetSingleUseCodes($code: String!) {
     edges {
       cursor
       node {
-        ... on BeamClaim {
-          code
-          qr {
-            url
-            payload
-          }
-        }
-
-        ... on BeamPack {
-          code
-          qr {
-            url
-            payload
-          }
+        code
+        qr {
+          url
+          payload
         }
       }
     }
