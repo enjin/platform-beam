@@ -39,10 +39,6 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
          * The sum of all unique tokens (including existing tokens, tokens in beams, and tokens to be created)
          * must not exceed the collection's maximum token count.
          */
-        if (!$inputTokens = $this->getInputTokens()) {
-            return;
-        }
-
         if ($this->collectionId
             && ($collection = Collection::withCount('tokens')->firstWhere(['collection_chain_id' => $this->collectionId]))
             && ! is_null($this->limit = $collection->max_token_count)
@@ -65,12 +61,12 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
                 ->groupBy('token_chain_id')
                 ->count();
 
-            $tokens = collect($inputTokens)
+            $tokens = collect($this->data['tokens'])
                 ->filter(fn ($data) => !empty(Arr::get($data, 'tokenIds')))
                 ->pluck('tokenIds')
                 ->flatten();
 
-            collect($inputTokens)
+            collect($this->data['tokens'])
                 ->filter(fn ($data) => !empty(Arr::get($data, 'tokenIdDataUpload')))
                 ->map(function ($data) use ($tokens) {
                     $handle = fopen($data['tokenIdDataUpload']->getPathname(), 'r');
@@ -136,10 +132,5 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
                 $fail('enjin-platform-beam::validation.max_token_count')->translate(['limit' => $this->limit]);
             }
         }
-    }
-
-    protected function getInputTokens(): array
-    {
-        return Arr::get($this->data, 'tokens', []);
     }
 }
