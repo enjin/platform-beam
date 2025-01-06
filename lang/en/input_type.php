@@ -1,12 +1,12 @@
 <?php
 
 return [
-    'beam_flag.description' => 'The beam flag input type.',
-    'beam_flag.field.flag' => 'The beam flag.',
-    'beam_flag.field.enabled' => 'The flag enabled status.',
-    'claim_token.description' => 'The claimable tokens.',
-    'claim_token.field.tokenId' => 'The token chain IDs available to claim.',
+    'beam_flag.description' => 'Defines a flag setting for the beam. The `flag` specifies the type of behavior to modify, while `enabled` determines whether the selected flag is active. Use to enable or disable specific features of the beam.',
+    'beam_flag.field.flag' => 'Specifies the type of beam behavior to modify.',
+    'beam_flag.field.enabled' => 'Indicates whether the specified flag is active (`true`) or inactive (`false`).',
+    'claim_token.description' => 'Specifies the tokens included in a beam, along with their claimable amounts, distribution methods, and attributes. Based on the token configuration, the system generates "Beam Claims," where each claim mints or transfers a single token id (with a specified quantity) to the claimer\'s account.',
+    'claim_token.field.tokenId' => 'Specifies a list of [integer token IDs](https://docs.enjin.io/docs/tokenid-structure#4-integer) claimable in the beam. Provide IDs as strings, using commas to separate multiple entries. Supports single IDs (e.g., `"1"`), ranges (e.g., `"6..8"`), or a combination (e.g., `["1", "6..8", "10"]` includes IDs 1, 6, 7, 8, and 10).',
     'claim_token.field.tokenIdDataUpload' => 'You can use this to upload a txt file that contains a list of token ID ranges, one per line.',
-    'claim_token.field.claimQuantity' => 'The total amount of times each token ID can be claimed.  This is mainly relevant for fungible tokens, where you can specify that there are a certain amount of claims for a token ID, e.g. 10 individual claims to receive 1 token with ID 123 per claim.',
-    'claim_token.field.tokenQuantityPerClaim' => 'The quantity of token that can be received per claim.',
+    'claim_token.field.claimQuantity' => 'Specifies the number of claims to create for each provided token ID. Defaults to `1`.',
+    'claim_token.field.tokenQuantityPerClaim' => 'Specifies how many token units will be minted or transferred for each claim.',
 ];
