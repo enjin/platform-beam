@@ -21,7 +21,7 @@ class BeamClaimPending extends PlatformBroadcastEvent
         parent::__construct();
 
         $this->broadcastData = array_merge(
-            //idempotency_key needs to be present both since for some cases it's not set in $claim['beam']
+            // idempotency_key needs to be present both since for some cases it's not set in $claim['beam']
             Arr::only($claim['beam'], ['code', 'collection_chain_id', 'idempotency_key']),
             Arr::only($claim, ['wallet_public_key', 'claimed_at', 'state', 'token_chain_id', 'idempotency_key']),
             [
