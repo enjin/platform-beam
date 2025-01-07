@@ -4,7 +4,7 @@ namespace Enjin\Platform\Beam\Tests\Feature\GraphQL;
 
 use Enjin\Platform\Beam\BeamServiceProvider;
 use Enjin\Platform\Beam\Tests\Feature\Traits\CreateCollectionData;
-use Enjin\Platform\Beam\Tests\TestCase;
+use Orchestra\Testbench\TestCase as BaseTestCase;
 use Enjin\Platform\CoreServiceProvider;
 use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
 use Illuminate\Support\Arr;
@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Event;
 use PHPUnit\Framework\ExpectationFailedException;
 use Rebing\GraphQL\Support\Facades\GraphQL;
 
-class TestCaseGraphQL extends TestCase
+class TestCaseGraphQL extends BaseTestCase
 {
     use CreateCollectionData;
 
@@ -239,5 +239,15 @@ class TestCaseGraphQL extends TestCase
                 return $line;
             }, $trace, array_keys($trace))
         );
+    }
+
+    protected function assertArrayContainsArray(array $expected, array $actual): void
+    {
+        $this->assertArrayIsEqualToArrayOnlyConsideringListOfKeys($expected, $actual, $this->arrayKeys($expected));
+    }
+
+    protected function arrayKeys($array): array
+    {
+        return array_keys(Arr::dot($array));
     }
 }
