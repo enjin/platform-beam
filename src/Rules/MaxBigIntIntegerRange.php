@@ -11,12 +11,13 @@ class MaxBigIntIntegerRange extends MaxBigInt
     /**
      * Determine if the value is a valid min big int.
      */
+    #[\Override]
     protected function isValidMaxBigInt($value): bool
     {
         $range = $this->integerRange($value);
         $value = $range === false ? $value : $range[0];
         $this->message = __('enjin-platform::validation.max_big_int', ['max' => $this->max]);
 
-        return bccomp($this->max, $value) >= 0;
+        return bccomp($this->max, (string) $value) >= 0;
     }
 }

@@ -27,31 +27,23 @@ trait EagerLoadSelectFields
         static::$query = $query;
         $queryPlan = $resolveInfo->lookAhead()->queryPlan();
 
-        switch ($query) {
-            case 'GetBeams':
-            case 'GetBeam':
-                [$select, $with, $withCount] = static::loadBeams(
-                    $queryPlan,
-                    $query == 'GetBeams' ? 'edges.fields.node.fields' : '',
-                    [],
-                    null,
-                    true
-                );
-
-                break;
-            case 'GetPendingClaims':
-            case 'GetClaims':
-            case 'GetSingleUseCodes':
-                [$select, $with, $withCount] = static::loadClaims(
-                    $queryPlan,
-                    'edges.fields.node.fields',
-                    [],
-                    null,
-                    true
-                );
-
-                break;
-        }
+        [$select, $with, $withCount] = match ($query) {
+            'GetBeams', 'GetBeam' => static::loadBeams(
+                $queryPlan,
+                $query == 'GetBeams' ? 'edges.fields.node.fields' : '',
+                [],
+                null,
+                true
+            ),
+            'GetPendingClaims', 'GetClaims', 'GetSingleUseCodes' => static::loadClaims(
+                $queryPlan,
+                'edges.fields.node.fields',
+                [],
+                null,
+                true
+            ),
+            default => [$select, $with, $withCount],
+        };
 
         return [$select, $with, $withCount];
     }
@@ -80,7 +72,7 @@ trait EagerLoadSelectFields
 
         if (! $isParent) {
             $with = [
-                $key => function ($query) use ($select, $args) {
+                $key => function ($query) use ($select, $args): void {
                     $query->select(array_unique($select))
                         ->when($cursor = Cursor::fromEncoded(Arr::get($args, 'after')), fn ($q) => $q->where('id', '>', $cursor->parameter('id')))
                         ->orderBy('beams.id');
@@ -139,7 +131,7 @@ trait EagerLoadSelectFields
 
         if (! $isParent) {
             $with = [
-                $key => function ($query) use ($select, $args) {
+                $key => function ($query) use ($select, $args): void {
                     $query->select(array_unique($select))
                         ->when($cursor = Cursor::fromEncoded(Arr::get($args, 'after')), fn ($q) => $q->where('id', '>', $cursor->parameter('id')))
                         ->orderBy('beam_claims.id');

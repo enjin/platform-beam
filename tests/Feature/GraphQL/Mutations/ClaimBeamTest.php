@@ -42,6 +42,7 @@ class ClaimBeamTest extends TestCaseGraphQL
     /**
      * Setup test case.
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -137,19 +138,13 @@ class ClaimBeamTest extends TestCaseGraphQL
     public function test_it_can_remove_a_condition_from_the_rule(): void
     {
         PassesClaimConditions::addConditionalFunctions([
-            function ($attribute, $code, $singleUse, $data) {
-                return CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'];
-            },
-            function ($attribute, $code, $singleUse, $data) {
-                return $attribute == 'code';
-            },
+            fn ($attribute, $code, $singleUse, $data) => CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'],
+            fn ($attribute, $code, $singleUse, $data) => $attribute == 'code',
         ]);
         $this->assertCount(2, PassesClaimConditions::getConditionalFunctions());
 
         PassesClaimConditions::removeConditionalFunctions(
-            function ($attribute, $code, $singleUse, $data) {
-                return $attribute == 'code';
-            }
+            fn ($attribute, $code, $singleUse, $data) => $attribute == 'code'
         );
         $this->assertCount(1, PassesClaimConditions::getConditionalFunctions());
 
@@ -164,9 +159,7 @@ class ClaimBeamTest extends TestCaseGraphQL
      */
     public function test_it_can_claim_beam_with_single_condition_that_passes(): void
     {
-        PassesClaimConditions::addConditionalFunctions(function ($attribute, $code, $singleUse, $data) {
-            return CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'];
-        });
+        PassesClaimConditions::addConditionalFunctions(fn ($attribute, $code, $singleUse, $data) => CryptoSignatureType::ED25519->name == $data['cryptoSignatureType']);
         $this->assertNotEmpty(PassesClaimConditions::getConditionalFunctions());
 
         $this->genericClaimTest(CryptoSignatureType::ED25519);
@@ -181,12 +174,8 @@ class ClaimBeamTest extends TestCaseGraphQL
     public function test_it_can_claim_beam_with_multiple_conditions_that_pass(): void
     {
         PassesClaimConditions::addConditionalFunctions([
-            function ($attribute, $code, $singleUse, $data) {
-                return CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'];
-            },
-            function ($attribute, $code, $singleUse, $data) {
-                return $attribute == 'code';
-            },
+            fn ($attribute, $code, $singleUse, $data) => CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'],
+            fn ($attribute, $code, $singleUse, $data) => $attribute == 'code',
         ]);
         $this->assertNotEmpty(PassesClaimConditions::getConditionalFunctions());
 
@@ -201,9 +190,7 @@ class ClaimBeamTest extends TestCaseGraphQL
      */
     public function test_it_cannot_claim_beam_with_single_condition_that_fails(): void
     {
-        PassesClaimConditions::addConditionalFunctions(function ($attribute, $code, $singleUse, $data) {
-            return CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'] ? true : 'Signature is not SR25519.';
-        });
+        PassesClaimConditions::addConditionalFunctions(fn ($attribute, $code, $singleUse, $data) => CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'] ? true : 'Signature is not SR25519.');
         $this->assertNotEmpty(PassesClaimConditions::getConditionalFunctions());
 
         [$keypair, $publicKey, $privateKey] = $this->getKeyPair(CryptoSignatureType::ED25519);
@@ -240,12 +227,8 @@ class ClaimBeamTest extends TestCaseGraphQL
     public function test_it_cannot_claim_beam_with_multiple_conditions_that_fail(): void
     {
         $functions = collect([
-            function ($attribute, $code, $singleUse, $data) {
-                return $data[$attribute] == 'code';
-            },
-            function ($attribute, $code, $singleUse, $data) {
-                return CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'] ? true : 'Signature is not SR25519.';
-            },
+            fn ($attribute, $code, $singleUse, $data) => $data[$attribute] == 'code',
+            fn ($attribute, $code, $singleUse, $data) => CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'] ? true : 'Signature is not SR25519.',
         ]);
 
         PassesClaimConditions::addConditionalFunctions($functions);

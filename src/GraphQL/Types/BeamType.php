@@ -26,6 +26,7 @@ class BeamType extends Type
     /**
      * Get the type's attributes.
      */
+    #[\Override]
     public function attributes(): array
     {
         return [
@@ -38,6 +39,7 @@ class BeamType extends Type
     /**
      * Get the type's fields.
      */
+    #[\Override]
     public function fields(): array
     {
         return [
@@ -92,12 +94,10 @@ class BeamType extends Type
             'qr' => [
                 'type' => GraphQL::type('BeamQr'),
                 'description' => __('enjin-platform-beam::type.beam.field.qr'),
-                'resolve' => function ($beam) {
-                    return [
-                        'url' => $beam->qrUrl,
-                        'payload' => $beam->claimableCode,
-                    ];
-                },
+                'resolve' => fn ($beam) => [
+                    'url' => $beam->qrUrl,
+                    'payload' => $beam->claimableCode,
+                ],
                 'selectable' => false,
                 'is_relation' => false,
             ],

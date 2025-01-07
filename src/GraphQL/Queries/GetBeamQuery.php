@@ -21,6 +21,7 @@ class GetBeamQuery extends Query implements PlatformPublicGraphQlOperation
     /**
      * Get the query's attributes.
      */
+    #[\Override]
     public function attributes(): array
     {
         return [
@@ -40,6 +41,7 @@ class GetBeamQuery extends Query implements PlatformPublicGraphQlOperation
     /**
      * Get the query's arguments definition.
      */
+    #[\Override]
     public function args(): array
     {
         return [
@@ -75,6 +77,7 @@ class GetBeamQuery extends Query implements PlatformPublicGraphQlOperation
     /**
      * Get the query's request validation rules.
      */
+    #[\Override]
     protected function rules(array $args = []): array
     {
         $singleUse = BeamService::isSingleUse($args['code']);

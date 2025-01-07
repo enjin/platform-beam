@@ -15,15 +15,13 @@ trait HasSingleUseCodeScope
     {
         try {
             if (is_array($code)) {
-                $singleUseCode = array_map(function ($item) {
-                    return BeamService::getSingleUseCodeData($item)?->claimCode;
-                }, $code);
+                $singleUseCode = array_map(fn ($item) => BeamService::getSingleUseCodeData($item)?->claimCode, $code);
             } else {
                 $singleUseCode = BeamService::getSingleUseCodeData($code)?->claimCode;
             }
 
             return $query->whereIn('code', Arr::wrap($singleUseCode));
-        } catch (\Throwable $exception) {
+        } catch (\Throwable) {
             return $query;
         }
     }

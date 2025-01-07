@@ -34,6 +34,7 @@ class UpdateBeamTest extends TestCaseGraphQL
     /**
      * Setup test case.
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -56,17 +57,15 @@ class UpdateBeamTest extends TestCaseGraphQL
             $this->beam->only(array_keys($expected))
         );
 
-        $totalClaims = collect($updates['tokens'])->sum(function ($token) {
-            return collect($token['tokenIds'])->reduce(function ($val, $tokenId) use ($token) {
-                $range = $this->integerRange($tokenId);
+        $totalClaims = collect($updates['tokens'])->sum(fn ($token) => collect($token['tokenIds'])->reduce(function ($val, $tokenId) use ($token) {
+            $range = $this->integerRange($tokenId);
 
-                return $val + (
-                    $range === false
-                    ? $token['claimQuantity']
-                    : (($range[1] - $range[0]) + 1) * $token['claimQuantity']
-                );
-            }, 10);
-        });
+            return $val + (
+                $range === false
+                ? $token['claimQuantity']
+                : (($range[1] - $range[0]) + 1) * $token['claimQuantity']
+            );
+        }, 10));
         $this->assertEquals($totalClaims, Cache::get(BeamService::key($this->beam->code)));
     }
 
@@ -216,7 +215,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             'cap' => TokenMintCapType::COLLAPSING_SUPPLY->name,
             'cap_supply' => 1,
             'is_frozen' => false,
-            'unit_price' => (string) $unitPrice = fake()->numberBetween(1 / $supply * 10 ** 17),
+            'unit_price' => (string) $unitPrice = fake()->numberBetween(10 ** 17),
             'mint_deposit' => (string) ($unitPrice * $supply),
             'minimum_balance' => '1',
             'attribute_count' => '0',

@@ -32,7 +32,7 @@ class RemoveClaimToken implements ShouldQueue
         }
 
         $key = 'RemoveClaimToken:' . $collectionId . ':' . $event->broadcastData['tokenId'];
-        Cache::lock($key, 5)->get(function () use ($event, $collectionId) {
+        Cache::lock($key, 5)->get(function () use ($event, $collectionId): void {
             if (Token::where('collection_id', $collectionId)
                 ->where('token_chain_id', $event->broadcastData['tokenId'])
                 ->first()

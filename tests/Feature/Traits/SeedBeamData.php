@@ -57,7 +57,7 @@ trait SeedBeamData
      */
     public function claimAllBeams(string $publicKey): void
     {
-        $this->claims->pluck('type')->each(function ($type) use ($publicKey) {
+        $this->claims->pluck('type')->each(function ($type) use ($publicKey): void {
             if ($this->batch = BeamBatch::create(['beam_type' => $type])) {
                 $this->claims->each(fn ($claim) => $claim->forceFill([
                     'wallet_public_key' => $publicKey,

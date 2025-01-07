@@ -15,6 +15,7 @@ class PruneTest extends TestCaseGraphQL
     /**
      * Setup test case.
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -51,7 +52,7 @@ class PruneTest extends TestCaseGraphQL
             false,
             null,
             [
-                'end' => now()->subMinute(1),
+                'end' => now()->subMinute(),
                 'flags_mask' => BeamService::getFlagsValue([['flag' => 'PRUNABLE']]),
             ]
         );

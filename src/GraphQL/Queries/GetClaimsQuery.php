@@ -24,6 +24,7 @@ class GetClaimsQuery extends Query
     /**
      * Get the query's attributes.
      */
+    #[\Override]
     public function attributes(): array
     {
         return [
@@ -43,6 +44,7 @@ class GetClaimsQuery extends Query
     /**
      * Get the query's arguments definition.
      */
+    #[\Override]
     public function args(): array
     {
         return ConnectionInput::args([
@@ -97,6 +99,7 @@ class GetClaimsQuery extends Query
     /**
      * Get the query's request validation rules.
      */
+    #[\Override]
     protected function rules(array $args = []): array
     {
         return [

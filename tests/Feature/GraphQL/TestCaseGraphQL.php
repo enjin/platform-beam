@@ -34,6 +34,7 @@ class TestCaseGraphQL extends TestCase
     /**
      * Setup test case.
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -162,6 +163,7 @@ class TestCaseGraphQL extends TestCase
      *
      * @param  mixed  $app
      */
+    #[\Override]
     protected function getPackageProviders($app): array
     {
         return [
@@ -185,6 +187,7 @@ class TestCaseGraphQL extends TestCase
      *
      * @param  mixed  $app
      */
+    #[\Override]
     protected function defineEnvironment($app): void
     {
         $app->useEnvironmentPath(__DIR__ . '/..');
