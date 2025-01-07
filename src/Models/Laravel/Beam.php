@@ -170,7 +170,7 @@ class Beam extends BaseModel
 
         $formatted = [];
         foreach ($value as $key => $val) {
-            if (str_contains($key, '..')) {
+            if ($this->isIntegerRange($key)) {
                 foreach ($this->expandRanges($key) as $tokenId) {
                     $formatted[$tokenId] = $val;
                 }
