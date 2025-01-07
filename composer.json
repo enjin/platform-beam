@@ -38,6 +38,7 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "phpunit/php-code-coverage": "^11.0",
         "phpunit/phpunit": "^11.5",
+        "rector/rector": "^2.0",
         "roave/security-advisories": "dev-latest",
         "spatie/laravel-ray": "^1.39"
     },
