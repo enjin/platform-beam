@@ -212,6 +212,16 @@ class TestCaseGraphQL extends BaseTestCase
         }
     }
 
+    protected function assertArrayContainsArray(array $expected, array $actual): void
+    {
+        $this->assertArrayIsEqualToArrayOnlyConsideringListOfKeys($expected, $actual, $this->arrayKeys($expected));
+    }
+
+    protected function arrayKeys($array): array
+    {
+        return array_keys(Arr::dot($array));
+    }
+
     /**
      * Converts the trace as generated from \GraphQL\Error\FormattedError::toSafeTrace
      * to a more human-readable string for a failed test.
@@ -239,15 +249,5 @@ class TestCaseGraphQL extends BaseTestCase
                 return $line;
             }, $trace, array_keys($trace))
         );
-    }
-
-    protected function assertArrayContainsArray(array $expected, array $actual): void
-    {
-        $this->assertArrayIsEqualToArrayOnlyConsideringListOfKeys($expected, $actual, $this->arrayKeys($expected));
-    }
-
-    protected function arrayKeys($array): array
-    {
-        return array_keys(Arr::dot($array));
     }
 }
