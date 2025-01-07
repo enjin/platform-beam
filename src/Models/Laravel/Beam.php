@@ -7,6 +7,7 @@ use Enjin\Platform\Beam\Database\Factories\BeamFactory;
 use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Beam\Support\ClaimProbabilities;
+use Enjin\Platform\GraphQL\Types\Scalars\Traits\HasIntegerRanges;
 use Enjin\Platform\Models\BaseModel;
 use Enjin\Platform\Models\Laravel\Collection;
 use Enjin\Platform\Support\BitMask;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Cache;
 class Beam extends BaseModel
 {
     use HasFactory;
+    use HasIntegerRanges;
     use SoftDeletes;
     use Traits\EagerLoadSelectFields;
     use Traits\HasBeamQr;
@@ -151,13 +153,33 @@ class Beam extends BaseModel
 
         return Attribute::make(
             get: fn () => $probabilities ? [
-                'ft' => (object) $probabilities['ft'],
+                'ft' => (object) $this->formatFtTokenIds((array) $probabilities['ft']),
                 'nft' => $probabilities['nft'],
                 'ftTokenIds' => (object) $probabilities['ftTokenIds'],
                 'nftTokenIds' => (object) $probabilities['nftTokenIds'],
 
             ] : null
         );
+    }
+
+    protected function formatFtTokenIds(array $value): array
+    {
+        if (empty($value)) {
+            return $value;
+        }
+
+        $formatted = [];
+        foreach ($value as $key => $val) {
+            if ($this->isIntegerRange($key)) {
+                foreach ($this->expandRanges($key) as $tokenId) {
+                    $formatted[$tokenId] = $val;
+                }
+            } else {
+                $formatted[$key] = $val;
+            }
+        }
+
+        return $formatted;
     }
 
     /**
