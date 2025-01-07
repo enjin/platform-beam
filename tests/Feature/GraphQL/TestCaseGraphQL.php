@@ -2,20 +2,18 @@
 
 namespace Enjin\Platform\Beam\Tests\Feature\GraphQL;
 
-use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Enjin\Platform\Beam\BeamServiceProvider;
 use Enjin\Platform\Beam\Tests\Feature\Traits\CreateCollectionData;
+use Enjin\Platform\Beam\Tests\TestCase;
 use Enjin\Platform\CoreServiceProvider;
 use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Event;
-use Orchestra\Testbench\TestCase as BaseTestCase;
 use PHPUnit\Framework\ExpectationFailedException;
 use Rebing\GraphQL\Support\Facades\GraphQL;
 
-class TestCaseGraphQL extends BaseTestCase
+class TestCaseGraphQL extends TestCase
 {
-    use ArraySubsetAsserts;
     use CreateCollectionData;
 
     /**

@@ -5,6 +5,7 @@ namespace Enjin\Platform\Beam\Tests;
 use Enjin\Platform\Beam\BeamServiceProvider;
 use Enjin\Platform\CoreServiceProvider;
 use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Event;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 
@@ -79,5 +80,15 @@ abstract class TestCase extends BaseTestCase
     protected function usesDeveloperNetwork($app)
     {
         $app->config->set('enjin-platform.chains.network', 'developer');
+    }
+
+    protected function assertArrayContainsArray(array $expected, array $actual): void
+    {
+        $this->assertArrayIsEqualToArrayOnlyConsideringListOfKeys($expected, $actual, $this->arrayKeys($expected));
+    }
+
+    protected function arrayKeys($array): array
+    {
+        return array_keys(Arr::dot($array));
     }
 }

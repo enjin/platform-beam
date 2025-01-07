@@ -100,7 +100,7 @@ class GetClaimsTest extends TestCaseGraphQL
             'singleUseCodes' => [fake()->text(2000)],
         ], true);
 
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'ids' => ['The ids field prohibits codes from being present.'],
             'codes' => ['The codes field prohibits ids from being present.'],
             'codes.0' => ['The codes.0 field must not be greater than 32 characters.'],
@@ -121,7 +121,7 @@ class GetClaimsTest extends TestCaseGraphQL
             'singleUseCodes' => $singleUseCodes,
         ], true);
 
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'codes' => ['The codes field must not have more than 100 items.'],
             'singleUseCodes' => ['The single use codes field must not have more than 100 items.'],
         ], $response['error']);

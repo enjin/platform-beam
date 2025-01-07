@@ -45,21 +45,21 @@ class GetBeamsTest extends TestCaseGraphQL
         $response = $this->graphql($this->method, [
             'codes' => Collection::range(1, 200)->map(fn ($val) => (string) $val)->toArray(),
         ], true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'codes' => ['The codes field must not have more than 100 items.'],
         ], $response['error']);
 
         $response = $this->graphql($this->method, [
             'codes' => [''],
         ], true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'codes.0' => ['The codes.0 field must have a value.'],
         ], $response['error']);
 
         $response = $this->graphql($this->method, [
             'codes' => [Str::random(2000)],
         ], true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'codes.0' => ['The codes.0 field must not be greater than 1024 characters.'],
         ], $response['error']);
     }
@@ -69,21 +69,21 @@ class GetBeamsTest extends TestCaseGraphQL
         $response = $this->graphql($this->method, [
             'names' => Collection::range(1, 200)->map(fn ($val) => (string) $val)->toArray(),
         ], true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'names' => ['The names field must not have more than 100 items.'],
         ], $response['error']);
 
         $response = $this->graphql($this->method, [
             'names' => [''],
         ], true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'names.0' => ['The names.0 field must have a value.'],
         ], $response['error']);
 
         $response = $this->graphql($this->method, [
             'names' => [Str::random(300)],
         ], true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'names.0' => ['The names.0 field must not be greater than 255 characters.'],
         ], $response['error']);
     }

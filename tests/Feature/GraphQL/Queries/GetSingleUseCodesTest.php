@@ -37,9 +37,9 @@ class GetSingleUseCodesTest extends TestCaseGraphQL
     public function test_it_will_fail_with_invalid_code(): void
     {
         $response = $this->graphql($this->method, ['code' => fake()->text(10)], true);
-        $this->assertArraySubset(['code' => ['The code is invalid.']], $response['error']);
+        $this->assertArrayContainsArray(['code' => ['The code is invalid.']], $response['error']);
 
         $response = $this->graphql($this->method, ['code' => fake()->text(10000)], true);
-        $this->assertArraySubset(['code' => ['The code field must not be greater than 1024 characters.']], $response['error']);
+        $this->assertArrayContainsArray(['code' => ['The code field must not be greater than 1024 characters.']], $response['error']);
     }
 }

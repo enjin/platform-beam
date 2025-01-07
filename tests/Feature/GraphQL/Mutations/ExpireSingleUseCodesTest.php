@@ -48,6 +48,6 @@ class ExpireSingleUseCodesTest extends TestCaseGraphQL
     public function test_it_will_fail_with_invalid_code(): void
     {
         $response = $this->graphql($this->method, ['codes' => [fake()->text(10)]], true);
-        $this->assertArraySubset(['codes' => ['The codes is invalid.']], $response['error']);
+        $this->assertArrayContainsArray(['codes' => ['The codes is invalid.']], $response['error']);
     }
 }

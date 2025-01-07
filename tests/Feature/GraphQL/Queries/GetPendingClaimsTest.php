@@ -69,7 +69,7 @@ class GetPendingClaimsTest extends TestCaseGraphQL
             'code' => null,
             'account' => null,
         ], true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             ['message' => 'Variable "$code" of non-null type "String!" must not be null.'],
             ['message' => 'Variable "$account" of non-null type "String!" must not be null.'],
         ], $response['errors']);
@@ -78,7 +78,7 @@ class GetPendingClaimsTest extends TestCaseGraphQL
             'code' => '',
             'account' => '',
         ], true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'code' => ['The code field must have a value.'],
             'account' => ['The account field must have a value.'],
         ], $response['error']);
@@ -87,7 +87,7 @@ class GetPendingClaimsTest extends TestCaseGraphQL
             'code' => fake()->text(),
             'account' => fake()->text(),
         ], true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'code' => ['The selected code is invalid.'],
             'account' => ['The account is not a valid substrate account.'],
         ], $response['error']);
@@ -96,7 +96,7 @@ class GetPendingClaimsTest extends TestCaseGraphQL
             'code' => fake()->realTextBetween(1025, 1032),
             'account' => $this->claims->first()->wallet_public_key,
         ], true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'code' => ['The code field must not be greater than 1024 characters.'],
         ], $response['error']);
     }

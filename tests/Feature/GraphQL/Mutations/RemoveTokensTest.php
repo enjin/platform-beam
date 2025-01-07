@@ -60,7 +60,7 @@ class RemoveTokensTest extends TestCaseGraphQL
             'code' => '',
             'tokenIds' => $this->claims->pluck('token_chain_id')->toArray(),
         ], true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['code' => ['The code field must have a value.']],
             $response['error']
         );
@@ -78,7 +78,7 @@ class RemoveTokensTest extends TestCaseGraphQL
             'code' => $this->beam->code,
             'tokenIds' => [],
         ], true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['tokenIds' => ['The token ids field must have at least 1 items.']],
             $response['error']
         );
@@ -105,7 +105,7 @@ class RemoveTokensTest extends TestCaseGraphQL
             'code' => $this->beam->code,
             'tokenIds' => ['0'],
         ], true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['tokenIds.0' => ["The tokenIds.0 doesn't exist in beam."]],
             $response['error']
         );
@@ -114,7 +114,7 @@ class RemoveTokensTest extends TestCaseGraphQL
             'code' => $this->beam->code,
             'tokenIds' => ['0..5'],
         ], true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['tokenIds.0' => ["The tokenIds.0 doesn't exist in beam."]],
             $response['error']
         );
@@ -123,7 +123,7 @@ class RemoveTokensTest extends TestCaseGraphQL
             'code' => $this->beam->code,
             'tokenIds' => ['0', '0'],
         ], true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             [
                 'tokenIds.0' => ['The tokenIds.0 field has a duplicate value.'],
                 'tokenIds.1' => ['The tokenIds.1 field has a duplicate value.'],
@@ -136,7 +136,7 @@ class RemoveTokensTest extends TestCaseGraphQL
             'code' => $this->beam->code,
             'tokenIds' => $this->claims->pluck('token_chain_id')->toArray(),
         ], true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['tokenIds.0' => ["The tokenIds.0 doesn't exist in beam."]],
             $response['error']
         );

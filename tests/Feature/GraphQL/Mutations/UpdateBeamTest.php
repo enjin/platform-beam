@@ -130,7 +130,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             ),
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIds' => ['The tokens.0.tokenIds already exist in beam.'],
         ], $response['error']);
 
@@ -143,7 +143,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             ),
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload already exist in beam.'],
         ], $response['error']);
     }
@@ -158,7 +158,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             $this->generateBeamData(),
             ['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]]]
         ), true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload exists in the specified collection.'],
         ], $response['error']);
         Event::assertNotDispatched(BeamUpdated::class);
@@ -168,7 +168,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             $this->generateBeamData(),
             ['tokens' => [['tokenIdDataUpload' => $file, 'type' => BeamType::MINT_ON_DEMAND->name]]]
         ), true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload exists in the specified collection.'],
         ], $response['error']);
         Event::assertNotDispatched(BeamUpdated::class);
@@ -178,7 +178,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             $this->generateBeamData(),
             ['tokens' => [['tokenIdDataUpload' => $file]]]
         ), true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
         ], $response['error']);
         Event::assertNotDispatched(BeamUpdated::class);
@@ -188,7 +188,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             $this->generateBeamData(),
             ['tokens' => [['tokenIdDataUpload' => $file]]]
         ), true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
         ], $response['error']);
         Event::assertNotDispatched(BeamUpdated::class);
@@ -230,7 +230,7 @@ class UpdateBeamTest extends TestCaseGraphQL
         $this->assertTrue($this->graphql($this->method, $updates));
 
         $response = $this->graphql($this->method, $updates, true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['tokens.0.tokenIds' => ['The tokens.0.tokenIds already exist in beam.']],
             $response['error']
         );
@@ -240,7 +240,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             ['tokens' => [['tokenIds' => [$token->token_chain_id . '..' . $token->token_chain_id]]]]
         );
         $response = $this->graphql($this->method, $updates, true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['tokens.0.tokenIds' => ['The tokens.0.tokenIds already exist in beam.']],
             $response['error']
         );
@@ -250,7 +250,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             ['tokens' => [['tokenIds' => [$token->token_chain_id . '..' . $token->token_chain_id], 'type' => BeamType::MINT_ON_DEMAND->name]]]
         );
         $response = $this->graphql($this->method, $updates, true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['tokens.0.tokenIds' => ['The tokens.0.tokenIds exists in the specified collection.']],
             $response['error']
         );
@@ -269,7 +269,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             'image' => fake()->url() . '/' . urlencode($text),
         ], true);
 
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'code' => ['The code field must not be greater than 1024 characters.'],
             'name' => ['The name field must not be greater than 255 characters.'],
             'description' => ['The description field must not be greater than 1024 characters.'],
@@ -288,14 +288,14 @@ class UpdateBeamTest extends TestCaseGraphQL
             array_merge($data, ['code' => fake()->text(10)]),
             true
         );
-        $this->assertArraySubset(['code' => ['The selected code is invalid.']], $response['error']);
+        $this->assertArrayContainsArray(['code' => ['The selected code is invalid.']], $response['error']);
 
         $response = $this->graphql(
             $this->method,
             array_merge($data, ['image' => 'invalid image url']),
             true
         );
-        $this->assertArraySubset(['image' => ['The image field must be a valid URL.']], $response['error']);
+        $this->assertArrayContainsArray(['image' => ['The image field must be a valid URL.']], $response['error']);
     }
 
     /**
@@ -313,7 +313,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset(['start' => ['The start must be a date before end.'], 'end' => ['The end must be a date after start.']], $response['error']);
+        $this->assertArrayContainsArray(['start' => ['The start must be a date before end.'], 'end' => ['The end must be a date after start.']], $response['error']);
 
         $start = Carbon::parse($this->beam->start);
         $end = Carbon::parse($this->beam->end);
@@ -323,14 +323,14 @@ class UpdateBeamTest extends TestCaseGraphQL
             ['code' => $this->beam->code, 'start' => $end->clone()->addDay()->toDateTimeString()],
             true
         );
-        $this->assertArraySubset(['start' => ["The start must be a date less than {$end->toDateTimeString()}."]], $response['error']);
+        $this->assertArrayContainsArray(['start' => ["The start must be a date less than {$end->toDateTimeString()}."]], $response['error']);
 
         $response = $this->graphql(
             $this->method,
             ['code' => $this->beam->code, 'end' => $start->clone()->subDay()->toDateTimeString()],
             true
         );
-        $this->assertArraySubset(['end' => ["The end must be a date greater than {$start->toDateTimeString()}."]], $response['error']);
+        $this->assertArrayContainsArray(['end' => ["The end must be a date greater than {$start->toDateTimeString()}."]], $response['error']);
 
         $this->beam->fill(['start' => $now->clone()->subDay()->toDateTimeString()])->save();
         $response = $this->graphql(
@@ -342,7 +342,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset(['start' => ['The start date of this beam has passed, it can no longer be modified.']], $response['error']);
+        $this->assertArrayContainsArray(['start' => ['The start date of this beam has passed, it can no longer be modified.']], $response['error']);
     }
 
     /**
@@ -416,7 +416,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             array_merge($updates, ['tokens' => [['tokenIds' => [Hex::MAX_UINT256]]]]),
             true
         );
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['tokens.0.tokenIds' => ['The tokens.0.tokenIds is too large, the maximum value it can be is 340282366920938463463374607431768211455.']],
             $response['error']
         );

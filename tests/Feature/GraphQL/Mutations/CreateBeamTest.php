@@ -101,7 +101,7 @@ class CreateBeamTest extends TestCaseGraphQL
             $this->generateBeamData(),
             ['tokens' => [['tokenIdDataUpload' => $file]]]
         ), true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
         ], $response['error']);
         Event::assertNotDispatched(BeamCreated::class);
@@ -111,7 +111,7 @@ class CreateBeamTest extends TestCaseGraphQL
             $this->generateBeamData(),
             ['tokens' => [['tokenIdDataUpload' => $file]]]
         ), true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
         ], $response['error']);
         Event::assertNotDispatched(BeamCreated::class);
@@ -134,7 +134,7 @@ class CreateBeamTest extends TestCaseGraphQL
             ),
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIds' => ['The tokens.0.tokenIds already exist in beam.'],
         ], $response['error']);
 
@@ -147,7 +147,7 @@ class CreateBeamTest extends TestCaseGraphQL
             ),
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload already exist in beam.'],
         ], $response['error']);
     }
@@ -167,7 +167,7 @@ class CreateBeamTest extends TestCaseGraphQL
             true
         );
 
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.attributes.0.key' => ['The tokens.0.attributes.0.key field must not be greater than 255 characters.'],
             'tokens.0.attributes.0.value' => ['The tokens.0.attributes.0.value field must not be greater than 1000 characters.'],
         ], $response['error']);
@@ -179,7 +179,7 @@ class CreateBeamTest extends TestCaseGraphQL
     public function test_it_will_fail_with_empty_params(): void
     {
         $response = $this->graphql($this->method, [], true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             ['message' => 'Variable "$name" of required type "String!" was not provided.'],
             ['message' => 'Variable "$description" of required type "String!" was not provided.'],
             ['message' => 'Variable "$image" of required type "String!" was not provided.'],
@@ -205,7 +205,7 @@ class CreateBeamTest extends TestCaseGraphQL
             ]
         ), true);
 
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'name' => ['The name field must not be greater than 255 characters.'],
             'description' => ['The description field must not be greater than 1024 characters.'],
             'image' => ['The image field must not be greater than 1024 characters.'],
@@ -222,7 +222,7 @@ class CreateBeamTest extends TestCaseGraphQL
             ['tokens' => []]
         ), true);
 
-        $this->assertArraySubset(['tokens' => ['The tokens field must have at least 1 items.']], $response['error']);
+        $this->assertArrayContainsArray(['tokens' => ['The tokens field must have at least 1 items.']], $response['error']);
     }
 
     /**
@@ -236,7 +236,7 @@ class CreateBeamTest extends TestCaseGraphQL
             array_merge($data, ['image' => 'invalid image url']),
             true
         );
-        $this->assertArraySubset(['image' => ['The image field must be a valid URL.']], $response['error']);
+        $this->assertArrayContainsArray(['image' => ['The image field must be a valid URL.']], $response['error']);
 
         $now = Carbon::now();
         $response = $this->graphql(
@@ -244,7 +244,7 @@ class CreateBeamTest extends TestCaseGraphQL
             array_merge($data, ['start' => $now->toDateTimeString(), 'end' => $now->subDay()->toDateTimeString()]),
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'start' => ['The start field must be a date before end.'],
             'end' => ['The end field must be a date after start.'],
         ], $response['error']);
@@ -254,49 +254,49 @@ class CreateBeamTest extends TestCaseGraphQL
             array_merge($data, ['collectionId' => '1']),
             true
         );
-        $this->assertArraySubset(['collectionId' => ['The selected collection id is invalid.']], $response['error']);
+        $this->assertArrayContainsArray(['collectionId' => ['The selected collection id is invalid.']], $response['error']);
 
         $response = $this->graphql(
             $this->method,
             array_merge($data, ['tokens' => [['tokenIds' => '1']]]),
             true
         );
-        $this->assertArraySubset(['tokens.0.tokenIds' => ['The tokens.0.tokenIds does not exist in the specified collection.']], $response['error']);
+        $this->assertArrayContainsArray(['tokens.0.tokenIds' => ['The tokens.0.tokenIds does not exist in the specified collection.']], $response['error']);
 
         $response = $this->graphql(
             $this->method,
             array_merge($data, ['tokens' => [['tokenIds' => '1..10']]]),
             true
         );
-        $this->assertArraySubset(['tokens.0.tokenIds' => ['The tokens.0.tokenIds does not exist in the specified collection.']], $response['error']);
+        $this->assertArrayContainsArray(['tokens.0.tokenIds' => ['The tokens.0.tokenIds does not exist in the specified collection.']], $response['error']);
 
         $response = $this->graphql(
             $this->method,
             array_merge($data, ['tokens' => [['tokenIds' => '1'], ['tokenIds' => '1']]]),
             true
         );
-        $this->assertArraySubset(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
+        $this->assertArrayContainsArray(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
 
         $response = $this->graphql(
             $this->method,
             array_merge($data, ['tokens' => [['tokenIds' => '1'], ['tokenIds' => '1..10']]]),
             true
         );
-        $this->assertArraySubset(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
+        $this->assertArrayContainsArray(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
 
         $response = $this->graphql(
             $this->method,
             array_merge($data, ['tokens' => [['tokenIds' => '1..10'], ['tokenIds' => '1']]]),
             true
         );
-        $this->assertArraySubset(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
+        $this->assertArrayContainsArray(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
 
         $response = $this->graphql(
             $this->method,
             array_merge($data, ['tokens' => [['tokenIds' => '1..10'], ['tokenIds' => '5..10']]]),
             true
         );
-        $this->assertArraySubset(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
+        $this->assertArrayContainsArray(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
     }
 
     /**
@@ -310,7 +310,7 @@ class CreateBeamTest extends TestCaseGraphQL
             $this->generateBeamData(),
             true
         );
-        $this->assertArraySubset(['collectionId' => ['The collection id provided is not owned by you and you are not currently approved to use it.']], $response['error']);
+        $this->assertArrayContainsArray(['collectionId' => ['The collection id provided is not owned by you and you are not currently approved to use it.']], $response['error']);
     }
 
     /**
@@ -326,7 +326,7 @@ class CreateBeamTest extends TestCaseGraphQL
             array_merge($this->generateBeamData(), ['tokens' => [['tokenIds' => [(string) $tokenId]]]]),
             true
         );
-        $this->assertArraySubset(['tokens.0.tokenIds' => ['The tokens.0.tokenIds does not exist in the specified collection.']], $response['error']);
+        $this->assertArrayContainsArray(['tokens.0.tokenIds' => ['The tokens.0.tokenIds does not exist in the specified collection.']], $response['error']);
     }
 
     /**
@@ -341,7 +341,7 @@ class CreateBeamTest extends TestCaseGraphQL
             $this->generateBeamData(BeamType::MINT_ON_DEMAND, 10),
             true
         );
-        $this->assertArraySubset(['tokens.0.claimQuantity' => ['The token count exceeded the maximum limit of 0 for this collection.']], $response['error']);
+        $this->assertArrayContainsArray(['tokens.0.claimQuantity' => ['The token count exceeded the maximum limit of 0 for this collection.']], $response['error']);
 
         $response = $this->graphql(
             $this->method,
@@ -354,7 +354,7 @@ class CreateBeamTest extends TestCaseGraphQL
         $this->assertNotEmpty($response);
 
         $response = $this->graphql($this->method, $data, true);
-        $this->assertArraySubset(['tokens.0.claimQuantity' => ['The token count exceeded the maximum limit of 0 for this collection.']], $response['error']);
+        $this->assertArrayContainsArray(['tokens.0.claimQuantity' => ['The token count exceeded the maximum limit of 0 for this collection.']], $response['error']);
     }
 
     /**
@@ -369,7 +369,7 @@ class CreateBeamTest extends TestCaseGraphQL
             $this->generateBeamData(BeamType::MINT_ON_DEMAND, 10),
             true
         );
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for unique tokens for this collection.']],
             $response['error']
         );
@@ -380,7 +380,7 @@ class CreateBeamTest extends TestCaseGraphQL
             true
         );
         $this->assertNotEmpty($response);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['tokens.0.tokenQuantityPerClaim' => ['The tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for unique tokens for this collection.']],
             $response['error']
         );
