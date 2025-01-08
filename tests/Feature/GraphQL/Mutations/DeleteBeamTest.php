@@ -20,6 +20,7 @@ class DeleteBeamTest extends TestCaseGraphQL
     /**
      * Setup test case.
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -56,7 +57,7 @@ class DeleteBeamTest extends TestCaseGraphQL
     {
         $response = $this->graphql($this->method, ['code' => fake()->text(10)], true);
 
-        $this->assertArraySubset(['code' => ['The selected code is invalid.']], $response['error']);
+        $this->assertArrayContainsArray(['code' => ['The selected code is invalid.']], $response['error']);
     }
 
     /**

@@ -20,7 +20,7 @@ class ExpireBeam implements ShouldQueue
     {
         Beam::where('collection_chain_id', $event->broadcastData['collectionId'])
             ->get()
-            ->each(function ($beam) {
+            ->each(function ($beam): void {
                 $beam->end = Carbon::now();
                 $beam->save();
                 Log::info("Expiring beam {$beam->code} because the collection {$beam->collection_chain_id} was deleted.");

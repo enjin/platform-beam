@@ -17,6 +17,7 @@ class ClaimProbabilityTest extends TestCaseGraphQL
 
     protected ClaimProbabilities $probabilities;
 
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();

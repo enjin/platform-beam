@@ -34,6 +34,7 @@ class UpdateBeamMutation extends Mutation
     /**
      * Get the mutation's attributes.
      */
+    #[\Override]
     public function attributes(): array
     {
         return [
@@ -53,6 +54,7 @@ class UpdateBeamMutation extends Mutation
     /**
      * Get the mutation's arguments definition.
      */
+    #[\Override]
     public function args(): array
     {
         return [
@@ -95,6 +97,7 @@ class UpdateBeamMutation extends Mutation
     /**
      * Get the mutation's request validation rules.
      */
+    #[\Override]
     protected function rules(array $args = []): array
     {
         $beam = Beam::whereCode($args['code'])->first();
@@ -129,29 +132,25 @@ class UpdateBeamMutation extends Mutation
             }),
             'tokens.*.attributes.*.key' => 'max:255',
             'tokens.*.attributes.*.value' => 'max:1000',
-            'tokens.*.tokenIds' => Rule::forEach(function ($value, $attribute) use ($args, $beam) {
-                return [
-                    'bail',
-                    'required_without:tokens.*.tokenIdDataUpload',
-                    'prohibits:tokens.*.tokenIdDataUpload',
-                    'distinct',
-                    BeamType::getEnumCase(Arr::get($args, str_replace('tokenIds', 'type', $attribute))) == BeamType::TRANSFER_TOKEN
-                        ? new TokensExistInCollection($beam?->collection_chain_id)
-                        : new TokensDoNotExistInCollection($beam?->collection_chain_id),
-                    new TokensDoNotExistInBeam($beam),
-                ];
-            }),
-            'tokens.*.tokenIdDataUpload' => Rule::forEach(function ($value, $attribute) use ($args, $beam) {
-                return [
-                    'bail',
-                    'required_without:tokens.*.tokenIds',
-                    'prohibits:tokens.*.tokenIds',
-                    BeamType::getEnumCase(Arr::get($args, str_replace('tokenIdDataUpload', 'type', $attribute))) == BeamType::TRANSFER_TOKEN
-                        ? new TokenUploadExistInCollection($beam?->collection_chain_id)
-                        : new TokenUploadNotExistInCollection($beam?->collection_chain_id),
-                    new TokenUploadNotExistInBeam($beam),
-                ];
-            }),
+            'tokens.*.tokenIds' => Rule::forEach(fn ($value, $attribute) => [
+                'bail',
+                'required_without:tokens.*.tokenIdDataUpload',
+                'prohibits:tokens.*.tokenIdDataUpload',
+                'distinct',
+                BeamType::getEnumCase(Arr::get($args, str_replace('tokenIds', 'type', $attribute))) == BeamType::TRANSFER_TOKEN
+                    ? new TokensExistInCollection($beam?->collection_chain_id)
+                    : new TokensDoNotExistInCollection($beam?->collection_chain_id),
+                new TokensDoNotExistInBeam($beam),
+            ]),
+            'tokens.*.tokenIdDataUpload' => Rule::forEach(fn ($value, $attribute) => [
+                'bail',
+                'required_without:tokens.*.tokenIds',
+                'prohibits:tokens.*.tokenIds',
+                BeamType::getEnumCase(Arr::get($args, str_replace('tokenIdDataUpload', 'type', $attribute))) == BeamType::TRANSFER_TOKEN
+                    ? new TokenUploadExistInCollection($beam?->collection_chain_id)
+                    : new TokenUploadNotExistInCollection($beam?->collection_chain_id),
+                new TokenUploadNotExistInBeam($beam),
+            ]),
             'tokens.*.tokenQuantityPerClaim' => [
                 'bail',
                 'filled',

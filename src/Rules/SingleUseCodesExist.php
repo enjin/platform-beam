@@ -11,6 +11,7 @@ class SingleUseCodesExist extends SingleUseCodeExist
      *
      * @param  Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
      */
+    #[\Override]
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
         foreach ($value as $code) {

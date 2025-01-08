@@ -101,14 +101,15 @@ class Beam extends BaseModel
     /**
      * Boot model.
      */
+    #[\Override]
     public static function boot()
     {
-        static::deleting(function ($model) {
+        static::deleting(function ($model): void {
             BeamScan::where('beam_id', $model->id)->update(['deleted_at' => $now = now()]);
             BeamClaim::where('beam_id', $model->id)->update(['deleted_at' => $now]);
         });
 
-        static::deleted(function ($model) {
+        static::deleted(function ($model): void {
             Cache::forget(BeamService::key($model->code));
         });
 
@@ -196,15 +197,14 @@ class Beam extends BaseModel
     protected function flags(): Attribute
     {
         return Attribute::make(
-            get: fn () => collect(BitMask::getBits($this->flags_mask))->map(function ($flag) {
-                return BeamFlag::from($flag)->name;
-            })->toArray()
+            get: fn () => collect(BitMask::getBits($this->flags_mask))->map(fn ($flag) => BeamFlag::from($flag)->name)->toArray()
         );
     }
 
     /**
      * This model's specific pivot identifier.
      */
+    #[\Override]
     protected function pivotIdentifier(): Attribute
     {
         return Attribute::make(

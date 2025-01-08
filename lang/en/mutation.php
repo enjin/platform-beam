@@ -14,12 +14,12 @@ return [
     'common.args.name' => 'The beam name.',
     'common.args.quantityPerClaim' => 'The quantity per claim.',
     'common.args.start' => 'Specifies the date and time when the beam becomes claimable (e.g., "2026-01-01T00:00:00Z").',
-    'common.args.type' => <<<MD
+    'common.args.type' => <<<'MD'
 Specifies how tokens are delivered:  
 - **`TRANSFER_TOKEN`**: Transfers existing tokens to the recipient.  
 - **`MINT_ON_DEMAND`**: Mints tokens directly to the recipient.  
 MD,
-    'common.args.source' => <<<MD
+    'common.args.source' => <<<'MD'
 (Optional) Specifies the wallet account from which tokens will be distributed. By default, tokens are distributed from the collection owner's account.  
 
 - For `TRANSFER_TOKEN` beamType: The source account acts as the operator and must be approved to transfer the token before a claim is transferred. [Learn more about operator transfers and approvals](https://docs.enjin.io/docs/multitoken-pallet#operator-transfer).  

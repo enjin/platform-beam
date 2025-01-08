@@ -22,6 +22,7 @@ class GetBeamTest extends TestCaseGraphQL
     /**
      * Setup test case.
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -108,7 +109,7 @@ class GetBeamTest extends TestCaseGraphQL
             'account' => $publickKey,
         ], true);
 
-        $this->assertArraySubset(['account' => ['You have reached the maximum limit to retry.']], $response['error']);
+        $this->assertArrayContainsArray(['account' => ['You have reached the maximum limit to retry.']], $response['error']);
     }
 
     /**
@@ -135,7 +136,7 @@ class GetBeamTest extends TestCaseGraphQL
             'account' => resolve(SubstrateProvider::class)->public_key(),
         ], true);
 
-        $this->assertArraySubset(['code' => ['The selected code is invalid.']], $response['error']);
+        $this->assertArrayContainsArray(['code' => ['The selected code is invalid.']], $response['error']);
     }
 
     /**
@@ -158,7 +159,7 @@ class GetBeamTest extends TestCaseGraphQL
             'account' => fake()->text(10),
         ], true);
 
-        $this->assertArraySubset(['account' => ['The account is not a valid substrate account.']], $response['error']);
+        $this->assertArrayContainsArray(['account' => ['The account is not a valid substrate account.']], $response['error']);
     }
 
     /**
@@ -168,7 +169,7 @@ class GetBeamTest extends TestCaseGraphQL
     {
         $response = $this->graphql($this->method, ['code' => fake()->text(2000)], true);
 
-        $this->assertArraySubset(['code' => ['The code field must not be greater than 1024 characters.']], $response['error']);
+        $this->assertArrayContainsArray(['code' => ['The code field must not be greater than 1024 characters.']], $response['error']);
     }
 
     public function test_it_hides_code_field_when_unauthenticated()

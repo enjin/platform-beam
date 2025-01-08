@@ -7,7 +7,6 @@ use Enjin\Platform\Beam\Traits\HasCustomQueue;
 use Enjin\Platform\Channels\PlatformAppChannel;
 use Enjin\Platform\Events\PlatformBroadcastEvent;
 use Illuminate\Broadcasting\Channel;
-use Illuminate\Database\Eloquent\Model;
 
 class CreateBeamClaimsCompleted extends PlatformBroadcastEvent
 {
@@ -16,7 +15,7 @@ class CreateBeamClaimsCompleted extends PlatformBroadcastEvent
     /**
      * Creates a new event instance.
      */
-    public function __construct(mixed $event, ?Model $transaction = null, ?array $extra = null)
+    public function __construct(mixed $event)
     {
         parent::__construct();
 

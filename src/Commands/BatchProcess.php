@@ -138,11 +138,11 @@ class BatchProcess extends Command
     {
         $batches = $this->batch->getBatchesForProcessing($type)->groupBy('beam_batch_id');
         if (! $batches->isEmpty()) {
-            $batches->each(function ($claims, $batchId) use ($type) {
+            $batches->each(function ($claims, $batchId) use ($type): void {
                 $params = [];
                 $createdTokens = [];
                 $reassignedClaims = [];
-                $claims->each(function ($claim) use (&$params, $type, &$createdTokens, &$reassignedClaims) {
+                $claims->each(function ($claim) use (&$params, $type, &$createdTokens, &$reassignedClaims): void {
                     $collectionId = Arr::get($claim, 'beam.collection_chain_id');
                     if (! isset($params[$collectionId])) {
                         $params[$collectionId] = [

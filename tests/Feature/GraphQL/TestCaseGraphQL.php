@@ -2,20 +2,18 @@
 
 namespace Enjin\Platform\Beam\Tests\Feature\GraphQL;
 
-use DMS\PHPUnitExtensions\ArraySubset\ArraySubsetAsserts;
 use Enjin\Platform\Beam\BeamServiceProvider;
 use Enjin\Platform\Beam\Tests\Feature\Traits\CreateCollectionData;
+use Orchestra\Testbench\TestCase as BaseTestCase;
 use Enjin\Platform\CoreServiceProvider;
 use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Event;
-use Orchestra\Testbench\TestCase as BaseTestCase;
 use PHPUnit\Framework\ExpectationFailedException;
 use Rebing\GraphQL\Support\Facades\GraphQL;
 
 class TestCaseGraphQL extends BaseTestCase
 {
-    use ArraySubsetAsserts;
     use CreateCollectionData;
 
     /**
@@ -36,6 +34,7 @@ class TestCaseGraphQL extends BaseTestCase
     /**
      * Setup test case.
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -164,6 +163,7 @@ class TestCaseGraphQL extends BaseTestCase
      *
      * @param  mixed  $app
      */
+    #[\Override]
     protected function getPackageProviders($app): array
     {
         return [
@@ -187,6 +187,7 @@ class TestCaseGraphQL extends BaseTestCase
      *
      * @param  mixed  $app
      */
+    #[\Override]
     protected function defineEnvironment($app): void
     {
         $app->useEnvironmentPath(__DIR__ . '/..');
@@ -209,6 +210,16 @@ class TestCaseGraphQL extends BaseTestCase
         if ($this->fakeEvents) {
             Event::fake();
         }
+    }
+
+    protected function assertArrayContainsArray(array $expected, array $actual): void
+    {
+        $this->assertArrayIsEqualToArrayOnlyConsideringListOfKeys($expected, $actual, $this->arrayKeys($expected));
+    }
+
+    protected function arrayKeys($array): array
+    {
+        return array_keys(Arr::dot($array));
     }
 
     /**

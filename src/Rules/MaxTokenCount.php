@@ -53,7 +53,7 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
                 ->whereHas(
                     'beam',
                     fn ($query) => $query->where('collection_chain_id', $this->collectionId)->where('end', '>', now())
-                )->whereNotExists(function ($query) {
+                )->whereNotExists(function ($query): void {
                     $query->selectRaw('1')
                         ->from('tokens')
                         ->whereColumn('tokens.token_chain_id', 'beam_claims.token_chain_id');
@@ -68,7 +68,7 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
 
             collect($this->data['tokens'])
                 ->filter(fn ($data) => !empty(Arr::get($data, 'tokenIdDataUpload')))
-                ->map(function ($data) use ($tokens) {
+                ->map(function ($data) use ($tokens): void {
                     $handle = fopen($data['tokenIdDataUpload']->getPathname(), 'r');
                     while (($line = fgets($handle)) !== false) {
                         if (! $this->tokenIdExists($tokens->all(), $tokenId = trim($line))) {
@@ -110,7 +110,7 @@ class MaxTokenCount implements DataAwareRule, ValidationRule
 
                     LazyCollection::range((int) $from, (int) $to)
                         ->chunk(5000)
-                        ->each(function ($chunk) use (&$createTokenTotal, $collection) {
+                        ->each(function ($chunk) use (&$createTokenTotal, $collection): void {
                             $existingTokens = Token::where('collection_id', $collection->id)
                                 ->whereIn('token_chain_id', $chunk)
                                 ->pluck('token_chain_id');

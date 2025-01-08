@@ -21,6 +21,7 @@ class GetSingleUseCodesQuery extends Query
     /**
      * Get the query's attributes.
      */
+    #[\Override]
     public function attributes(): array
     {
         return [
@@ -40,6 +41,7 @@ class GetSingleUseCodesQuery extends Query
     /**
      * Get the query's arguments defintion.
      */
+    #[\Override]
     public function args(): array
     {
         return ConnectionInput::args([
@@ -70,6 +72,7 @@ class GetSingleUseCodesQuery extends Query
     /**
      * Get the query's request validation rules.
      */
+    #[\Override]
     protected function rules(array $args = []): array
     {
         return [

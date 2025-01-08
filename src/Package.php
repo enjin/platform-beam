@@ -10,6 +10,7 @@ class Package extends CorePackage
     /**
      * Get any routes that have been set up for this package.
      */
+    #[\Override]
     public static function getPackageRoutes(): array
     {
         return BeamRoute::caseValuesAsArray();

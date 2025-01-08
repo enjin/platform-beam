@@ -21,7 +21,7 @@ class UnpauseBeam implements ShouldQueue
     {
         Beam::where('collection_chain_id', $event->broadcastData['collectionId'])
             ->get()
-            ->each(function ($beam) {
+            ->each(function ($beam): void {
                 $beam->update(['flags_mask' => BeamService::getFlagsValue(
                     collect(array_merge($beam->flags ?? [], ['PAUSED']))
                         ->unique()

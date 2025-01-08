@@ -19,11 +19,6 @@ class UpdateClaimStatus implements ShouldQueue
     use HasCustomQueue;
 
     /**
-     * Create new event listener instance.
-     */
-    public function __construct() {}
-
-    /**
      * Handle the event.
      */
     public function handle(PlatformBroadcastEvent $event): void

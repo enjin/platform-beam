@@ -11,12 +11,13 @@ class MinBigIntIntegerRange extends MinBigInt
     /**
      * Determine if the value is a valid min big int.
      */
+    #[\Override]
     protected function isValidMinBigInt($value): bool
     {
         $range = $this->integerRange($value);
         $value = $range === false ? $value : $range[0];
         $this->message = __('enjin-platform::validation.min_big_int', ['min' => $this->min]);
 
-        return bccomp($this->min, $value) <= 0;
+        return bccomp($this->min, (string) $value) <= 0;
     }
 }

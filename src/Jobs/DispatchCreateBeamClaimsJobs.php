@@ -44,10 +44,10 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
         $tokens = collect($this->tokens);
 
         $tokens->chunk(1000)
-            ->each(function (Collection $chunks) use ($beam) {
+            ->each(function (Collection $chunks) use ($beam): void {
                 $claims = collect();
-                $chunks->each(function ($token) use ($beam, $claims) {
-                    collect($token['tokenIds'])->each(function ($tokenId) use ($beam, $claims, $token) {
+                $chunks->each(function ($token) use ($beam, $claims): void {
+                    collect($token['tokenIds'])->each(function ($tokenId) use ($beam, $claims, $token): void {
                         $range = $this->integerRange($tokenId);
                         if ($range === false) {
                             for ($i = 0; $i < $token['claimQuantity']; $i++) {
@@ -70,9 +70,9 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
                                     yield $from;
                                     $from = bcadd($from, 1);
                                 }
-                            })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token) {
+                            })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token): void {
                                 $claims = collect();
-                                $tokenIds->each(function ($tokenId) use ($token, $beam, $claims) {
+                                $tokenIds->each(function ($tokenId) use ($token, $beam, $claims): void {
                                     for ($i = 0; $i < $token['claimQuantity']; $i++) {
                                         $claims->push([
                                             'beam_id' => $beam->id,

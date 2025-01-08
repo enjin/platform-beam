@@ -26,6 +26,7 @@ class AddTokensTest extends TestCaseGraphQL
     /**
      * Setup test case.
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -108,7 +109,7 @@ class AddTokensTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIds' => ['The tokens.0.tokenIds already exist in beam.'],
         ], $response['error']);
 
@@ -121,7 +122,7 @@ class AddTokensTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload already exist in beam.'],
         ], $response['error']);
     }
@@ -137,7 +138,7 @@ class AddTokensTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload exists in the specified collection.'],
         ], $response['error']);
         Event::assertNotDispatched(BeamUpdated::class);
@@ -151,7 +152,7 @@ class AddTokensTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload exists in the specified collection.'],
         ], $response['error']);
         Event::assertNotDispatched(BeamUpdated::class);
@@ -165,7 +166,7 @@ class AddTokensTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
         ], $response['error']);
         Event::assertNotDispatched(BeamUpdated::class);
@@ -179,7 +180,7 @@ class AddTokensTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
         ], $response['error']);
         Event::assertNotDispatched(BeamUpdated::class);
@@ -198,7 +199,7 @@ class AddTokensTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'code' => ['The selected code is invalid.'],
             'tokens' => ['The tokens field must have at least 1 items.'],
         ], $response['error']);
@@ -227,7 +228,7 @@ class AddTokensTest extends TestCaseGraphQL
             'code' => Str::random(1500),
             'tokens' => [['tokenIds' => ['1..5'], 'type' => BeamType::MINT_ON_DEMAND->name]],
         ], true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['code' => ['The code field must not be greater than 1024 characters.']],
             $response['error']
         );

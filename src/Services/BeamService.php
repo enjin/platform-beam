@@ -215,7 +215,7 @@ class BeamService
             event(new BeamClaimPending($claim));
             Cache::decrement($key);
             Log::info("Claim beam: {$code}, Remaining: " . Cache::get($key), $claim);
-        } catch (LockTimeoutException $e) {
+        } catch (LockTimeoutException) {
             throw new BeamException(__('enjin-platform-beam::error.unable_to_process'));
         } finally {
             $lock?->release();
@@ -258,7 +258,7 @@ class BeamService
      */
     public static function key(string $name, ?string $suffix = null): string
     {
-        return PlatformBeamCache::CLAIM_COUNT->key($name, $suffix);
+        return PlatformBeamCache::CLAIM_COUNT->key($name);
     }
 
     /**
@@ -267,7 +267,7 @@ class BeamService
     public function expireSingleUseCodes(array $codes): int
     {
         $beams = [];
-        collect($codes)->each(function ($code) use (&$beams) {
+        collect($codes)->each(function ($code) use (&$beams): void {
             if ($claim = BeamClaim::claimable()->withSingleUseCode($code)->first()) {
                 if (! isset($beams[$claim->beam_id])) {
                     $beams[$claim->beam_id] = 0;
@@ -278,7 +278,7 @@ class BeamService
 
         if ($beams) {
             Beam::findMany(array_keys($beams), ['id', 'code'])
-                ->each(fn ($beam) => Cache::decrement($this->key($beam->code, $beams[$beam->id])));
+                ->each(fn ($beam) => Cache::decrement(static::key($beam->code, $beams[$beam->id])));
         }
 
         return array_sum($beams);
@@ -311,7 +311,7 @@ class BeamService
     public static function getSingleUseCodeData(string $code): ?object
     {
         try {
-            [$claimCode, $beamCode, $nonce] = explode(':', decrypt($code), 3);
+            [$claimCode, $beamCode, $nonce] = explode(':', (string) decrypt($code), 3);
 
             return (object) [
                 'claimCode' => $claimCode,
@@ -383,17 +383,15 @@ class BeamService
         $tokens = collect($tokens);
         $tokenIds = $tokens->whereNotNull('tokenIds');
         if ($tokenIds->count()) {
-            $totalClaimCount = $tokenIds->reduce(function ($carry, $token) {
-                return collect($token['tokenIds'])->reduce(function ($val, $tokenId) use ($token) {
-                    $range = $this->integerRange($tokenId);
+            $totalClaimCount = $tokenIds->reduce(fn ($carry, $token) => collect($token['tokenIds'])->reduce(function ($val, $tokenId) use ($token) {
+                $range = $this->integerRange($tokenId);
 
-                    return $val + (
-                        $range === false
-                        ? $token['claimQuantity']
-                        : (($range[1] - $range[0]) + 1) * $token['claimQuantity']
-                    );
-                }, $carry);
-            }, $totalClaimCount);
+                return $val + (
+                    $range === false
+                    ? $token['claimQuantity']
+                    : (($range[1] - $range[0]) + 1) * $token['claimQuantity']
+                );
+            }, $carry), $totalClaimCount);
             $this->probability->createOrUpdateProbabilities($beam->code, $tokens->all());
 
             DispatchCreateBeamClaimsJobs::dispatch($beam, $tokenIds->all())->afterCommit();
@@ -402,7 +400,7 @@ class BeamService
         $tokenUploads = $tokens->whereNotNull('tokenIdDataUpload');
         if ($tokenUploads->count()) {
             $ids = $tokenIds->pluck('tokenIds');
-            $tokenUploads->each(function ($token) use ($beam, $ids, &$totalClaimCount) {
+            $tokenUploads->each(function ($token) use ($beam, $ids, &$totalClaimCount): void {
                 LazyCollection::make(function () use ($token, $ids) {
                     $handle = fopen($token['tokenIdDataUpload']->getPathname(), 'r');
                     while (($line = fgets($handle)) !== false) {
@@ -412,7 +410,7 @@ class BeamService
                         }
                     }
                     fclose($handle);
-                })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token, &$totalClaimCount) {
+                })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token, &$totalClaimCount): void {
                     $token['tokenIds'] = $tokenIds->all();
                     $totalClaimCount = $tokenIds->reduce(function ($carry, $tokenId) use ($token) {
                         $range = $this->integerRange($tokenId);

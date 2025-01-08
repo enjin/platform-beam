@@ -49,6 +49,7 @@ class BeamServiceProvider extends PackageServiceProvider
      *
      * @return void
      */
+    #[\Override]
     public function register()
     {
         if (app()->runningUnitTests()) {
@@ -72,6 +73,7 @@ class BeamServiceProvider extends PackageServiceProvider
      *
      * @return void
      */
+    #[\Override]
     public function boot()
     {
         parent::boot();

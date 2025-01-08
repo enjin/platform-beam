@@ -42,6 +42,7 @@ class ClaimBeamTest extends TestCaseGraphQL
     /**
      * Setup test case.
      */
+    #[\Override]
     protected function setUp(): void
     {
         parent::setUp();
@@ -137,19 +138,13 @@ class ClaimBeamTest extends TestCaseGraphQL
     public function test_it_can_remove_a_condition_from_the_rule(): void
     {
         PassesClaimConditions::addConditionalFunctions([
-            function ($attribute, $code, $singleUse, $data) {
-                return CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'];
-            },
-            function ($attribute, $code, $singleUse, $data) {
-                return $attribute == 'code';
-            },
+            fn ($attribute, $code, $singleUse, $data) => CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'],
+            fn ($attribute, $code, $singleUse, $data) => $attribute == 'code',
         ]);
         $this->assertCount(2, PassesClaimConditions::getConditionalFunctions());
 
         PassesClaimConditions::removeConditionalFunctions(
-            function ($attribute, $code, $singleUse, $data) {
-                return $attribute == 'code';
-            }
+            fn ($attribute, $code, $singleUse, $data) => $attribute == 'code'
         );
         $this->assertCount(1, PassesClaimConditions::getConditionalFunctions());
 
@@ -164,9 +159,7 @@ class ClaimBeamTest extends TestCaseGraphQL
      */
     public function test_it_can_claim_beam_with_single_condition_that_passes(): void
     {
-        PassesClaimConditions::addConditionalFunctions(function ($attribute, $code, $singleUse, $data) {
-            return CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'];
-        });
+        PassesClaimConditions::addConditionalFunctions(fn ($attribute, $code, $singleUse, $data) => CryptoSignatureType::ED25519->name == $data['cryptoSignatureType']);
         $this->assertNotEmpty(PassesClaimConditions::getConditionalFunctions());
 
         $this->genericClaimTest(CryptoSignatureType::ED25519);
@@ -181,12 +174,8 @@ class ClaimBeamTest extends TestCaseGraphQL
     public function test_it_can_claim_beam_with_multiple_conditions_that_pass(): void
     {
         PassesClaimConditions::addConditionalFunctions([
-            function ($attribute, $code, $singleUse, $data) {
-                return CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'];
-            },
-            function ($attribute, $code, $singleUse, $data) {
-                return $attribute == 'code';
-            },
+            fn ($attribute, $code, $singleUse, $data) => CryptoSignatureType::ED25519->name == $data['cryptoSignatureType'],
+            fn ($attribute, $code, $singleUse, $data) => $attribute == 'code',
         ]);
         $this->assertNotEmpty(PassesClaimConditions::getConditionalFunctions());
 
@@ -201,9 +190,7 @@ class ClaimBeamTest extends TestCaseGraphQL
      */
     public function test_it_cannot_claim_beam_with_single_condition_that_fails(): void
     {
-        PassesClaimConditions::addConditionalFunctions(function ($attribute, $code, $singleUse, $data) {
-            return CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'] ? true : 'Signature is not SR25519.';
-        });
+        PassesClaimConditions::addConditionalFunctions(fn ($attribute, $code, $singleUse, $data) => CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'] ? true : 'Signature is not SR25519.');
         $this->assertNotEmpty(PassesClaimConditions::getConditionalFunctions());
 
         [$keypair, $publicKey, $privateKey] = $this->getKeyPair(CryptoSignatureType::ED25519);
@@ -228,7 +215,7 @@ class ClaimBeamTest extends TestCaseGraphQL
 
         $this->assertNotEmpty($response);
 
-        $this->assertArraySubset(['code' => ['Signature is not SR25519.']], $response['error']);
+        $this->assertArrayContainsArray(['code' => ['Signature is not SR25519.']], $response['error']);
 
         PassesClaimConditions::clearConditionalFunctions();
         $this->assertEmpty(PassesClaimConditions::getConditionalFunctions());
@@ -240,12 +227,8 @@ class ClaimBeamTest extends TestCaseGraphQL
     public function test_it_cannot_claim_beam_with_multiple_conditions_that_fail(): void
     {
         $functions = collect([
-            function ($attribute, $code, $singleUse, $data) {
-                return $data[$attribute] == 'code';
-            },
-            function ($attribute, $code, $singleUse, $data) {
-                return CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'] ? true : 'Signature is not SR25519.';
-            },
+            fn ($attribute, $code, $singleUse, $data) => $data[$attribute] == 'code',
+            fn ($attribute, $code, $singleUse, $data) => CryptoSignatureType::SR25519->name == $data['cryptoSignatureType'] ? true : 'Signature is not SR25519.',
         ]);
 
         PassesClaimConditions::addConditionalFunctions($functions);
@@ -273,7 +256,7 @@ class ClaimBeamTest extends TestCaseGraphQL
 
         $this->assertNotEmpty($response);
 
-        $this->assertArraySubset(['code' => [
+        $this->assertArrayContainsArray(['code' => [
             'A condition to claim has not been met.',
             'Signature is not SR25519.',
         ]], $response['error']);
@@ -295,7 +278,7 @@ class ClaimBeamTest extends TestCaseGraphQL
             'signature' => fake()->text(10),
         ], true);
 
-        $this->assertArraySubset(['code' => ['The beam has expired.']], $response['error']);
+        $this->assertArrayContainsArray(['code' => ['The beam has expired.']], $response['error']);
     }
 
     /**
@@ -311,7 +294,7 @@ class ClaimBeamTest extends TestCaseGraphQL
             'signature' => fake()->text(10),
         ], true);
 
-        $this->assertArraySubset(['code' => ['There are no more claims available.']], $response['error']);
+        $this->assertArrayContainsArray(['code' => ['There are no more claims available.']], $response['error']);
     }
 
     /**
@@ -321,7 +304,7 @@ class ClaimBeamTest extends TestCaseGraphQL
     {
         $response = $this->graphql($this->method, [], true);
 
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             ['message' => 'Variable "$code" of required type "String!" was not provided.'],
             ['message' => 'Variable "$account" of required type "String!" was not provided.'],
             ['message' => 'Variable "$signature" of required type "String!" was not provided.'],
@@ -341,7 +324,7 @@ class ClaimBeamTest extends TestCaseGraphQL
             'signature' => (new sr25519())->Sign($keypair, fake()->text(10)),
         ], true);
 
-        $this->assertArraySubset(['signature' => ['Beam scan record is not found.']], $response['error']);
+        $this->assertArrayContainsArray(['signature' => ['Beam scan record is not found.']], $response['error']);
     }
 
     /**
@@ -355,13 +338,13 @@ class ClaimBeamTest extends TestCaseGraphQL
             'signature' => $randString,
         ], true);
 
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'code' => ['The selected code is invalid.'],
             'account' => ['The account is not a valid substrate account.'],
             'signature' => ['The account is not a valid substrate account.'],
         ], $response['error']);
 
-        $this->assertArraySubset(['account' => ['The account is not a valid substrate account.']], $response['error']);
+        $this->assertArrayContainsArray(['account' => ['The account is not a valid substrate account.']], $response['error']);
     }
 
     /**
@@ -375,7 +358,7 @@ class ClaimBeamTest extends TestCaseGraphQL
             'signature' => fake()->text(10),
         ], true);
 
-        $this->assertArraySubset(['account' => ['The account should not be the owner of the collection.']], $response['error']);
+        $this->assertArrayContainsArray(['account' => ['The account should not be the owner of the collection.']], $response['error']);
     }
 
     /**
@@ -413,7 +396,7 @@ class ClaimBeamTest extends TestCaseGraphQL
         ], true);
 
         $this->assertNotEmpty($response);
-        $this->assertArraySubset(['code' => ['The beam is paused.']], $response['error']);
+        $this->assertArrayContainsArray(['code' => ['The beam is paused.']], $response['error']);
     }
 
     /**
@@ -434,7 +417,7 @@ class ClaimBeamTest extends TestCaseGraphQL
             'code' => $claim->singleUseCode,
             'account' => $publicKey,
         ], true);
-        $this->assertArraySubset(['code' => ['The selected code is invalid.']], $response['error']);
+        $this->assertArrayContainsArray(['code' => ['The selected code is invalid.']], $response['error']);
 
         $response = $this->graphql($this->method, [
             'code' => $claim->singleUseCode,
@@ -442,7 +425,7 @@ class ClaimBeamTest extends TestCaseGraphQL
             'cryptoSignatureType' => $type->name,
             'signature' => '',
         ], true);
-        $this->assertArraySubset(['code' => ['The selected code is invalid.']], $response['error']);
+        $this->assertArrayContainsArray(['code' => ['The selected code is invalid.']], $response['error']);
     }
 
     /**
@@ -513,7 +496,7 @@ class ClaimBeamTest extends TestCaseGraphQL
             'account' => app(Generator::class)->public_key(),
             'signature' => '',
         ], true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             $response['error'],
             ['code' => ['There are no more claims available.', 'The beam is paused.']]
         );
@@ -552,7 +535,7 @@ class ClaimBeamTest extends TestCaseGraphQL
             'account' => app(Generator::class)->public_key(),
             'signature' => '',
         ], true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             $response['error'],
             ['code' => ['There are no more claims available.']]
         );
