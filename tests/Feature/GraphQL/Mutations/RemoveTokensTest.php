@@ -109,7 +109,7 @@ class RemoveTokensTest extends TestCaseGraphQL
             'code' => $this->beam->code,
             'tokenIds' => [],
         ], true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['tokenIds' => ['The token ids field is required.']],
             $response['error']
         );
@@ -177,7 +177,7 @@ class RemoveTokensTest extends TestCaseGraphQL
             'code' => $this->beam->code,
             'packs' => [],
         ], true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['packs' => ['The packs field is required.']],
             $response['error']
         );
@@ -195,7 +195,7 @@ class RemoveTokensTest extends TestCaseGraphQL
             'code' => $this->beam->code,
             'packs' => [['id' => 100000, 'tokenIds' => ['10000']]],
         ], true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             [
                 'packs.0.id' => ['The packs.0.id doesn\'t exist in beam.'],
                 'packs.0.tokenIds.0' => ['The packs.0.tokenIds.0 doesn\'t exist in beam pack.'],

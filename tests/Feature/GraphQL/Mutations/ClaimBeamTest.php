@@ -161,7 +161,7 @@ class ClaimBeamTest extends TestCaseGraphQL
             'signature' => '',
         ], true);
 
-        $this->assertArraySubset(['code' => ['The code is invalid.']], $response['error']);
+        $this->assertArrayContainsArray(['code' => ['The code is invalid.']], $response['error']);
     }
 
     public function test_it_can_claim_beam_job_with_idempotency_key(): void

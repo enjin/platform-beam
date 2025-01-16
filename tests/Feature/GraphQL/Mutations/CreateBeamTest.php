@@ -151,7 +151,7 @@ class CreateBeamTest extends TestCaseGraphQL
             $this->generateBeamPackData(),
             ['packs' => [['tokens' => [['tokenIdDataUpload' => $file]]]]]
         ), true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'packs.0.tokens.0.tokenIdDataUpload' => ['The packs.0.tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
         ], $response['error']);
         Event::assertNotDispatched(BeamCreated::class);
@@ -161,7 +161,7 @@ class CreateBeamTest extends TestCaseGraphQL
             $this->generateBeamPackData(),
             ['tokens' => [['tokenIdDataUpload' => $file]]]
         ), true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenIdDataUpload' => ['The tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
         ], $response['error']);
         Event::assertNotDispatched(BeamCreated::class);
@@ -209,7 +209,7 @@ class CreateBeamTest extends TestCaseGraphQL
             ),
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'packs.0.tokens.0.tokenIds' => ['The packs.0.tokens.0.tokenIds already exist in beam.'],
         ], $response['error']);
 
@@ -222,7 +222,7 @@ class CreateBeamTest extends TestCaseGraphQL
             ),
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'packs.0.tokens.0.tokenIdDataUpload' => ['The packs.0.tokens.0.tokenIdDataUpload already exist in beam.'],
         ], $response['error']);
     }
@@ -257,7 +257,7 @@ class CreateBeamTest extends TestCaseGraphQL
             true
         );
 
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'packs.0.tokens.0.attributes.0.key' => ['The packs.0.tokens.0.attributes.0.key field must not be greater than 255 characters.'],
             'packs.0.tokens.0.attributes.0.value' => ['The packs.0.tokens.0.attributes.0.value field must not be greater than 1000 characters.'],
         ], $response['error']);
@@ -311,21 +311,21 @@ class CreateBeamTest extends TestCaseGraphQL
             ['tokens' => []]
         ), true);
 
-        $this->assertArraySubset(['tokens' => ['The tokens field is required when packs is not present.']], $response['error']);
+        $this->assertArrayContainsArray(['tokens' => ['The tokens field is required when packs is not present.']], $response['error']);
 
         $response = $this->graphql($this->method, array_merge(
             $this->generateBeamData(),
             ['packs' => []]
         ), true);
 
-        $this->assertArraySubset(['packs' => ['The packs field must have at least 1 items.']], $response['error']);
+        $this->assertArrayContainsArray(['packs' => ['The packs field must have at least 1 items.']], $response['error']);
 
         $response = $this->graphql($this->method, array_merge(
             $this->generateBeamData(),
             ['packs' => [], 'tokens' => []]
         ), true);
 
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens' => ['The tokens field is required when packs is not present.'],
             'packs' => ['The packs field is required when tokens is not present.'],
         ], $response['error']);
@@ -402,7 +402,7 @@ class CreateBeamTest extends TestCaseGraphQL
             array_merge($data, ['tokens' => [['tokenIds' => '1..10'], ['tokenIds' => '5..10']]]),
             true
         );
-        $this->assertArraySubset(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
+        $this->assertArrayContainsArray(['tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
 
 
 
@@ -412,42 +412,42 @@ class CreateBeamTest extends TestCaseGraphQL
             array_merge($data, ['packs' => [['tokens' => [['tokenIds' => '1']]]]]),
             true
         );
-        $this->assertArraySubset(['packs.0.tokens.0.tokenIds' => ['The packs.0.tokens.0.tokenIds does not exist in the specified collection.']], $response['error']);
+        $this->assertArrayContainsArray(['packs.0.tokens.0.tokenIds' => ['The packs.0.tokens.0.tokenIds does not exist in the specified collection.']], $response['error']);
 
         $response = $this->graphql(
             $this->method,
             array_merge($data, ['packs' => [['tokens' => [['tokenIds' => '1..10']]]]]),
             true
         );
-        $this->assertArraySubset(['packs.0.tokens.0.tokenIds' => ['The packs.0.tokens.0.tokenIds does not exist in the specified collection.']], $response['error']);
+        $this->assertArrayContainsArray(['packs.0.tokens.0.tokenIds' => ['The packs.0.tokens.0.tokenIds does not exist in the specified collection.']], $response['error']);
 
         $response = $this->graphql(
             $this->method,
             array_merge($data, ['packs' => [['tokens' => [['tokenIds' => '1'], ['tokenIds' => '1']]]]]),
             true
         );
-        $this->assertArraySubset(['packs.0.tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
+        $this->assertArrayContainsArray(['packs.0.tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
 
         $response = $this->graphql(
             $this->method,
             array_merge($data, ['packs' => [['tokens' => [['tokenIds' => '1'], ['tokenIds' => '1..10']]]]]),
             true
         );
-        $this->assertArraySubset(['packs.0.tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
+        $this->assertArrayContainsArray(['packs.0.tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
 
         $response = $this->graphql(
             $this->method,
             array_merge($data, ['packs' => [['tokens' => [['tokenIds' => '1..10'], ['tokenIds' => '1']]]]]),
             true
         );
-        $this->assertArraySubset(['packs.0.tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
+        $this->assertArrayContainsArray(['packs.0.tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
 
         $response = $this->graphql(
             $this->method,
             array_merge($data, ['packs' => [['tokens' => [['tokenIds' => '1..10'], ['tokenIds' => '5..10']]]]]),
             true
         );
-        $this->assertArraySubset(['packs.0.tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
+        $this->assertArrayContainsArray(['packs.0.tokens' => ['There are some duplicate token IDs supplied in the data.']], $response['error']);
 
         $response = $this->graphql(
             $this->method,
@@ -457,7 +457,7 @@ class CreateBeamTest extends TestCaseGraphQL
             ]),
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens' => ['The tokens field prohibits packs from being present.'],
             'packs' => ['The packs field prohibits tokens from being present.'],
         ], $response['error']);
@@ -502,7 +502,7 @@ class CreateBeamTest extends TestCaseGraphQL
         $this->assertNotEmpty($response);
 
         $response = $this->graphql($this->method, $data, true);
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens.0.tokenQuantityPerClaim' => [
                 'The tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for unique tokens for this collection.',
             ],
@@ -538,7 +538,7 @@ class CreateBeamTest extends TestCaseGraphQL
         );
 
         $response = $this->graphql($this->method, $this->generateBeamPackData(), true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['packs.0.tokens.0.tokenQuantityPerClaim' => ['The packs.0.tokens.0.tokenQuantityPerClaim exceeded the maximum supply limit of 0 for unique tokens for this collection.']],
             $response['error']
         );

@@ -197,7 +197,7 @@ class AddTokensTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'packs.0.tokens.0.tokenIds' => ['The packs.0.tokens.0.tokenIds already exist in beam.'],
         ], $response['error']);
 
@@ -212,7 +212,7 @@ class AddTokensTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'packs.0.tokens.0.tokenIdDataUpload' => ['The packs.0.tokens.0.tokenIdDataUpload already exist in beam.'],
         ], $response['error']);
 
@@ -256,7 +256,7 @@ class AddTokensTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'packs.0.tokens.0.tokenIdDataUpload' => ['The packs.0.tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
         ], $response['error']);
 
@@ -269,7 +269,7 @@ class AddTokensTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'packs.0.tokens.0.tokenIdDataUpload' => ['The packs.0.tokens.0.tokenIdDataUpload does not exist in the specified collection.'],
         ], $response['error']);
     }
@@ -300,7 +300,7 @@ class AddTokensTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'tokens' => ['The tokens field must have at least 1 items.'],
         ], $response['error']);
 
@@ -332,7 +332,7 @@ class AddTokensTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'packs' => ['The packs field must have at least 1 items.'],
         ], $response['error']);
     }

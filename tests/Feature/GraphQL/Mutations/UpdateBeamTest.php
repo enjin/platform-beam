@@ -213,7 +213,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'packs.0.tokens.0.tokenIds' => ['The packs.0.tokens.0.tokenIds already exist in beam.'],
         ], $response['error']);
 
@@ -226,7 +226,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             ],
             true
         );
-        $this->assertArraySubset([
+        $this->assertArrayContainsArray([
             'packs.0.tokens.0.tokenIdDataUpload' => ['The packs.0.tokens.0.tokenIdDataUpload already exist in beam.'],
         ], $response['error']);
 
@@ -314,7 +314,7 @@ class UpdateBeamTest extends TestCaseGraphQL
             ['tokens' => [['tokenIds' => [$token->token_chain_id . '..' . $token->token_chain_id], 'type' => BeamType::MINT_ON_DEMAND->name]]]
         );
         $response = $this->graphql($this->method, $updates, true);
-        $this->assertArraySubset(
+        $this->assertArrayContainsArray(
             ['tokens.0.tokenIds' => ['The tokens.0.tokenIds already exist in beam.']],
             $response['error']
         );
