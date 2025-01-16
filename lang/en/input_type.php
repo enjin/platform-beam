@@ -9,4 +9,7 @@ return [
     'claim_token.field.tokenIdDataUpload' => 'You can use this to upload a txt file that contains a list of token ID ranges, one per line.',
     'claim_token.field.claimQuantity' => 'Specifies the number of claims to create for each provided token ID. Defaults to `1`.',
     'claim_token.field.tokenQuantityPerClaim' => 'Specifies how many token units will be minted or transferred for each claim.',
+    'beam_pack.description' => 'The beam pack.',
+    'beam_pack.field.id' => 'The beam pack database ID, which can be null when creating a new beam pack.',
+    'beam_pack.field.beam_pack' => 'The number of times this pack can be claimed.',
 ];

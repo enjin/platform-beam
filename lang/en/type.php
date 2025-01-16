@@ -29,4 +29,7 @@ return [
     'beam_scan.field.walletPublicKey' => 'The wallet public key.',
     'integer_range.description' => "A string value that can be used to represent a range of integer numbers.  Use a double full stop to supply a range between 2 integers. \n\nExample \[\"1\",\"2\",\"3..8\"\]",
     'attribute.description' => 'An initial attribute to set for the token when minting on demand.',
+    'beam_pack.description' => 'The beam pack.',
+    'beam_pack.field.id' => 'The beam pack internal ID.',
+    'beam_pack.field.isClaimed' => 'The flag that determines if the beam pack is claimed.',
 ];
