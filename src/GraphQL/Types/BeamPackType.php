@@ -15,6 +15,7 @@ class BeamPackType extends Type
     /**
      * Get the type's attributes.
      */
+    #[\Override]
     public function attributes(): array
     {
         return [
@@ -27,6 +28,7 @@ class BeamPackType extends Type
     /**
      * Get the type's fields.
      */
+    #[\Override]
     public function fields(): array
     {
         return [
@@ -53,12 +55,10 @@ class BeamPackType extends Type
             'qr' => [
                 'type' => GraphQL::type('BeamQr'),
                 'description' => __('enjin-platform-beam::type.beam.field.qr'),
-                'resolve' => function ($claim) {
-                    return [
-                        'url' => $claim->qrUrl,
-                        'payload' => $claim->claimableCode,
-                    ];
-                },
+                'resolve' => fn ($claim) => [
+                    'url' => $claim->qrUrl,
+                    'payload' => $claim->claimableCode,
+                ],
                 'selectable' => false,
                 'is_relation' => false,
                 'excludeFrom' => ['GetBeam', 'GetBeams', 'GetPendingClaims'],

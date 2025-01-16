@@ -50,7 +50,7 @@ trait CreateBeamData
         array $flags = [],
         array $extra = []
     ): array {
-        $data = [
+        return [
             'name' => fake()->name(),
             'description' => fake()->word(),
             'image' => fake()->url(),
@@ -68,7 +68,5 @@ trait CreateBeamData
             ]]])->all(),
             ...$extra,
         ];
-
-        return $data;
     }
 }

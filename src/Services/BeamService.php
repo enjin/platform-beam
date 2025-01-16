@@ -140,7 +140,7 @@ class BeamService
             $tokenUploads = $tokens->whereNotNull('tokenIdDataUpload');
             if ($tokenUploads->count()) {
                 $ids = $tokenIds->pluck('tokenIds');
-                $tokenUploads->each(function ($token) use ($beam, $ids, $beamPack) {
+                $tokenUploads->each(function ($token) use ($beam, $ids, $beamPack): void {
                     LazyCollection::make(function () use ($token, $ids) {
                         $handle = fopen($token['tokenIdDataUpload']->getPathname(), 'r');
                         while (($line = fgets($handle)) !== false) {
@@ -150,7 +150,7 @@ class BeamService
                             }
                         }
                         fclose($handle);
-                    })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token, $beamPack) {
+                    })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token, $beamPack): void {
                         $token['tokenIds'] = $tokenIds->all();
                         unset($token['tokenIdDataUpload']);
                         DispatchCreateBeamClaimsJobs::dispatch($beam, [$token], $beamPack->id)->afterCommit();
@@ -360,7 +360,7 @@ class BeamService
 
         Beam::whereIn('code', array_keys($beamCodes))
             ->get(['id', 'code', 'is_pack'])
-            ->each(function ($beam) use ($beamCodes) {
+            ->each(function ($beam) use ($beamCodes): void {
                 if ($claim = ($beam->is_pack ? new BeamPack() : new BeamClaim())
                     ->claimable()
                     ->where('beam_id', $beam->id)
@@ -368,7 +368,7 @@ class BeamService
                     ->first()
                 ) {
                     $claim->increment('nonce');
-                    Cache::decrement($this->key($beam->code));
+                    Cache::decrement(static::key($beam->code));
                 }
             });
 
@@ -500,8 +500,8 @@ class BeamService
             if ($tokenIdRanges) {
                 $deletedTokens += BeamClaim::where('beam_pack_id', $pack['id'])
                     ->whereNull('claimed_at')
-                    ->where(function ($query) use ($tokenIdRanges) {
-                        $tokenIdRanges->each(function ($tokenString) use ($query) {
+                    ->where(function ($query) use ($tokenIdRanges): void {
+                        $tokenIdRanges->each(function ($tokenString) use ($query): void {
                             $ranges = $this->integerRange($tokenString);
                             $query->orWhereBetween('token_chain_id', [(int) $ranges[0], (int) $ranges[1]]);
                         });

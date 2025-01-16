@@ -12,6 +12,7 @@ class ClaimUnion extends UnionType implements PlatformGraphQlUnion
     /**
      * Get the type's attributes.
      */
+    #[\Override]
     public function attributes(): array
     {
         return [

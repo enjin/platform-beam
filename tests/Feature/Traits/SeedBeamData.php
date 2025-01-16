@@ -66,7 +66,7 @@ trait SeedBeamData
         ])->create();
 
         $this->claims = collect();
-        Collection::times($claimsCount ?: 1, function () use ($type) {
+        Collection::times($claimsCount ?: 1, function () use ($type): void {
             $this->claims->push(
                 BeamClaim::factory()
                     ->create([

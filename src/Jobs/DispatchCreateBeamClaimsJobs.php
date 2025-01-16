@@ -78,7 +78,7 @@ class DispatchCreateBeamClaimsJobs implements ShouldQueue
                                 }
                             })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token): void {
                                 $claims = collect();
-                                $tokenIds->each(function ($tokenId) use ($token, $beam, $claims) {
+                                $tokenIds->each(function ($tokenId) use ($token, $beam, $claims): void {
                                     for ($i = 0; $i < Arr::get($token, 'claimQuantity', 1); $i++) {
                                         $claims->push([
                                             'beam_id' => $beam->id,

@@ -120,7 +120,7 @@ class ClaimBeam implements ShouldQueue
         return BeamClaim::where('beam_id', $data['beam']['id'])
             ->with(['beam:id,collection_chain_id', 'beamPack:id,beam_id'])
             ->claimable()
-            ->when($isPack = Arr::get($data, 'is_pack'), function (Builder $query) use ($data) {
+            ->when($isPack = Arr::get($data, 'is_pack'), function (Builder $query) use ($data): void {
                 if (!($pack = BeamPack::where('is_claimed', false)
                     ->where('beam_id', $data['beam']['id'])
                     ->when($data['code'], fn ($subquery) => $subquery->where('code', $data['code']))

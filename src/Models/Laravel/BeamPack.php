@@ -95,7 +95,7 @@ class BeamPack extends BaseModel
 
         if (! $isParent) {
             $with = [
-                $key => function ($query) use ($select, $args) {
+                $key => function ($query) use ($select, $args): void {
                     $query->select(array_unique($select))
                         ->when($cursor = Cursor::fromEncoded(Arr::get($args, 'after')), fn ($q) => $q->where('id', '>', $cursor->parameter('id')))
                         ->orderBy('beam_packs.id');
