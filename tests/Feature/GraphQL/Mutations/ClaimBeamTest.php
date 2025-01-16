@@ -199,7 +199,7 @@ class ClaimBeamTest extends TestCaseGraphQL
         PassesClaimConditions::removeConditionalFunctions(
             fn ($attribute, $code, $singleUse, $data) => $attribute == 'code'
         );
-        $this->assertCount(1, PassesClaimConditions::getConditionalFunctions());
+        $this->assertCount(2, PassesClaimConditions::getConditionalFunctions());
 
         $this->genericClaimTest(CryptoSignatureType::ED25519);
 
