@@ -282,7 +282,7 @@ class BeamService
                 ->first()) {
                 throw new BeamException(__('enjin-platform-beam::error.beam_not_found', ['code' => $code]));
             }
-            $singleUseCode = $code;
+            $singleUseCode = $singleUse->claimCode;
             $code = $singleUse->beamCode;
         }
 
