@@ -120,18 +120,21 @@ class ClaimBeam implements ShouldQueue
         return BeamClaim::where('beam_id', Arr::get($data, 'beam.id'))
             ->with(['beam:id,collection_chain_id', 'beamPack:id,beam_id'])
             ->claimable()
-            ->when($isPack = Arr::get($data, 'is_pack'), function (Builder $query) use ($data): void {
-                if (!($pack = BeamPack::claimable()
-                    ->where('beam_id', Arr::get($data, 'beam.id'))
+            ->when(
+                Arr::get($data, 'is_pack'),
+                function (Builder $query) use ($data): void {
+                    if (!($pack = BeamPack::claimable()
+                        ->where('beam_id', Arr::get($data, 'beam.id'))
+                        ->when($data['code'], fn ($subquery) => $subquery->where('code', $data['code']))
+                        ->inRandomOrder()
+                        ->first())) {
+                        throw new BeamException('No available packs to claim.');
+                    }
+                    $query->where('beam_pack_id', $pack->id);
+                },
+                fn ($query) => $query->inRandomOrder()->take(1)
                     ->when($data['code'], fn ($subquery) => $subquery->where('code', $data['code']))
-                    ->inRandomOrder()
-                    ->first())) {
-                    throw new BeamException('No available packs to claim.');
-                }
-                $query->where('beam_pack_id', $pack->id);
-            })
-            ->when(!$isPack && $data['code'], fn ($query) => $query->withSingleUseCode($data['code']))
-            ->when(!$isPack, fn ($query) => $query->inRandomOrder())
+            )
             ->when($collection?->is_frozen, fn ($query) => $query->where('type', BeamType::MINT_ON_DEMAND->name))
             ->get(['id', 'beam_id', 'type', 'beam_pack_id']);
     }
