@@ -29,7 +29,6 @@ use Facades\Enjin\Platform\Beam\Services\BeamService as BeamServiceFacade;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\LazyCollection;
@@ -116,54 +115,52 @@ class BeamService
         $quantity = 0;
         $allTokenIds = [];
         foreach ($packs as $pack) {
+            $claimQuantity = Arr::get($pack, 'claimQuantity', 1);
             if (!($id = Arr::get($pack, 'id'))) {
-                $quantity++;
+                $quantity += $claimQuantity;
             }
+            for ($i = 0; $i < $claimQuantity; $i++) {
+                $beamPack = BeamPack::firstOrcreate(['id' => $id], [
+                    'beam_id' => $beam->id,
+                    'code' => bin2hex(openssl_random_pseudo_bytes(16)),
+                    'nonce' => 1,
+                ]);
 
-            $beamPack = BeamPack::firstOrcreate(['id' => $id], [
-                'beam_id' => $beam->id,
-                'code' => bin2hex(openssl_random_pseudo_bytes(16)),
-                'nonce' => 1,
-            ]);
+                $tokens = collect(Arr::get($pack, 'tokens', []));
+                $tokenIds = collect(Arr::get($pack, 'tokens', []))->whereNotNull('tokenIds');
+                if ($tokenIds->count()) {
+                    $allTokenIds = $tokenIds->pluck('tokenIds')->flatten()->all();
+                    DispatchCreateBeamClaimsJobs::dispatch($beam, $tokenIds->all(), $beamPack->id)->afterCommit();
+                }
 
-            $tokens = Collection::times(
-                Arr::get($pack, 'claimQuantity', 1),
-                fn () => $pack['tokens']
-            )->flatMap(fn ($rows) => $rows);
-            $tokenIds = $tokens->whereNotNull('tokenIds');
-
-            if ($tokenIds->count()) {
-                $allTokenIds = $tokenIds->pluck('tokenIds')->flatten()->all();
-                DispatchCreateBeamClaimsJobs::dispatch($beam, $tokenIds->all(), $beamPack->id)->afterCommit();
-            }
-
-            $tokenUploads = $tokens->whereNotNull('tokenIdDataUpload');
-            if ($tokenUploads->count()) {
-                $ids = $tokenIds->pluck('tokenIds');
-                $tokenUploads->each(function ($token) use ($beam, $ids, $beamPack): void {
-                    LazyCollection::make(function () use ($token, $ids) {
-                        $handle = fopen($token['tokenIdDataUpload']->getPathname(), 'r');
-                        while (($line = fgets($handle)) !== false) {
-                            if (! $this->tokenIdExists($ids->all(), $tokenId = trim($line))) {
-                                $ids->push($tokenId);
-                                yield $tokenId;
+                $tokenUploads = $tokens->whereNotNull('tokenIdDataUpload');
+                if ($tokenUploads->count()) {
+                    $ids = $tokenIds->pluck('tokenIds');
+                    $tokenUploads->each(function ($token) use ($beam, $ids, $beamPack): void {
+                        LazyCollection::make(function () use ($token, $ids) {
+                            $handle = fopen($token['tokenIdDataUpload']->getPathname(), 'r');
+                            while (($line = fgets($handle)) !== false) {
+                                if (! $this->tokenIdExists($ids->all(), $tokenId = trim($line))) {
+                                    $ids->push($tokenId);
+                                    yield $tokenId;
+                                }
                             }
-                        }
-                        fclose($handle);
-                    })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token, $beamPack): void {
-                        $token['tokenIds'] = $tokenIds->all();
-                        unset($token['tokenIdDataUpload']);
-                        DispatchCreateBeamClaimsJobs::dispatch($beam, [$token], $beamPack->id)->afterCommit();
-                        unset($tokenIds, $token);
+                            fclose($handle);
+                        })->chunk(10000)->each(function (LazyCollection $tokenIds) use ($beam, $token, $beamPack): void {
+                            $token['tokenIds'] = $tokenIds->all();
+                            unset($token['tokenIdDataUpload']);
+                            DispatchCreateBeamClaimsJobs::dispatch($beam, [$token], $beamPack->id)->afterCommit();
+                            unset($tokenIds, $token);
+                        });
                     });
-                });
-                $allTokenIds = $ids->pluck('tokenIds')->flatten()->all();
+                    $allTokenIds = $ids->pluck('tokenIds')->flatten()->all();
+                }
             }
 
         }
 
         if ($isNew) {
-            return Cache::forever(self::key($beam->code), count($packs));
+            return Cache::forever(self::key($beam->code), $quantity);
         }
 
         TokensAdded::safeBroadcast(
@@ -324,9 +321,13 @@ class BeamService
                 return (int) empty($singleUseClaim?->claimed_at);
             }
 
+            $beam = Beam::where('code', $code)->first();
+
             Cache::forever(
                 self::key($code),
-                $count = BeamClaim::claimable()->hasCode($code)->count()
+                $count = $beam?->is_pack
+                    ? BeamPack::where('beam_id', $beam->id)->claimable()->count()
+                    : BeamClaim::claimable()->hasCode($code)->count()
             );
 
             return $count;

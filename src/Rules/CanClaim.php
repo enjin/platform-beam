@@ -6,6 +6,7 @@ use Closure;
 use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamClaim;
+use Enjin\Platform\Beam\Models\BeamPack;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Rules\Traits\HasDataAwareRule;
 use Illuminate\Contracts\Validation\DataAwareRule;
@@ -44,10 +45,18 @@ class CanClaim implements DataAwareRule, ValidationRule
         $remaining = (int) Cache::get(BeamService::key($value), BeamService::claimsCountResolver($value));
         if ($beam = Beam::where('code', $value)->with('collection')->first()) {
             if ($beam->collection?->is_frozen) {
-                $remaining = $remaining - BeamClaim::claimable()
+                $claimableCount = $beam->is_pack && BeamClaim::claimable()
                     ->where('beam_id', $beam->id)
-                    ->where('type', BeamType::TRANSFER_TOKEN->name)
-                    ->count();
+                    ->where('type', BeamType::MINT_ON_DEMAND->name)
+                    ->count() == 0
+                    ? BeamPack::claimable()
+                        ->where('beam_id', $beam->id)
+                        ->count()
+                    : BeamClaim::claimable()
+                        ->where('beam_id', $beam->id)
+                        ->where('type', BeamType::TRANSFER_TOKEN->name)
+                        ->count();
+                $remaining = $remaining - $claimableCount;
             }
         }
 
