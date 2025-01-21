@@ -167,8 +167,8 @@ class ClaimProbabilities
             foreach ($claim['tokenIds'] as $tokenId) {
                 $range = $this->integerRange($tokenId);
                 $tokens[$tokenId] = $range !== false
-                    ? (($range[1] - $range[0]) + 1) * $claim['claimQuantity']
-                    : $claim['claimQuantity'];
+                    ? (($range[1] - $range[0]) + 1) * Arr::get($claim, 'claimQuantity', 1)
+                    : Arr::get($claim, 'claimQuantity', 1);
             }
         }
 
@@ -181,7 +181,7 @@ class ClaimProbabilities
     protected function filterClaims(array $claims): array
     {
         [$nfts, $fts] = collect($claims)->partition(
-            fn ($claim) => $claim['claimQuantity'] == 1 && Arr::get($claim, 'tokenQuantityPerClaim', 1) == 1
+            fn ($claim) => Arr::get($claim, 'claimQuantity', 1) == 1 && Arr::get($claim, 'tokenQuantityPerClaim', 1) == 1
         );
 
         return [

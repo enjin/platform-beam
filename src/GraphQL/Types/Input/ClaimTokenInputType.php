@@ -55,7 +55,6 @@ class ClaimTokenInputType extends InputType
                 'type' => GraphQL::type('Int'),
                 'description' => __('enjin-platform-beam::input_type.claim_token.field.claimQuantity'),
                 'rules' => ['integer'],
-                'defaultValue' => 1,
             ],
             'type' => [
                 'type' => GraphQL::type('BeamType'),
