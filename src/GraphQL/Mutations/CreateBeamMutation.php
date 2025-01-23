@@ -3,6 +3,7 @@
 namespace Enjin\Platform\Beam\GraphQL\Mutations;
 
 use Closure;
+use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
 use Enjin\Platform\Beam\GraphQL\Traits\HasTokenInputRules;
 use Enjin\Platform\Beam\Services\BeamService;
@@ -96,6 +97,8 @@ class CreateBeamMutation extends Mutation
     #[\Override]
     protected function rules(array $args = []): array
     {
+        $hasFuelTankFlag = $this->hasBeamFlag(Arr::get($args, 'flags', []), BeamFlag::USES_FUEL_TANK->name);
+
         return [
             'name' => ['filled', 'max:255'],
             'description' => ['filled', 'max:1024'],
@@ -114,13 +117,13 @@ class CreateBeamMutation extends Mutation
             ],
             'flags.*.flag' => ['required', 'distinct'],
             'tankId' => [
-                'nullable',
+                $hasFuelTankFlag ? 'required' : 'nullable',
                 'string',
                 new ValidSubstrateAddress(),
                 new FuelTankExists(),
             ],
-            'tankRuleId' => [
-                'nullable',
+            'ruleSetId' => [
+                $hasFuelTankFlag ? 'required' : 'nullable',
                 new MinBigInt(),
                 new MaxBigInt(Hex::MAX_UINT32),
                 new RuleSetExists(),

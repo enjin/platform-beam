@@ -11,4 +11,5 @@ enum BeamFlag: int
     case PAUSED = 0;
     case SINGLE_USE = 1;
     case PRUNABLE = 2;
+    case USES_FUEL_TANK = 3;
 }

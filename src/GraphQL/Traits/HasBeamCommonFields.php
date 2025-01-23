@@ -50,4 +50,9 @@ trait HasBeamCommonFields
 
         return array_diff_key($fields, array_flip($exclude));
     }
+
+    public function hasBeamFlag(array $flags, string $flag): bool
+    {
+        return collect($flags)->where('flag', $flag)->count();
+    }
 }
