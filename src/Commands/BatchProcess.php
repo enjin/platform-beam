@@ -149,6 +149,7 @@ class BatchProcess extends Command
                         $params[$collectionId] = [
                             'collectionId' => $collectionId,
                             'recipients' => [],
+                            'beam' => $claim->beam,
                         ];
                     }
 
@@ -214,7 +215,7 @@ class BatchProcess extends Command
                 foreach ($params as $param) {
                     $transaction = $this->transaction->store([
                         'method' => $method,
-                        'encoded_data' => $this->encodeTransaction($method, $param),
+                        'encoded_data' => $this->encodeTransaction($param['beam'], $method, Arr::except($param, 'beam')),
                         'idempotency_key' => Str::uuid()->toString(),
                     ]);
                     BeamBatch::where('id', $batchId)->update(['transaction_id' => $transaction->id]);
