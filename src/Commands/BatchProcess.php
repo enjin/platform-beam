@@ -211,24 +211,9 @@ class BatchProcess extends Command
 
                 $method = $type == BeamType::MINT_ON_DEMAND ? 'BatchMint' : 'BatchTransfer';
                 foreach ($params as $param) {
-                    // TODO: With the v1010 upgrade we run into a bug with the php-scale-codec lib where it cannot
-                    //  Encode the transaction with `0x` the solution here is to use Batch and within each call append the 0's
-                    if ($method === 'BatchMint') {
-                        $encodedData = $this->serialize->encode('Batch', BatchMintMutation::getEncodableParams(
-                            collectionId: $param['collectionId'],
-                            recipients: $param['recipients'],
-                            continueOnFailure: true
-                        ));
-                    } else {
-                        $encodedData = $this->serialize->encode($method, [
-                            'collectionId' => $param['collectionId'],
-                            'recipients' => $param['recipients'],
-                        ]);
-                    }
-
                     $transaction = $this->transaction->store([
                         'method' => $method,
-                        'encoded_data' => $encodedData,
+                        'encoded_data' => $this->encodeTransaction($method, $param),
                         'idempotency_key' => Str::uuid()->toString(),
                     ]);
                     BeamBatch::where('id', $batchId)->update(['transaction_id' => $transaction->id]);
@@ -246,6 +231,22 @@ class BatchProcess extends Command
         }
 
         return $batches->count();
+    }
+
+    protected function encodeTransaction(string $method, array $params): string
+    {
+        // TODO: With the v1010 upgrade we run into a bug with the php-scale-codec lib where it cannot
+        //  Encode the transaction with `0x` the solution here is to use Batch and within each call append the 0's
+        return $method === 'BatchMint'
+            ? $this->serialize->encode('Batch', BatchMintMutation::getEncodableParams(
+                collectionId: $params['collectionId'],
+                recipients: $params['recipients'],
+                continueOnFailure: true
+            ))
+            : $this->serialize->encode($method, [
+                'collectionId' => $params['collectionId'],
+                'recipients' => $params['recipients'],
+            ]);
     }
 
     /**
