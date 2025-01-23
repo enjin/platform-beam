@@ -8,7 +8,7 @@ use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
 use Enjin\Platform\Beam\GraphQL\Traits\HasTokenInputRules;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\FuelTanks\Rules\FuelTankExists;
-use Enjin\Platform\FuelTanks\Rules\RuleSetExists;
+use Enjin\Platform\Beam\Rules\RuleSetExists;
 use Enjin\Platform\Models\Collection;
 use Enjin\Platform\Rules\IsCollectionOwnerOrApproved;
 use Enjin\Platform\Rules\MaxBigInt;

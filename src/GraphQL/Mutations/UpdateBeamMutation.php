@@ -12,7 +12,7 @@ use Enjin\Platform\Beam\Rules\IsEndDateValid;
 use Enjin\Platform\Beam\Rules\IsStartDateValid;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\FuelTanks\Rules\FuelTankExists;
-use Enjin\Platform\FuelTanks\Rules\RuleSetExists;
+use Enjin\Platform\Beam\Rules\RuleSetExists;
 use Enjin\Platform\Rules\MaxBigInt;
 use Enjin\Platform\Rules\MinBigInt;
 use Enjin\Platform\Rules\ValidSubstrateAddress;
