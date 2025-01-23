@@ -15,15 +15,15 @@ return [
     'common.args.quantityPerClaim' => 'The quantity per claim.',
     'common.args.start' => 'Specifies the date and time when the beam becomes claimable (e.g., "2026-01-01T00:00:00Z").',
     'common.args.type' => <<<'MD'
-Specifies how tokens are delivered:  
-- **`TRANSFER_TOKEN`**: Transfers existing tokens to the recipient.  
-- **`MINT_ON_DEMAND`**: Mints tokens directly to the recipient.  
+Specifies how tokens are delivered:
+- **`TRANSFER_TOKEN`**: Transfers existing tokens to the recipient.
+- **`MINT_ON_DEMAND`**: Mints tokens directly to the recipient.
 MD,
     'common.args.source' => <<<'MD'
-(Optional) Specifies the wallet account from which tokens will be distributed. By default, tokens are distributed from the collection owner's account.  
+(Optional) Specifies the wallet account from which tokens will be distributed. By default, tokens are distributed from the collection owner's account.
 
-- For `TRANSFER_TOKEN` beamType: The source account acts as the operator and must be approved to transfer the token before a claim is transferred. [Learn more about operator transfers and approvals](https://docs.enjin.io/docs/multitoken-pallet#operator-transfer).  
-- For `MINT_ON_DEMAND` beamType: The source account is ignored, and tokens are always minted from the collection owner's account.  
+- For `TRANSFER_TOKEN` beamType: The source account acts as the operator and must be approved to transfer the token before a claim is transferred. [Learn more about operator transfers and approvals](https://docs.enjin.io/docs/multitoken-pallet#operator-transfer).
+- For `MINT_ON_DEMAND` beamType: The source account is ignored, and tokens are always minted from the collection owner's account.
 MD,
     'create_beam.args.collectionId' => 'The collection ID to distribute tokens from.',
     'create_beam.args.tokenIds' => 'The token chain IDs to claim.',
@@ -38,4 +38,6 @@ MD,
     'remove_tokens.description' => 'Removes tokens from a beam.',
     'remove_tokens.args.tokenIds' => 'The token IDs to remove.',
     'add_tokens.description' => 'Add tokens to a beam.',
+    'create_beam.args.tankId' => 'The fuel tank to use to dispatch the beam claims.',
+    'create_beam.args.ruleSetId' => 'The fuel tank rule set ID should be checked for execution permit.',
 ];

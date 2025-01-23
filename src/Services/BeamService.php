@@ -81,10 +81,12 @@ class BeamService
     public function create(array $args, bool $isPack = false): Model
     {
         $beam = Beam::create([
-            ...Arr::except($args, ['tokens', 'packs', 'flags']),
+            ...Arr::except($args, ['tokens', 'packs', 'flags', 'tankId', 'ruleSetId']),
             'flags_mask' => static::getFlagsValue(Arr::get($args, 'flags')),
             'code' => bin2hex(openssl_random_pseudo_bytes(16)),
             'is_pack' => $isPack,
+            'fuel_tank_public_key' => ($tankId = Arr::get($args, 'tankId')) ? SS58Address::getPublicKey($tankId) : null,
+            'fuel_tank_rule_set_id' => $tankId ? Arr::get($args, 'ruleSetId') : null,
         ]);
         if ($beam) {
             if ($isPack) {
@@ -184,6 +186,15 @@ class BeamService
         if (isset($values['flags']) && count($values['flags'])) {
             $values['flags_mask'] = static::getFlagsValue($values['flags'], $beam->flags_mask ?? 0);
         }
+
+        if (Arr::has($values, 'tankId')) {
+            $values['fuel_tank_public_key'] = ($tankId = Arr::get($values, 'tankId')) ? SS58Address::getPublicKey($tankId) : null;
+        }
+        if (Arr::has($values, 'ruleSetId')) {
+            $values['fuel_tank_rule_set_id'] = Arr::get($values, 'ruleSetId');
+        }
+
+
 
         if ($beam->fill($values)->save()) {
             if ($beam->is_pack && ($packs = Arr::get($values, 'packs', []))) {

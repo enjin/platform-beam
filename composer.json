@@ -24,6 +24,7 @@
         "ext-json": "*",
         "ext-openssl": "*",
         "enjin/platform-core": "*",
+        "enjin/platform-fuel-tanks": "*",
         "phrity/websocket": "*",
         "rebing/graphql-laravel": "*",
         "spatie/laravel-package-tools": "*"
