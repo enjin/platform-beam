@@ -8,6 +8,8 @@ mutation UpdateBeam(
   $flags: [BeamFlagInputType!]
   $tokens: [ClaimToken!]
   $packs: [BeamPackInput!]
+  $tankId: String
+  $ruleSetId: BigInt
 ) {
   UpdateBeam(
     code: $code
@@ -19,5 +21,7 @@ mutation UpdateBeam(
     flags: $flags
     tokens: $tokens
     packs: $packs
+    tankId: $tankId
+    ruleSetId: $ruleSetId
   )
 }

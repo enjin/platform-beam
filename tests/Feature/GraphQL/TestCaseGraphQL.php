@@ -6,6 +6,7 @@ use Enjin\Platform\Beam\BeamServiceProvider;
 use Enjin\Platform\Beam\Tests\Feature\Traits\CreateCollectionData;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 use Enjin\Platform\CoreServiceProvider;
+use Enjin\Platform\FuelTanks\FuelTanksServiceProvider;
 use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Event;
@@ -169,6 +170,7 @@ class TestCaseGraphQL extends BaseTestCase
         return [
             CoreServiceProvider::class,
             BeamServiceProvider::class,
+            FuelTanksServiceProvider::class,
         ];
     }
 

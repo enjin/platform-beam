@@ -120,7 +120,7 @@ class UpdateBeamMutation extends Mutation
                 new ValidSubstrateAddress(),
                 new FuelTankExists(),
             ],
-            'tankRuleId' => [
+            'ruleSetId' => [
                 $hasFuelTankFlag ? 'required' : 'nullable',
                 new MinBigInt(),
                 new MaxBigInt(Hex::MAX_UINT32),

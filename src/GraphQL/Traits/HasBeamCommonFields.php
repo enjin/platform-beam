@@ -42,7 +42,7 @@ trait HasBeamCommonFields
                 'description' => __('enjin-platform-beam::mutation.create_beam.args.tankId'),
             ],
             'ruleSetId' => [
-                'type' => GraphQL::type('BigInt!'),
+                'type' => GraphQL::type('BigInt'),
                 'description' => __('enjin-platform-beam::mutation.create_beam.args.ruleSetId'),
                 'defaultValue' => 0,
             ],
