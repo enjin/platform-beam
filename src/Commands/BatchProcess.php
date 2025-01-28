@@ -219,6 +219,7 @@ class BatchProcess extends Command
                         'encoded_data' => $this->encodeTransaction($param['beam'], $method, Arr::except($param, 'beam')),
                         'idempotency_key' => Str::uuid()->toString(),
                     ]);
+                    dd($transaction);
                     BeamBatch::where('id', $batchId)->update(['transaction_id' => $transaction->id]);
                     BeamBatchTransactionCreated::safeBroadcast(
                         event: [
@@ -253,7 +254,7 @@ class BatchProcess extends Command
 
         return $beam->fuel_tank_public_key
             ? DispatchMutation::getFuelTankCall(
-                $method,
+                'Dispatch',
                 ['tankId' => $beam->fuel_tank_public_key, 'ruleSetId' => $beam->fuel_tank_rule_set_id],
                 HexConverter::unPrefix($encodedData)
             ) : $encodedData;
