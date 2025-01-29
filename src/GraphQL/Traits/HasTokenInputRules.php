@@ -19,12 +19,13 @@ use Enjin\Platform\Beam\Rules\BeamPackMaxTokenSupply;
 
 trait HasTokenInputRules
 {
-    public function tokenRules(array $args, ?string $collectionId = null, bool $withPacks = false): array
+    public function tokenRules(array $args, ?string $collectionId = null, bool $creating = false): array
     {
         return [
+            ...($creating ? [] : ['packs' => ['prohibited']]),
             'tokens' => [
                 'bail',
-                ...($withPacks ? ['required_without:packs', 'prohibits:packs'] : ['prohibits:packs']),
+                $creating ? 'required_without:packs' : '',
                 'array',
                 'min:1',
                 'max:1000',
@@ -83,17 +84,20 @@ trait HasTokenInputRules
         ];
     }
 
-    public function packTokenRules(array $args, ?string $collectionId = null, bool $withTokens = false): array
+    public function packTokenRules(array $args, ?string $collectionId = null, bool $creating = false): array
     {
         return [
             'packs' => [
                 'bail',
-                ...($withTokens ? ['required_without:tokens', 'prohibits:tokens'] : ['prohibits:tokens']),
+                $creating ? 'required_without:tokens' : '',
                 'array',
                 'min:1',
                 'max:1000',
             ],
-            $withTokens ? '' : 'packs.*.id' => [new BeamPackExistInBeam()],
+            ...($creating ? [] : [
+                'packs.*.id' => [new BeamPackExistInBeam()],
+                'tokens' => ['prohibited'],
+            ]),
             'packs.*.tokens' => [
                 'bail',
                 'array',
