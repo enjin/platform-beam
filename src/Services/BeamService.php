@@ -186,8 +186,10 @@ class BeamService
         }
 
         if ($beam->fill($values)->save()) {
-            if ($beam->is_pack && ($packs = Arr::get($values, 'packs', []))) {
-                $this->createPackClaims($beam, $packs);
+            if ($beam->is_pack) {
+                if ($packs = Arr::get($values, 'packs', [])) {
+                    $this->createPackClaims($beam, $packs);
+                }
             } elseif ($tokens = Arr::get($values, 'tokens', [])) {
                 Cache::increment(
                     self::key($beam->code),

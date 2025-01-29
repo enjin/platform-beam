@@ -360,6 +360,21 @@ class UpdateBeamTest extends TestCaseGraphQL
             true
         );
         $this->assertArrayContainsArray(['image' => ['The image field must be a valid URL.']], $response['error']);
+
+        $response = $this->graphql(
+            $this->method,
+            array_merge($data, ['packs' => [['tokens' => [['tokenIds' => ['1']]]]]]),
+            true
+        );
+        $this->assertArrayContainsArray(['packs' => ['The packs field is prohibited.']], $response['error']);
+
+        $this->seedBeamPack();
+        $response = $this->graphql(
+            $this->method,
+            ['tokens' => [['tokenIds' => ['1']]], 'code' => $this->beam->code],
+            true
+        );
+        $this->assertArrayContainsArray(['tokens' => ['The tokens field is prohibited.']], $response['error']);
     }
 
     /**
