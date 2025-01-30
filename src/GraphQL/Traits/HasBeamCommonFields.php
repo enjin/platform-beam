@@ -53,6 +53,6 @@ trait HasBeamCommonFields
 
     public function hasBeamFlag(array $flags, string $flag): bool
     {
-        return collect($flags)->where('flag', $flag)->count();
+        return collect($flags)->where('flag', $flag)->where('enabled', true)->count();
     }
 }

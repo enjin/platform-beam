@@ -3,6 +3,7 @@
 namespace Enjin\Platform\Beam\Commands;
 
 use Enjin\BlockchainTools\HexConverter;
+use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Enums\ClaimStatus;
 use Enjin\Platform\Beam\Events\BeamBatchTransactionCreated;
@@ -251,7 +252,7 @@ class BatchProcess extends Command
                 'recipients' => $params['recipients'],
             ]);
 
-        return $beam->fuel_tank_public_key
+        return $beam->fuel_tank_public_key && $beam->hasFlag(BeamFlag::USES_FUEL_TANK)
             ? DispatchMutation::getFuelTankCall(
                 'Dispatch',
                 ['tankId' => $beam->fuel_tank_public_key, 'ruleSetId' => $beam->fuel_tank_rule_set_id],

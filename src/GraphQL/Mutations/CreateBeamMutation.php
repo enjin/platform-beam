@@ -118,7 +118,6 @@ class CreateBeamMutation extends Mutation
             'flags.*.flag' => ['required', 'distinct'],
             'tankId' => [
                 $hasFuelTankFlag ? 'required' : 'nullable',
-                'string',
                 new ValidSubstrateAddress(),
                 new FuelTankExists(),
             ],
