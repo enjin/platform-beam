@@ -2,6 +2,8 @@
 
 namespace Enjin\Platform\Beam\Commands;
 
+use Enjin\BlockchainTools\HexConverter;
+use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Enums\ClaimStatus;
 use Enjin\Platform\Beam\Events\BeamBatchTransactionCreated;
@@ -10,6 +12,7 @@ use Enjin\Platform\Beam\Models\BeamBatch;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Beam\Services\BatchService;
 use Enjin\Platform\Enums\Substrate\TokenMintCapType;
+use Enjin\Platform\FuelTanks\GraphQL\Mutations\DispatchMutation;
 use Enjin\Platform\GraphQL\Schemas\Primary\Substrate\Mutations\BatchMintMutation;
 use Enjin\Platform\Models\Token;
 use Enjin\Platform\Services\Blockchain\Implementations\Substrate;
@@ -148,6 +151,7 @@ class BatchProcess extends Command
                         $params[$collectionId] = [
                             'collectionId' => $collectionId,
                             'recipients' => [],
+                            'beam' => $claim->beam,
                         ];
                     }
 
@@ -213,7 +217,7 @@ class BatchProcess extends Command
                 foreach ($params as $param) {
                     $transaction = $this->transaction->store([
                         'method' => $method,
-                        'encoded_data' => $this->encodeTransaction($method, $param),
+                        'encoded_data' => $this->encodeTransaction($param['beam'], $method, Arr::except($param, 'beam')),
                         'idempotency_key' => Str::uuid()->toString(),
                     ]);
                     BeamBatch::where('id', $batchId)->update(['transaction_id' => $transaction->id]);
@@ -233,11 +237,11 @@ class BatchProcess extends Command
         return $batches->count();
     }
 
-    protected function encodeTransaction(string $method, array $params): string
+    protected function encodeTransaction(Model $beam, string $method, array $params): string
     {
         // TODO: With the v1010 upgrade we run into a bug with the php-scale-codec lib where it cannot
         //  Encode the transaction with `0x` the solution here is to use Batch and within each call append the 0's
-        return $method === 'BatchMint'
+        $encodedData = $method === 'BatchMint'
             ? $this->serialize->encode('Batch', BatchMintMutation::getEncodableParams(
                 collectionId: $params['collectionId'],
                 recipients: $params['recipients'],
@@ -247,6 +251,13 @@ class BatchProcess extends Command
                 'collectionId' => $params['collectionId'],
                 'recipients' => $params['recipients'],
             ]);
+
+        return $beam->fuel_tank_public_key && $beam->hasFlag(BeamFlag::USES_FUEL_TANK)
+            ? DispatchMutation::getFuelTankCall(
+                'Dispatch',
+                ['tankId' => $beam->fuel_tank_public_key, 'ruleSetId' => $beam->fuel_tank_rule_set_id],
+                HexConverter::unPrefix($encodedData)
+            ) : $encodedData;
     }
 
     /**

@@ -7,6 +7,7 @@ use Enjin\Platform\Beam\Database\Factories\BeamFactory;
 use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Beam\Support\ClaimProbabilities;
+use Enjin\Platform\FuelTanks\Models\FuelTank;
 use Enjin\Platform\GraphQL\Types\Scalars\Traits\HasIntegerRanges;
 use Enjin\Platform\Models\BaseModel;
 use Enjin\Platform\Models\Laravel\Collection;
@@ -49,6 +50,8 @@ class Beam extends BaseModel
         'flags_mask',
         'is_pack',
         'source',
+        'fuel_tank_public_key',
+        'fuel_tank_rule_set_id',
     ];
 
     /**
@@ -89,6 +92,14 @@ class Beam extends BaseModel
     public function collection(): BelongsTo
     {
         return $this->belongsTo(Collection::class, 'collection_chain_id', 'collection_chain_id');
+    }
+
+    /**
+     * The fuel tank relationship.
+     */
+    public function fuelTank(): BelongsTo
+    {
+        return $this->belongsTo(FuelTank::class, 'fuel_tank_public_key', 'public_key');
     }
 
     /**

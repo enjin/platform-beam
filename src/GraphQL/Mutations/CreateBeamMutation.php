@@ -3,12 +3,18 @@
 namespace Enjin\Platform\Beam\GraphQL\Mutations;
 
 use Closure;
+use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
 use Enjin\Platform\Beam\GraphQL\Traits\HasTokenInputRules;
 use Enjin\Platform\Beam\Services\BeamService;
+use Enjin\Platform\FuelTanks\Rules\FuelTankExists;
+use Enjin\Platform\Beam\Rules\RuleSetExists;
 use Enjin\Platform\Models\Collection;
 use Enjin\Platform\Rules\IsCollectionOwnerOrApproved;
+use Enjin\Platform\Rules\MaxBigInt;
+use Enjin\Platform\Rules\MinBigInt;
 use Enjin\Platform\Rules\ValidSubstrateAddress;
+use Enjin\Platform\Support\Hex;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Illuminate\Support\Arr;
@@ -91,6 +97,8 @@ class CreateBeamMutation extends Mutation
     #[\Override]
     protected function rules(array $args = []): array
     {
+        $hasFuelTankFlag = $this->hasBeamFlag(Arr::get($args, 'flags', []), BeamFlag::USES_FUEL_TANK->name);
+
         return [
             'name' => ['filled', 'max:255'],
             'description' => ['filled', 'max:1024'],
@@ -108,6 +116,17 @@ class CreateBeamMutation extends Mutation
                 new IsCollectionOwnerOrApproved(),
             ],
             'flags.*.flag' => ['required', 'distinct'],
+            'tankId' => [
+                $hasFuelTankFlag ? 'required' : 'nullable',
+                new ValidSubstrateAddress(),
+                new FuelTankExists(),
+            ],
+            'ruleSetId' => [
+                $hasFuelTankFlag ? 'required' : 'nullable',
+                new MinBigInt(),
+                new MaxBigInt(Hex::MAX_UINT32),
+                new RuleSetExists(),
+            ],
             ...$this->tokenRules($args, $args['collectionId'], true),
             ...$this->packTokenRules($args, $args['collectionId'], true),
             'source' => [
