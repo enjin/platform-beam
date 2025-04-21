@@ -8,8 +8,6 @@ mutation CreateBeam(
   $tokens: [ClaimToken!]
   $packs: [BeamPackInput!]
   $flags: [BeamFlagInputType!]
-  $tankId: String
-  $ruleSetId: BigInt
 ) {
   CreateBeam(
     name: $name
@@ -21,7 +19,5 @@ mutation CreateBeam(
     tokens: $tokens
     packs: $packs
     flags: $flags
-    tankId: $tankId
-    ruleSetId: $ruleSetId
   )
 }

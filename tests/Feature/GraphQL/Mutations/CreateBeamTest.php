@@ -3,18 +3,14 @@
 namespace Enjin\Platform\Beam\Tests\Feature\GraphQL\Mutations;
 
 use Carbon\Carbon;
-use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Events\BeamCreated;
 use Enjin\Platform\Beam\Services\BeamService;
 use Enjin\Platform\Beam\Tests\Feature\GraphQL\TestCaseGraphQL;
 use Enjin\Platform\Beam\Tests\Feature\Traits\CreateBeamData;
 use Enjin\Platform\Beam\Tests\Feature\Traits\SeedBeamData;
-use Enjin\Platform\FuelTanks\Models\DispatchRule;
-use Enjin\Platform\FuelTanks\Models\Laravel\FuelTank;
 use Enjin\Platform\GraphQL\Types\Scalars\Traits\HasIntegerRanges;
 use Enjin\Platform\Providers\Faker\SubstrateProvider;
-use Faker\Generator;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
@@ -39,87 +35,6 @@ class CreateBeamTest extends TestCaseGraphQL
         $this->genericTestCreateBeam(BeamType::TRANSFER_TOKEN, 1);
 
         $this->genericTestCreateBeamPack(BeamType::TRANSFER_TOKEN, 1);
-    }
-
-    public function test_it_can_create_beam_with_fuel_tank(): void
-    {
-        $fuelTank = FuelTank::factory()->create(['owner_wallet_id' => $this->wallet->id]);
-        $dispatchRule = DispatchRule::factory()->create(['fuel_tank_id' => $fuelTank->id]);
-        $this->genericTestCreateBeam(
-            BeamType::TRANSFER_TOKEN,
-            1,
-            [],
-            [['flag' => BeamFlag::USES_FUEL_TANK->name]],
-            ['tankId' => $fuelTank->public_key, 'ruleSetId' => $dispatchRule->rule_set_id]
-        );
-    }
-
-    public function test_it_will_fail_with_invalid_fuel_tank_params(): void
-    {
-        $fuelTank = FuelTank::factory()->create(['owner_wallet_id' => $this->wallet->id]);
-        $response = $this->graphql(
-            $this->method,
-            $this->generateBeamData(
-                BeamType::TRANSFER_TOKEN,
-                1,
-                [],
-                [['flag' => BeamFlag::USES_FUEL_TANK->name]],
-                ['tankId' => '']
-            ),
-            true
-        );
-        $this->assertArrayContainsArray(
-            ['tankId' => ['The tank id field is required.']],
-            $response['error']
-        );
-
-        $response = $this->graphql(
-            $this->method,
-            $this->generateBeamData(
-                BeamType::TRANSFER_TOKEN,
-                1,
-                [],
-                [['flag' => BeamFlag::USES_FUEL_TANK->name]],
-                ['tankId' => app(Generator::class)->public_key()]
-            ),
-            true
-        );
-        $this->assertArrayContainsArray(
-            ['tankId' => ['The selected tankId is invalid.']],
-            $response['error']
-        );
-
-        $response = $this->graphql(
-            $this->method,
-            $this->generateBeamData(
-                BeamType::TRANSFER_TOKEN,
-                1,
-                [],
-                [['flag' => BeamFlag::USES_FUEL_TANK->name]],
-                ['tankId' => $fuelTank->public_key, 'ruleSetId' => '']
-            ),
-            true
-        );
-        $this->assertEquals(
-            'Variable "$ruleSetId" got invalid value (empty string); Cannot represent following value as uint256: (empty string)',
-            $response['error']
-        );
-
-        $response = $this->graphql(
-            $this->method,
-            $this->generateBeamData(
-                BeamType::TRANSFER_TOKEN,
-                1,
-                [],
-                [['flag' => BeamFlag::USES_FUEL_TANK->name]],
-                ['tankId' => $fuelTank->public_key, 'ruleSetId' => fake()->numberBetween()]
-            ),
-            true
-        );
-        $this->assertArrayContainsArray(
-            ['ruleSetId' => ['The rule set ID doesn\'t exist.']],
-            $response['error']
-        );
     }
 
     /**
@@ -632,17 +547,11 @@ class CreateBeamTest extends TestCaseGraphQL
     /**
      * Generic test for create beam.
      */
-    protected function genericTestCreateBeam(
-        BeamType $type =
-        BeamType::MINT_ON_DEMAND,
-        int $count = 1,
-        array $attributes = [],
-        array $singleUse = [],
-        array $extra = []
-    ): void {
+    protected function genericTestCreateBeam(BeamType $type = BeamType::MINT_ON_DEMAND, int $count = 1, array $attributes = [], array $singleUse = []): void
+    {
         $this->truncateBeamTables();
 
-        $response = $this->graphql($this->method, $data = $this->generateBeamData($type, $count, $attributes, $singleUse, $extra));
+        $response = $this->graphql($this->method, $data = $this->generateBeamData($type, $count, $attributes, $singleUse));
 
         $this->assertNotEmpty($response);
 

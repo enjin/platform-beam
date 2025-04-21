@@ -41,7 +41,6 @@ class BeamServiceProvider extends PackageServiceProvider
             ->hasMigration('add_idempotency_key_to_beam_claims_table')
             ->hasMigration('beam_packs')
             ->hasMigration('add_source_to_beams_table')
-            ->hasMigration('add_fuel_tank_to_beams_table')
             ->hasRoute('enjin-platform-beam')
             ->hasTranslations();
     }

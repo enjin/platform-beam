@@ -3,7 +3,6 @@
 namespace Enjin\Platform\Beam\GraphQL\Mutations;
 
 use Closure;
-use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\GraphQL\Traits\HasBeamCommonFields;
 use Enjin\Platform\Beam\GraphQL\Traits\HasTokenInputRules;
 use Enjin\Platform\Beam\Models\Beam;
@@ -11,12 +10,6 @@ use Enjin\Platform\Beam\Rules\BeamExists;
 use Enjin\Platform\Beam\Rules\IsEndDateValid;
 use Enjin\Platform\Beam\Rules\IsStartDateValid;
 use Enjin\Platform\Beam\Services\BeamService;
-use Enjin\Platform\FuelTanks\Rules\FuelTankExists;
-use Enjin\Platform\Beam\Rules\RuleSetExists;
-use Enjin\Platform\Rules\MaxBigInt;
-use Enjin\Platform\Rules\MinBigInt;
-use Enjin\Platform\Rules\ValidSubstrateAddress;
-use Enjin\Platform\Support\Hex;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;
 use Illuminate\Support\Arr;
@@ -102,7 +95,6 @@ class UpdateBeamMutation extends Mutation
     protected function rules(array $args = []): array
     {
         $beam = Beam::whereCode($args['code'])->first();
-        $hasFuelTankFlag = $this->hasBeamFlag(Arr::get($args, 'flags', []), BeamFlag::USES_FUEL_TANK->name);
 
         return [
             'code' => [
@@ -114,18 +106,6 @@ class UpdateBeamMutation extends Mutation
             'description' => ['filled', 'max:1024'],
             'image' => ['filled', 'url', 'max:1024'],
             'flags.*.flag' => ['required', 'distinct'],
-            'tankId' => [
-                $hasFuelTankFlag ? 'required' : 'nullable',
-                'string',
-                new ValidSubstrateAddress(),
-                new FuelTankExists(),
-            ],
-            'ruleSetId' => [
-                $hasFuelTankFlag ? 'required' : 'nullable',
-                new MinBigInt(),
-                new MaxBigInt(Hex::MAX_UINT32),
-                new RuleSetExists(),
-            ],
             'start' => ['filled', 'date', new IsStartDateValid()],
             'end' => ['filled', 'date', new IsEndDateValid()],
             ...match (true) {
