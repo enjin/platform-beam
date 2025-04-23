@@ -37,15 +37,6 @@ trait HasBeamCommonFields
                 'type' => GraphQL::type('String'),
                 'description' => __('enjin-platform-beam::mutation.common.args.source'),
             ],
-            'tankId' => [
-                'type' => GraphQL::type('String'),
-                'description' => __('enjin-platform-beam::mutation.create_beam.args.tankId'),
-            ],
-            'ruleSetId' => [
-                'type' => GraphQL::type('BigInt'),
-                'description' => __('enjin-platform-beam::mutation.create_beam.args.ruleSetId'),
-                'defaultValue' => 0,
-            ],
         ];
 
         return array_diff_key($fields, array_flip($exclude));
