@@ -154,18 +154,23 @@ class BatchProcess extends Command
                     $params[$collectionId]['beamId'] = $claim->beam_id;
 
                     if ($type == BeamType::TRANSFER_TOKEN) {
+                        $transferParams = [
+                            'tokenId' => ['integer' => $claim->token_chain_id],
+                            'amount' => $claim->quantity,
+                            'source' => match (true) {
+                                !empty($claim->beam?->source) => SS58Address::getPublicKey($claim->beam->source),
+                                Account::daemonPublicKey() !== $claim->collection->owner->public_key => $claim->collection->owner->public_key,
+                                default => null,
+                            },
+                        ];
+
+                        if (Arr::get($transferParams, 'source') != null) {
+                            $transferParams['operatorPaysDeposit'] = true;
+                        }
+
                         $params[$collectionId]['recipients'][] = [
                             'accountId' => $claim->wallet_public_key,
-                            'params' => $this->substrate->getTransferParams([
-                                'tokenId' => ['integer' => $claim->token_chain_id],
-                                'amount' => $claim->quantity,
-                                'keepAlive' => false,
-                                'source' => match (true) {
-                                    !empty($claim->beam?->source) => SS58Address::getPublicKey($claim->beam->source),
-                                    Account::daemonPublicKey() !== $claim->collection->owner->public_key => $claim->collection->owner->public_key,
-                                    default => null,
-                                },
-                            ])->toEncodable(),
+                            'params' => $this->substrate->getTransferParams($transferParams)->toEncodable(),
                         ];
                     } else {
                         $key = $claim->token_chain_id . '|' . $claim->collection_id;
