@@ -29,6 +29,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Queue;
+use PHPUnit\Framework\Attributes\RequiresOperatingSystem;
 
 class ClaimBeamTest extends TestCaseGraphQL
 {
@@ -90,6 +91,7 @@ class ClaimBeamTest extends TestCaseGraphQL
     /**
      * Test claiming beam with sr25519 for single use codes.
      */
+    #[RequiresOperatingSystem('Linux')]
     public function test_it_can_claim_beam_with_sr25519_single_use_codes(): void
     {
         $code = $this->graphql('CreateBeam', $this->generateBeamData(
@@ -104,6 +106,7 @@ class ClaimBeamTest extends TestCaseGraphQL
         $this->genericClaimTest(CryptoSignatureType::SR25519, Arr::get($response, 'edges.0.node.code'));
     }
 
+    #[RequiresOperatingSystem('Linux')]
     public function test_it_can_claim_beam_pack_with_sr25519_single_use_codes(): void
     {
         $code = $this->graphql('CreateBeam', $this->generateBeamPackData(
@@ -132,6 +135,7 @@ class ClaimBeamTest extends TestCaseGraphQL
         $this->genericClaimTest(CryptoSignatureType::ED25519);
     }
 
+    #[RequiresOperatingSystem('Linux')]
     public function test_it_can_claim_beam_pack_with_sr25519(): void
     {
         $this->seedBeamPack();

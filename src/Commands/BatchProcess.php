@@ -2,6 +2,7 @@
 
 namespace Enjin\Platform\Beam\Commands;
 
+use Enjin\Platform\Beam\Enums\BeamFlag;
 use Enjin\Platform\Beam\Enums\BeamType;
 use Enjin\Platform\Beam\Enums\ClaimStatus;
 use Enjin\Platform\Beam\Events\BeamBatchTransactionCreated;
@@ -165,7 +166,7 @@ class BatchProcess extends Command
                         ];
 
                         if (Arr::get($transferParams, 'source') != null) {
-                            $transferParams['operatorPaysDeposit'] = true;
+                            $transferParams['operatorPaysDeposit'] = $claim->beam?->hasFlag(BeamFlag::OPERATOR_PAYS_DEPOSIT) ?? false;
                         }
 
                         $params[$collectionId]['recipients'][] = [
