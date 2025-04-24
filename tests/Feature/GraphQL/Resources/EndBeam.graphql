@@ -1,0 +1,7 @@
+mutation EndBeam(
+  $code: String!
+) {
+  EndBeam(
+    code: $code
+  )
+}

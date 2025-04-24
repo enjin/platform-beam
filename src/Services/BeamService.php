@@ -433,6 +433,22 @@ class BeamService
     }
 
     /**
+     * End beam by code.
+     */
+    public function endByCode(string $code): bool
+    {
+        if ($beam = $this->findByCode($code)) {
+            $beam->end = now();
+            $beam->save();
+            event(new BeamUpdated($beam));
+
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Remove tokens from a beam.
      */
     public function removeTokens(string $code, ?array $tokens = [], ?array $packs = []): bool
