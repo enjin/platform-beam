@@ -11,7 +11,13 @@ return new class () extends Migration {
     public function up(): void
     {
         Schema::table('beams', function (Blueprint $table) {
-            $table->dropColumn(['fuel_tank_public_key', 'fuel_tank_rule_set_id']);
+            if (Schema::hasColumn('beams','fuel_tank_public_key')) {
+                $table->dropColumn('fuel_tank_public_key');
+            }
+
+            if (Schema::hasColumn('beams','fuel_tank_rule_set_id')) {
+                $table->dropColumn('fuel_tank_rule_set_id');
+            }
         });
     }
 
