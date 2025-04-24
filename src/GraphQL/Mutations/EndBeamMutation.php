@@ -1,0 +1,85 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Enjin\Platform\Beam\GraphQL\Mutations;
+
+use Closure;
+use Enjin\Platform\Beam\Rules\BeamExists;
+use Enjin\Platform\Beam\Services\BeamService;
+use GraphQL\Type\Definition\ResolveInfo;
+use GraphQL\Type\Definition\Type;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
+use Override;
+use Rebing\GraphQL\Support\Facades\GraphQL;
+
+class EndBeamMutation extends Mutation
+{
+    /**
+     * Get the mutation's attributes.
+     */
+    #[Override]
+    public function attributes(): array
+    {
+        return [
+            'name' => 'EndBeam',
+            'description' => __('enjin-platform-beam::mutation.end_beam.description'),
+        ];
+    }
+
+    /**
+     * Get the mutation's return type.
+     */
+    public function type(): Type
+    {
+        return GraphQL::type('Boolean!');
+    }
+
+    /**
+     * Get the mutation's arguments definition.
+     */
+    #[Override]
+    public function args(): array
+    {
+        return [
+            'code' => [
+                'type' => GraphQL::type('String!'),
+                'description' => __('enjin-platform-beam::mutation.claim_beam.args.code'),
+            ],
+        ];
+    }
+
+    /**
+     * Resolve the mutation's request.
+     */
+    public function resolve(
+        $root,
+        array $args,
+        $context,
+        ResolveInfo $resolveInfo,
+        Closure $getSelectFields,
+        BeamService $beam
+    ) {
+        return DB::transaction(
+            fn () => $beam->endByCode(
+                Arr::get($args, 'code'),
+            )
+        );
+    }
+
+    /**
+     * Get the mutation's request validation rules.
+     */
+    #[Override]
+    protected function rules(array $args = []): array
+    {
+        return [
+            'code' => [
+                'filled',
+                'max:1024',
+                new BeamExists(),
+            ],
+        ];
+    }
+}
