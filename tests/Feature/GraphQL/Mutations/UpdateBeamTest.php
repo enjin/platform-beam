@@ -511,7 +511,7 @@ class UpdateBeamTest extends TestCaseGraphQL
         );
     }
 
-    protected function generateBeamData(BeamType $type = BeamType::TRANSFER_TOKEN, int $count = 1, array $attributes = [], array $singleUse = []): array
+    protected function generateBeamData(BeamType $type = BeamType::TRANSFER_TOKEN, int $count = 1, array $attributes = [], array $singleUse = [], array $extra = []): array
     {
         return $this->parentGenerateBeamData(
             $type,
