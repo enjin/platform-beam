@@ -469,7 +469,8 @@ class BeamService
         if ($integers) {
             Cache::decrement(
                 self::key($beam->code),
-                BeamClaim::whereIn('token_chain_id', $integers)
+                BeamClaim::query()
+                    ->whereIn('token_chain_id', $integers)
                     ->where('beam_id', $beam->id)
                     ->whereNull('claimed_at')
                     ->delete()
@@ -480,7 +481,8 @@ class BeamService
             [$from, $to] = $this->integerRange($range);
             Cache::decrement(
                 self::key($beam->code),
-                BeamClaim::whereBetween('token_chain_id', [(int) $from, (int) $to])
+                BeamClaim::query()
+                    ->whereBetween('token_chain_id', [(int) $from, (int) $to])
                     ->where('beam_id', $beam->id)
                     ->whereNull('claimed_at')
                     ->delete()

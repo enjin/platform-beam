@@ -29,6 +29,7 @@ class TokensDoNotExistInBeam implements DataAwareRule, ValidationRule
     {
         $prepare = static::prepareStatement($this->beam, Arr::get($this->data, 'collectionId'));
         $integers = collect($value)->filter(fn ($val) => $this->integerRange($val) === false)->all();
+
         if ($integers) {
             if ($prepare->whereIn('beam_claims.token_chain_id', $integers)->exists()) {
                 $fail($this->message())->translate();
@@ -50,7 +51,8 @@ class TokensDoNotExistInBeam implements DataAwareRule, ValidationRule
      */
     public static function prepareStatement(?Model $beam, ?string $collectionId = null): Builder
     {
-        return BeamClaim::whereHas('beam', fn ($query) => $query->where('end', '>', now()))
+        return BeamClaim::query()
+            ->whereHas('beam', fn ($query) => $query->where('end', '>', now()))
             ->join(
                 'collections',
                 fn ($join) => $join->on('collections.id', '=', 'beam_claims.collection_id')
@@ -62,7 +64,8 @@ class TokensDoNotExistInBeam implements DataAwareRule, ValidationRule
                 'tokens',
                 fn ($join) => $join->on('tokens.token_chain_id', '=', 'beam_claims.token_chain_id')
                     ->whereColumn('tokens.collection_id', 'beam_claims.collection_id')
-            )->whereRaw("
+            )->whereNull('beam_claims.deleted_at')
+            ->whereRaw("
                 (tokens.is_currency is false OR tokens.is_currency is NULL)
                 AND (
                     collections.max_token_supply = '1'
@@ -75,10 +78,8 @@ class TokensDoNotExistInBeam implements DataAwareRule, ValidationRule
 
     /**
      * Get the validation error message.
-     *
-     * @return string
      */
-    public function message()
+    public function message(): string
     {
         return 'enjin-platform-beam::validation.tokens_doesnt_exist_in_beam';
     }
