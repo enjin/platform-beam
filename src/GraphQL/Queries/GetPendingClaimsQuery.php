@@ -72,6 +72,7 @@ class GetPendingClaimsQuery extends Query implements PlatformPublicGraphQlOperat
         return BeamClaim::loadSelectFields($resolveInfo, $this->name)
             ->hasCode(Arr::get($args, 'code'))
             ->where('wallet_public_key', SS58Address::getPublicKey(Arr::get($args, 'account')))
+            ->pending()
             ->cursorPaginateWithTotalDesc('id', $args['first']);
     }
 

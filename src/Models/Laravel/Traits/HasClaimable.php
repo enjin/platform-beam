@@ -11,6 +11,14 @@ trait HasClaimable
      */
     public function scopeClaimable(Builder $query): Builder
     {
-        return $query->whereNull('claimed_at');
+        return $query->whereNull("claimed_at");
+    }
+
+    /**
+     * Local scope for pending claims.
+     */
+    public function scopePending(Builder $query): Builder
+    {
+        return $query->where("state", "PENDING");
     }
 }
