@@ -19,6 +19,6 @@ trait HasClaimable
      */
     public function scopePending(Builder $query): Builder
     {
-        return $query->where('state', 'PENDING');
+        return $query->whereIn('state', ['PENDING', 'IN_PROGRESS']);
     }
 }
