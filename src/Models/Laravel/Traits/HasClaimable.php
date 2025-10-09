@@ -11,7 +11,7 @@ trait HasClaimable
      */
     public function scopeClaimable(Builder $query): Builder
     {
-        return $query->whereNull("claimed_at");
+        return $query->whereNull('claimed_at');
     }
 
     /**
@@ -19,6 +19,6 @@ trait HasClaimable
      */
     public function scopePending(Builder $query): Builder
     {
-        return $query->where("state", "PENDING");
+        return $query->where('state', 'PENDING');
     }
 }
