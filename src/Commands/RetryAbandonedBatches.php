@@ -21,8 +21,7 @@ class RetryAbandonedBatches extends Command
     protected $signature = 'platform:beam:retry-abandoned-batches
                             {code : The beam code}
                             {--dry-run : Show what would change without writing}
-                            {--force : Retry even if the batch transaction is not abandoned}
-                            {--yes : Skip confirmation prompt}';
+                            {--force : Retry even if the batch transaction is not abandoned}';
 
     /**
      * The console command description.
@@ -39,7 +38,6 @@ class RetryAbandonedBatches extends Command
         $code = (string) $this->argument('code');
         $dryRun = (bool) $this->option('dry-run');
         $force = (bool) $this->option('force');
-        $skipConfirm = (bool) $this->option('yes');
 
         $beam = Beam::query()->where('code', $code)->first();
         if (!$beam) {
@@ -143,24 +141,6 @@ class RetryAbandonedBatches extends Command
             $this->warn('Dry run enabled; no changes written.');
 
             return self::SUCCESS;
-        }
-
-        if (!$skipConfirm && !$this->option('no-interaction')) {
-            if (
-                !$this->confirm(
-                    'Do you want to proceed with resetting these batches?',
-                )
-            ) {
-                $this->info('Operation cancelled.');
-
-                return self::SUCCESS;
-            }
-        } elseif (!$skipConfirm && $this->option('no-interaction')) {
-            $this->error(
-                'Running non-interactively without --yes flag. Use --yes to confirm or --dry-run to preview.',
-            );
-
-            return self::FAILURE;
         }
 
         DB::transaction(function () use (

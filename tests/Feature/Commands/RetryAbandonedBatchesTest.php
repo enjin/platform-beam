@@ -32,7 +32,6 @@ class RetryAbandonedBatchesTest extends TestCaseGraphQL
 
         $this->artisan('platform:beam:retry-abandoned-batches', [
             'code' => $this->beam->code,
-            '--yes' => true,
         ])
             ->expectsOutputToContain('Updated claims:')
             ->expectsOutputToContain('Updated batches:')
