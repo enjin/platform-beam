@@ -1,0 +1,195 @@
+<?php
+
+namespace Enjin\Platform\Beam\Commands;
+
+use Enjin\Platform\Beam\Enums\ClaimStatus;
+use Enjin\Platform\Beam\Models\Beam;
+use Enjin\Platform\Beam\Models\BeamBatch;
+use Enjin\Platform\Beam\Models\BeamClaim;
+use Enjin\Platform\Enums\Global\TransactionState;
+use Enjin\Platform\Models\Transaction;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+
+class RetryAbandonedBatches extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'platform:beam:retry-abandoned-batches
+                            {code : The beam code}
+                            {--dry-run : Show what would change without writing}
+                            {--force : Retry even if the batch transaction is not abandoned}
+                            {--yes : Skip confirmation prompt}';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Reset failed/in-progress claims for a beam whose batch transaction was abandoned (e.g. after a runtime upgrade).';
+
+    /**
+     * Execute the console command.
+     */
+    public function handle(): int
+    {
+        $code = (string) $this->argument('code');
+        $dryRun = (bool) $this->option('dry-run');
+        $force = (bool) $this->option('force');
+        $skipConfirm = (bool) $this->option('yes');
+
+        $beam = Beam::query()->where('code', $code)->first();
+        if (!$beam) {
+            $this->error("Beam not found for code: {$code}");
+
+            return self::FAILURE;
+        }
+
+        $this->info("Found beam: {$beam->name} (ID: {$beam->id})");
+
+        $batchIds = BeamClaim::query()
+            ->where('beam_id', $beam->id)
+            ->whereNull('claimed_at')
+            ->whereNotNull('beam_batch_id')
+            ->distinct()
+            ->pluck('beam_batch_id')
+            ->all();
+
+        if (empty($batchIds)) {
+            $this->info('No unclaimed batches found for this beam.');
+
+            return self::SUCCESS;
+        }
+
+        $this->info(
+            'Found ' . count($batchIds) . ' batch(es) with unclaimed claims.',
+        );
+
+        $batches = BeamBatch::query()
+            ->whereIn('id', $batchIds)
+            ->whereNotNull('completed_at')
+            ->whereNotNull('transaction_id')
+            ->get([
+                'id',
+                'transaction_id',
+                'processed_at',
+                'beam_type',
+                'collection_chain_id',
+            ]);
+
+        $eligibleBatches = [];
+        $transactionIds = [];
+
+        foreach ($batches as $batch) {
+            $transaction = Transaction::query()
+                ->where('id', $batch->transaction_id)
+                ->first(['id', 'state', 'transaction_chain_hash']);
+
+            if (!$transaction) {
+                $this->line(
+                    "  Skipping batch {$batch->id}: transaction not found.",
+                );
+
+                continue;
+            }
+
+            if (
+                !$force &&
+                $transaction->state !== TransactionState::ABANDONED->name
+            ) {
+                $this->line(
+                    "  Skipping batch {$batch->id}: transaction state is {$transaction->state} (use --force to override).",
+                );
+
+                continue;
+            }
+
+            $eligibleBatches[] = $batch;
+            $transactionIds[] = $transaction->id;
+            $this->line(
+                "  Eligible batch {$batch->id}: transaction {$transaction->id} (state: {$transaction->state})",
+            );
+        }
+
+        if (empty($eligibleBatches)) {
+            $this->info('No eligible batches to reset.');
+
+            return self::SUCCESS;
+        }
+
+        $eligibleBatchIds = array_map(fn ($b) => $b->id, $eligibleBatches);
+
+        $claimsToResetQuery = BeamClaim::query()
+            ->whereIn('beam_batch_id', $eligibleBatchIds)
+            ->whereNull('claimed_at')
+            ->where('state', ClaimStatus::FAILED->name);
+
+        $claimCount = (clone $claimsToResetQuery)->count();
+
+        $this->newLine();
+        $this->info('=== Summary ===');
+        $this->info('Eligible batches: ' . count($eligibleBatchIds));
+        $this->info('Batch IDs: ' . implode(', ', $eligibleBatchIds));
+        $this->info(
+            'Transaction IDs to unlink: ' . implode(', ', $transactionIds),
+        );
+        $this->info("Claims to reset to PENDING: {$claimCount}");
+
+        if ($dryRun) {
+            $this->newLine();
+            $this->warn('Dry run enabled; no changes written.');
+
+            return self::SUCCESS;
+        }
+
+        if (!$skipConfirm && !$this->option('no-interaction')) {
+            if (
+                !$this->confirm(
+                    'Do you want to proceed with resetting these batches?',
+                )
+            ) {
+                $this->info('Operation cancelled.');
+
+                return self::SUCCESS;
+            }
+        } elseif (!$skipConfirm && $this->option('no-interaction')) {
+            $this->error(
+                'Running non-interactively without --yes flag. Use --yes to confirm or --dry-run to preview.',
+            );
+
+            return self::FAILURE;
+        }
+
+        DB::transaction(function () use (
+            $claimsToResetQuery,
+            $eligibleBatchIds,
+            &$updatedClaims,
+            &$updatedBatches,
+        ): void {
+            $updatedClaims = $claimsToResetQuery->update([
+                'state' => ClaimStatus::PENDING->name,
+            ]);
+
+            $updatedBatches = BeamBatch::query()
+                ->whereIn('id', $eligibleBatchIds)
+                ->update([
+                    'processed_at' => null,
+                    'transaction_id' => null,
+                ]);
+        });
+
+        $this->newLine();
+        $this->info('=== Results ===');
+        $this->info("Updated claims: {$updatedClaims}");
+        $this->info("Updated batches: {$updatedBatches}");
+        $this->newLine();
+        $this->info(
+            'Next step: Run `php artisan platform:process-beam-claims --test` or wait for the long-running worker to generate new transactions.',
+        );
+
+        return self::SUCCESS;
+    }
+}

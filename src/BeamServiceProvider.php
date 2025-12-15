@@ -3,6 +3,7 @@
 namespace Enjin\Platform\Beam;
 
 use Enjin\Platform\Beam\Commands\BatchProcess;
+use Enjin\Platform\Beam\Commands\RetryAbandonedBatches;
 use Enjin\Platform\Beam\Listeners\ExpireBeam;
 use Enjin\Platform\Beam\Listeners\PauseBeam;
 use Enjin\Platform\Beam\Listeners\RemoveClaimToken;
@@ -32,7 +33,7 @@ class BeamServiceProvider extends PackageServiceProvider
         $package
             ->name('platform-beam')
             ->hasConfigFile(['enjin-platform-beam'])
-            ->hasCommands([BatchProcess::class])
+            ->hasCommands([BatchProcess::class, RetryAbandonedBatches::class])
             ->hasMigration('create_beams_table')
             ->hasMigration('create_beam_claims_table')
             ->hasMigration('create_beam_scans_table')
