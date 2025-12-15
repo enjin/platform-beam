@@ -48,14 +48,13 @@ class RetryAbandonedBatches extends Command
 
         $batchIds = BeamClaim::query()
             ->where('beam_id', $beam->id)
-            ->whereNull('claimed_at')
             ->whereNotNull('beam_batch_id')
             ->distinct()
             ->pluck('beam_batch_id')
             ->all();
 
         if (empty($batchIds)) {
-            $this->info('No unclaimed batches found for this beam.');
+            $this->info('No batches found for this beam.');
 
             return self::SUCCESS;
         }
@@ -109,7 +108,6 @@ class RetryAbandonedBatches extends Command
 
         $claimsToResetQuery = BeamClaim::query()
             ->whereIn('beam_batch_id', $eligibleBatchIds)
-            ->whereNull('claimed_at')
             ->whereIn('state', [ClaimStatus::FAILED->name, ClaimStatus::IN_PROGRESS->name]);
 
         $claimCount = (clone $claimsToResetQuery)->count();
