@@ -114,7 +114,7 @@ class RetryAbandonedBatches extends Command
         $claimsToResetQuery = BeamClaim::query()
             ->whereIn('beam_batch_id', $eligibleBatchIds)
             ->whereNull('claimed_at')
-            ->where('state', ClaimStatus::FAILED->name);
+            ->whereIn('state', [ClaimStatus::FAILED->name, ClaimStatus::IN_PROGRESS->name]);
 
         $claimCount = (clone $claimsToResetQuery)->count();
 
