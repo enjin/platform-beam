@@ -165,10 +165,6 @@ class RetryAbandonedBatches extends Command
         $this->info('=== Results ===');
         $this->info("Updated claims: {$updatedClaims}");
         $this->info("Updated batches: {$updatedBatches}");
-        $this->newLine();
-        $this->info(
-            'Next step: Run `php artisan platform:process-beam-claims --test` or wait for the long-running worker to generate new transactions.',
-        );
 
         return self::SUCCESS;
     }
