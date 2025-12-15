@@ -18,6 +18,6 @@ class MaxBigIntIntegerRange extends MaxBigInt
         $value = $range === false ? $value : $range[0];
         $this->message = __('enjin-platform::validation.max_big_int', ['max' => $this->max]);
 
-        return bccomp($this->max, (string) $value) >= 0;
+        return bccomp((string) $this->max, (string) $value) >= 0;
     }
 }

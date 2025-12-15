@@ -18,6 +18,6 @@ class MinBigIntIntegerRange extends MinBigInt
         $value = $range === false ? $value : $range[0];
         $this->message = __('enjin-platform::validation.min_big_int', ['min' => $this->min]);
 
-        return bccomp($this->min, (string) $value) <= 0;
+        return bccomp((string) $this->min, (string) $value) <= 0;
     }
 }
