@@ -68,21 +68,19 @@ class RetryAbandonedBatches extends Command
             ->whereIn('id', $batchIds)
             ->whereNotNull('completed_at')
             ->whereNotNull('transaction_id')
-            ->get([
-                'id',
-                'transaction_id',
-                'processed_at',
-                'beam_type',
-                'collection_chain_id',
-            ]);
+            ->get(['id', 'transaction_id', 'processed_at', 'beam_type', 'collection_chain_id']);
+
+        $transactionIds = $batches->pluck('transaction_id')->filter()->all();
+        $transactions = Transaction::query()
+            ->whereIn('id', $transactionIds)
+            ->get(['id', 'state'])
+            ->keyBy('id');
 
         $eligibleBatches = [];
-        $transactionIds = [];
+        $eligibleTransactionIds = [];
 
         foreach ($batches as $batch) {
-            $transaction = Transaction::query()
-                ->where('id', $batch->transaction_id)
-                ->first(['id', 'state', 'transaction_chain_hash']);
+            $transaction = $transactions->get($batch->transaction_id);
 
             if (!$transaction) {
                 $this->line("  Skipping batch {$batch->id}: transaction not found.");
@@ -97,10 +95,8 @@ class RetryAbandonedBatches extends Command
             }
 
             $eligibleBatches[] = $batch;
-            $transactionIds[] = $transaction->id;
-            $this->line(
-                "  Eligible batch {$batch->id}: transaction {$transaction->id} (state: {$transaction->state})",
-            );
+            $eligibleTransactionIds[] = $transaction->id;
+            $this->line("  Eligible batch {$batch->id}: transaction {$transaction->id} (state: {$transaction->state})");
         }
 
         if (empty($eligibleBatches)) {
@@ -122,9 +118,7 @@ class RetryAbandonedBatches extends Command
         $this->info('=== Summary ===');
         $this->info('Eligible batches: ' . count($eligibleBatchIds));
         $this->info('Batch IDs: ' . implode(', ', $eligibleBatchIds));
-        $this->info(
-            'Transaction IDs to unlink: ' . implode(', ', $transactionIds),
-        );
+        $this->info('Transaction IDs to unlink: ' . implode(', ', $eligibleTransactionIds));
         $this->info("Claims to reset to PENDING: {$claimCount}");
 
         if ($dryRun) {
@@ -134,22 +128,14 @@ class RetryAbandonedBatches extends Command
             return self::SUCCESS;
         }
 
-        DB::transaction(function () use (
-            $claimsToResetQuery,
-            $eligibleBatchIds,
-            &$updatedClaims,
-            &$updatedBatches,
-        ): void {
-            $updatedClaims = $claimsToResetQuery->update([
-                'state' => ClaimStatus::PENDING->name,
-            ]);
+        $updatedClaims = 0;
+        $updatedBatches = 0;
 
+        DB::transaction(function () use ($claimsToResetQuery, $eligibleBatchIds, &$updatedClaims, &$updatedBatches): void {
+            $updatedClaims = $claimsToResetQuery->update(['state' => ClaimStatus::PENDING->name]);
             $updatedBatches = BeamBatch::query()
                 ->whereIn('id', $eligibleBatchIds)
-                ->update([
-                    'processed_at' => null,
-                    'transaction_id' => null,
-                ]);
+                ->update(['processed_at' => null, 'transaction_id' => null]);
         });
 
         $this->newLine();
