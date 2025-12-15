@@ -24,9 +24,12 @@ class RetryAbandonedBatchesTest extends TestCaseGraphQL
         $this->claimAllBeams(resolve(SubstrateProvider::class)->public_key());
     }
 
-    public function test_it_resets_abandoned_batches(): void
+    public function test_it_resets_abandoned_batches_with_claimed_at_set(): void
     {
         $this->setupAbandonedBatch();
+
+        // Verify claims have claimed_at set (simulating real claimed beams)
+        $this->claims->each(fn ($claim) => $this->assertNotNull($claim->refresh()->claimed_at));
 
         BeamClaim::query()->update(['state' => ClaimStatus::FAILED->name]);
 
