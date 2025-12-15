@@ -20,8 +20,7 @@ class RetryAbandonedBatches extends Command
      */
     protected $signature = 'platform:beam:retry-abandoned-batches
                             {code : The beam code}
-                            {--dry-run : Show what would change without writing}
-                            {--force : Retry even if the batch transaction is not abandoned}';
+                            {--dry-run : Show what would change without writing}';
 
     /**
      * The console command description.
@@ -37,7 +36,6 @@ class RetryAbandonedBatches extends Command
     {
         $code = (string) $this->argument('code');
         $dryRun = (bool) $this->option('dry-run');
-        $force = (bool) $this->option('force');
 
         $beam = Beam::query()->where('code', $code)->first();
         if (!$beam) {
@@ -87,20 +85,13 @@ class RetryAbandonedBatches extends Command
                 ->first(['id', 'state', 'transaction_chain_hash']);
 
             if (!$transaction) {
-                $this->line(
-                    "  Skipping batch {$batch->id}: transaction not found.",
-                );
+                $this->line("  Skipping batch {$batch->id}: transaction not found.");
 
                 continue;
             }
 
-            if (
-                !$force &&
-                $transaction->state !== TransactionState::ABANDONED->name
-            ) {
-                $this->line(
-                    "  Skipping batch {$batch->id}: transaction state is {$transaction->state} (use --force to override).",
-                );
+            if ($transaction->state !== TransactionState::ABANDONED->name) {
+                $this->line("  Skipping batch {$batch->id}: transaction state is {$transaction->state}.");
 
                 continue;
             }
