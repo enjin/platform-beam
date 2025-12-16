@@ -31,7 +31,9 @@ class RetryAbandonedBatchesTest extends TestCaseGraphQL
         // Verify claims have claimed_at set (simulating real claimed beams)
         $this->claims->each(fn ($claim) => $this->assertNotNull($claim->refresh()->claimed_at));
 
-        BeamClaim::query()->update(['state' => ClaimStatus::FAILED->name]);
+        BeamClaim::query()
+            ->where('beam_id', $this->beam->id)
+            ->update(['state' => ClaimStatus::FAILED->name]);
 
         $this->artisan('platform:beam:retry-abandoned-batches', [
             'code' => $this->beam->code,
@@ -40,7 +42,10 @@ class RetryAbandonedBatchesTest extends TestCaseGraphQL
             ->expectsOutputToContain('Updated batches:')
             ->assertSuccessful();
 
-        BeamClaim::all()->each(fn ($claim) => $this->assertEquals(ClaimStatus::PENDING->name, $claim->state));
+        BeamClaim::query()
+            ->where('beam_id', $this->beam->id)
+            ->get()
+            ->each(fn ($claim) => $this->assertEquals(ClaimStatus::PENDING->name, $claim->state));
 
         $this->batch->refresh();
         $this->assertNull($this->batch->processed_at);
@@ -51,7 +56,9 @@ class RetryAbandonedBatchesTest extends TestCaseGraphQL
     {
         $this->setupAbandonedBatch();
 
-        BeamClaim::query()->update(['state' => ClaimStatus::FAILED->name]);
+        BeamClaim::query()
+            ->where('beam_id', $this->beam->id)
+            ->update(['state' => ClaimStatus::FAILED->name]);
 
         $this->artisan('platform:beam:retry-abandoned-batches', [
             'code' => $this->beam->code,
@@ -60,7 +67,10 @@ class RetryAbandonedBatchesTest extends TestCaseGraphQL
             ->expectsOutputToContain('Dry run enabled')
             ->assertSuccessful();
 
-        $this->assertEquals(ClaimStatus::FAILED->name, BeamClaim::first()->state);
+        $this->assertEquals(
+            ClaimStatus::FAILED->name,
+            BeamClaim::query()->where('beam_id', $this->beam->id)->firstOrFail()->state
+        );
         $this->assertNotNull($this->batch->refresh()->transaction_id);
     }
 
@@ -70,7 +80,7 @@ class RetryAbandonedBatchesTest extends TestCaseGraphQL
 
         // Simulate real scenario: batch was processed but transaction was abandoned
         // Some claims ended up FAILED, some stuck IN_PROGRESS
-        $claims = BeamClaim::all();
+        $claims = BeamClaim::query()->where('beam_id', $this->beam->id)->get();
         $claims->take(3)->each(fn ($claim) => $claim->update(['state' => ClaimStatus::FAILED->name]));
         $claims->skip(3)->each(fn ($claim) => $claim->update(['state' => ClaimStatus::IN_PROGRESS->name]));
 
@@ -87,7 +97,10 @@ class RetryAbandonedBatchesTest extends TestCaseGraphQL
             ->assertSuccessful();
 
         // All FAILED and IN_PROGRESS claims should be reset to PENDING
-        BeamClaim::all()->each(fn ($claim) => $this->assertEquals(ClaimStatus::PENDING->name, $claim->state));
+        BeamClaim::query()
+            ->where('beam_id', $this->beam->id)
+            ->get()
+            ->each(fn ($claim) => $this->assertEquals(ClaimStatus::PENDING->name, $claim->state));
 
         // Batch should be reset for reprocessing
         $this->batch->refresh();
