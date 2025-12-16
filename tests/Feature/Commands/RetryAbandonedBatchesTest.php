@@ -64,6 +64,39 @@ class RetryAbandonedBatchesTest extends TestCaseGraphQL
         $this->assertNotNull($this->batch->refresh()->transaction_id);
     }
 
+    public function test_it_resets_already_processed_batches_with_failed_and_in_progress_claims(): void
+    {
+        $this->setupAbandonedBatch();
+
+        // Simulate real scenario: batch was processed but transaction was abandoned
+        // Some claims ended up FAILED, some stuck IN_PROGRESS
+        $claims = BeamClaim::all();
+        $claims->take(3)->each(fn ($claim) => $claim->update(['state' => ClaimStatus::FAILED->name]));
+        $claims->skip(3)->each(fn ($claim) => $claim->update(['state' => ClaimStatus::IN_PROGRESS->name]));
+
+        // Verify batch is in "already processed" state (processed_at is set)
+        $this->assertNotNull($this->batch->refresh()->processed_at);
+        $this->assertNotNull($this->batch->completed_at);
+        $this->assertNotNull($this->batch->transaction_id);
+
+        $this->artisan('platform:beam:retry-abandoned-batches', [
+            'code' => $this->beam->code,
+        ])
+            ->expectsOutputToContain('Updated claims:')
+            ->expectsOutputToContain('Updated batches:')
+            ->assertSuccessful();
+
+        // All FAILED and IN_PROGRESS claims should be reset to PENDING
+        BeamClaim::all()->each(fn ($claim) => $this->assertEquals(ClaimStatus::PENDING->name, $claim->state));
+
+        // Batch should be reset for reprocessing
+        $this->batch->refresh();
+        $this->assertNull($this->batch->processed_at);
+        $this->assertNull($this->batch->transaction_id);
+        // completed_at should remain (batch was completed, just needs reprocessing)
+        $this->assertNotNull($this->batch->completed_at);
+    }
+
     protected function setupAbandonedBatch(): void
     {
         $transaction = Transaction::create([
