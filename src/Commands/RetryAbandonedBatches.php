@@ -7,7 +7,6 @@ use Enjin\Platform\Beam\Models\Beam;
 use Enjin\Platform\Beam\Models\BeamBatch;
 use Enjin\Platform\Beam\Models\BeamClaim;
 use Enjin\Platform\Enums\Global\TransactionState;
-use Enjin\Platform\Models\Transaction;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -50,61 +49,25 @@ class RetryAbandonedBatches extends Command
             ->where('beam_id', $beam->id)
             ->whereNotNull('beam_batch_id')
             ->distinct()
-            ->pluck('beam_batch_id')
-            ->all();
+            ->pluck('beam_batch_id');
 
-        if (empty($batchIds)) {
+        if ($batchIds->isEmpty()) {
             $this->info('No batches found for this beam.');
 
             return self::SUCCESS;
         }
 
-        $this->info(
-            'Found ' . count($batchIds) . ' batch(es) with unclaimed claims.',
-        );
-
-        $batches = BeamBatch::query()
+        $eligibleBatchIds = BeamBatch::query()
             ->whereIn('id', $batchIds)
             ->whereNotNull('completed_at')
-            ->whereNotNull('transaction_id')
-            ->get(['id', 'transaction_id', 'processed_at', 'beam_type', 'collection_chain_id']);
+            ->whereHas('transaction', fn ($q) => $q->where('state', TransactionState::ABANDONED->name))
+            ->pluck('id');
 
-        $transactionIds = $batches->pluck('transaction_id')->filter()->all();
-        $transactions = Transaction::query()
-            ->whereIn('id', $transactionIds)
-            ->get(['id', 'state'])
-            ->keyBy('id');
-
-        $eligibleBatches = [];
-        $eligibleTransactionIds = [];
-
-        foreach ($batches as $batch) {
-            $transaction = $transactions->get($batch->transaction_id);
-
-            if (!$transaction) {
-                $this->line("  Skipping batch {$batch->id}: transaction not found.");
-
-                continue;
-            }
-
-            if ($transaction->state !== TransactionState::ABANDONED->name) {
-                $this->line("  Skipping batch {$batch->id}: transaction state is {$transaction->state}.");
-
-                continue;
-            }
-
-            $eligibleBatches[] = $batch;
-            $eligibleTransactionIds[] = $transaction->id;
-            $this->line("  Eligible batch {$batch->id}: transaction {$transaction->id} (state: {$transaction->state})");
-        }
-
-        if (empty($eligibleBatches)) {
+        if ($eligibleBatchIds->isEmpty()) {
             $this->info('No eligible batches to reset.');
 
             return self::SUCCESS;
         }
-
-        $eligibleBatchIds = array_map(fn ($b) => $b->id, $eligibleBatches);
 
         $claimsToResetQuery = BeamClaim::query()
             ->whereIn('beam_batch_id', $eligibleBatchIds)
@@ -114,9 +77,7 @@ class RetryAbandonedBatches extends Command
 
         $this->newLine();
         $this->info('=== Summary ===');
-        $this->info('Eligible batches: ' . count($eligibleBatchIds));
-        $this->info('Batch IDs: ' . implode(', ', $eligibleBatchIds));
-        $this->info('Transaction IDs to unlink: ' . implode(', ', $eligibleTransactionIds));
+        $this->info('Eligible batches: ' . $eligibleBatchIds->count());
         $this->info("Claims to reset to PENDING: {$claimCount}");
 
         if ($dryRun) {
